@@ -259,33 +259,6 @@ void remove_extensions(std::vector<std::vector<std::string>>& resourceExtensions
         }
     }
 }
-
-void generate_launch_json(const std::string& file_path)
-{
-    // Define the JSON content as a raw string literal
-    const std::string json_content = R"json(
-{
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Attach to Mono",
-            "request": "attach",
-            "type": "mono",
-            "address": "localhost",
-            "port": 55555
-        }
-    ]
-}
-)json";
-
-    // Write the JSON string to a file
-    std::ofstream file(file_path);
-    if(file.is_open())
-    {
-        file << json_content;
-    }
-}
-
 void generate_workspace_file(const std::string& file_path,
                              const std::vector<std::vector<std::string>>& exclude_extensions)
 {
@@ -295,36 +268,37 @@ void generate_workspace_file(const std::string& file_path,
     json_stream << "{\n";
     json_stream << "    \"folders\": [\n";
     json_stream << "        {\n";
-    json_stream << "            \"path\": \"../data\"\n";
+    json_stream << "            \"path\": \"..\"\n";
     json_stream << "        }\n";
     json_stream << "    ],\n";
     json_stream << "    \"settings\": {\n";
+    json_stream << "        \"dotnet.preferCSharpExtension\": true,\n";
     json_stream << "        \"files.exclude\": {\n";
     json_stream << "            \"**/.git\": true,\n";
     json_stream << "            \"**/.svn\": true";
 
-           // Add the exclude patterns from the provided extensions
-    for (const auto& extensions : exclude_extensions)
+    // Add the exclude patterns from the provided extensions
+    for(const auto& extensions : exclude_extensions)
     {
-        for (const auto& ext : extensions)
+        for(const auto& ext : extensions)
         {
             // Escape any special characters in the extension if necessary
 
-                   // Create the pattern to exclude files with the given extension
+            // Create the pattern to exclude files with the given extension
             std::string pattern = "**/*" + ext;
 
-                   // Add a comma before each new entry
+            // Add a comma before each new entry
             json_stream << ",\n";
             json_stream << "            \"" << pattern << "\": true";
         }
     }
 
-           // Close the files.exclude object and the settings object
+    // Close the files.exclude object and the settings object
     json_stream << "\n";
     json_stream << "        }\n"; // End of "files.exclude"
     json_stream << "    }\n";     // End of "settings"
 
-           // Add the "launch" section
+    // Add the "launch" section
     json_stream << ",\n";
     json_stream << "    \"launch\": {\n";
     json_stream << "        \"version\": \"0.2.0\",\n";
@@ -339,7 +313,7 @@ void generate_workspace_file(const std::string& file_path,
     json_stream << "        ]\n";
     json_stream << "    }\n";
 
-           // Close the JSON object
+    // Close the JSON object
     json_stream << "}";
 
     // Write the JSON string to a file
@@ -350,6 +324,282 @@ void generate_workspace_file(const std::string& file_path,
     }
 
     APPLOG_INFO("Workspace {}", file_path);
+}
+
+/**
+ * @brief Generates a .csproj file based on the provided parameters.
+ *
+ * @param source_directory Directory containing C# source files.
+ * @param external_dll_path Path to the external DLL to reference.
+ * @param output_directory Directory where the .csproj file will be generated.
+ * @param project_name Name of the project and the .csproj file (default: "MyLibrary").
+ * @param dotnet_sdk_version Target .NET SDK version (default: "7.0").
+ *
+ * @throws std::runtime_error if the .csproj file cannot be created.
+ */
+void generate_csproj(const fs::path& source_directory,
+                     const std::vector<fs::path>& external_dll_paths,
+                     const fs::path& output_directory,
+                     const std::string& project_name = "MyLibrary",
+                     const std::string& dotnet_sdk_version = "7.0")
+{
+    // Ensure the output directory exists
+    try
+    {
+        fs::create_directories(output_directory);
+    }
+    catch(const fs::filesystem_error& e)
+    {
+        throw std::runtime_error("Failed to create output directory: " + std::string(e.what()));
+    }
+
+    // Verify that the source directory exists
+    if(!fs::exists(source_directory) || !fs::is_directory(source_directory))
+    {
+        throw std::runtime_error("Source directory does not exist or is not a directory: " + source_directory.string());
+    }
+
+    // Verify that all external DLLs exist and are files
+    for(const auto& dll_path : external_dll_paths)
+    {
+        if(!fs::exists(dll_path) || !fs::is_regular_file(dll_path))
+        {
+            throw std::runtime_error("External DLL does not exist or is not a file: " + dll_path.string());
+        }
+    }
+
+    // Collect all C# source files from the specified source directory
+    std::vector<fs::path> csharp_sources;
+    try
+    {
+        for(const auto& entry : fs::recursive_directory_iterator(source_directory))
+        {
+            if(entry.is_regular_file() && entry.path().extension() == ".cs")
+            {
+                // Compute the relative path from the source directory
+                fs::path relative_path = fs::relative(entry.path(), source_directory);
+                csharp_sources.push_back(relative_path);
+            }
+        }
+    }
+    catch(const fs::filesystem_error& e)
+    {
+        throw std::runtime_error("Error while iterating source directory: " + std::string(e.what()));
+    }
+
+    // Generate the list of source files for the .csproj file with <Link> elements (for virtual folders)
+    std::string csharp_source_items;
+    for(const auto& source_file : csharp_sources)
+    {
+        // Convert path to generic format (forward slashes)
+        std::string source_file_str = source_file.string();
+        fs::path full_physical_path = fs::absolute(source_directory / source_file);
+        std::string full_physical_path_str = full_physical_path.string();
+
+        // Construct the <Compile Include> with <Link>
+        csharp_source_items += "    <Compile Include=\"" + full_physical_path_str + "\">\n";
+        csharp_source_items += "      <Link>" + source_file_str + "</Link>\n";
+        csharp_source_items += "    </Compile>\n";
+    }
+
+    // Generate external DLL references
+    std::string external_dll_references;
+    for(const auto& dll_path : external_dll_paths)
+    {
+        std::string dll_name = dll_path.filename().string();
+        fs::path dll_absolute_path = fs::absolute(dll_path);
+        std::string dll_absolute_path_str = dll_absolute_path.string(); // Forward slashes
+
+        external_dll_references += "    <Reference Include=\"" + dll_name + "\">\n";
+        external_dll_references += "      <HintPath>" + dll_absolute_path_str + "</HintPath>\n";
+        external_dll_references += "    </Reference>\n";
+    }
+
+    // Build the .csproj content
+    std::string csproj_content;
+    csproj_content += "<Project Sdk=\"Microsoft.NET.Sdk\">\n";
+    csproj_content += "  <PropertyGroup>\n";
+    csproj_content += "    <TargetFramework>net" + dotnet_sdk_version + "</TargetFramework>\n";
+    csproj_content += "    <OutputType>Library</OutputType>\n";
+    csproj_content +=
+        "    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>\n"; // Disable default .cs file inclusion
+    csproj_content += "  </PropertyGroup>\n";
+    csproj_content += "  <ItemGroup>\n";
+    csproj_content += csharp_source_items;
+    csproj_content += "  </ItemGroup>\n";
+    csproj_content += "  <ItemGroup>\n";
+    csproj_content += external_dll_references;
+    csproj_content += "  </ItemGroup>\n";
+    csproj_content += "</Project>\n";
+
+    // Define the path to the .csproj file
+    fs::path csproj_path = output_directory / (project_name + ".csproj");
+
+    // Write the .csproj file
+    std::ofstream csproj_file(csproj_path);
+    if(!csproj_file.is_open())
+    {
+        APPLOG_ERROR("Failed to create .csproj file at {}", csproj_path.string());
+        return;
+    }
+
+    csproj_file << csproj_content;
+
+    APPLOG_TRACE("Generated {}", csproj_path.string());
+}
+
+void generate_csproj_legacy(const fs::path& source_directory,
+                            const std::vector<fs::path>& external_dll_paths,
+                            const fs::path& output_directory,
+                            const std::string& project_name = "MyLibrary",
+                            const std::string& dotnet_framework_version = "v4.7.1")
+{
+    auto uid = generate_uuid(project_name);
+    fs::path output_path = fs::path("temp") / "bin" / "Debug";
+    fs::path intermediate_output_path = fs::path("temp") / "obj" / "Debug";
+
+    // Ensure the output directory exists
+    try
+    {
+        fs::create_directories(output_directory);
+    }
+    catch(const fs::filesystem_error& e)
+    {
+        throw std::runtime_error("Failed to create output directory: " + std::string(e.what()));
+    }
+
+    // Verify that the source directory exists
+    if(!fs::exists(source_directory) || !fs::is_directory(source_directory))
+    {
+        throw std::runtime_error("Source directory does not exist or is not a directory: " + source_directory.string());
+    }
+
+    // Verify that all external DLLs exist and are files
+    for(const auto& dll_path : external_dll_paths)
+    {
+        if(!fs::exists(dll_path) || !fs::is_regular_file(dll_path))
+        {
+            throw std::runtime_error("External DLL does not exist or is not a file: " + dll_path.string());
+        }
+    }
+
+    // Collect all C# source files from the specified source directory
+    std::vector<fs::path> csharp_sources;
+    try
+    {
+        for(const auto& entry : fs::recursive_directory_iterator(source_directory))
+        {
+            if(entry.is_regular_file() && entry.path().extension() == ".cs")
+            {
+                // Compute the relative path from the output directory
+                fs::path relative_path = fs::relative(entry.path(), output_directory);
+                csharp_sources.push_back(relative_path);
+            }
+        }
+    }
+    catch(const fs::filesystem_error& e)
+    {
+        throw std::runtime_error("Error while iterating source directory: " + std::string(e.what()));
+    }
+
+    // Generate the list of source files for the .csproj file
+    std::string csharp_source_items;
+    for(const auto& source_file : csharp_sources)
+    {
+        // Convert path to generic format (forward slashes)
+        std::string source_file_str = source_file.string();
+        csharp_source_items += "    <Compile Include=\"" + source_file_str + "\" />\n";
+    }
+
+    // Generate external DLL references
+    std::string external_dll_references;
+    for(const auto& dll_path : external_dll_paths)
+    {
+        std::string dll_name = dll_path.filename().string();
+        fs::path dll_absolute_path = fs::absolute(dll_path);
+        std::string dll_absolute_path_str = dll_absolute_path.string(); // Forward slashes
+
+        external_dll_references += "    <Reference Include=\"" + dll_name + "\">\n";
+        external_dll_references += "      <HintPath>" + dll_absolute_path_str + "</HintPath>\n";
+        external_dll_references += "      <Private>False</Private>\n"; // Mimic Unity's references
+        external_dll_references += "    </Reference>\n";
+    }
+
+    // Build the .csproj content
+    std::string csproj_content;
+    csproj_content += "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
+    csproj_content += "<Project ToolsVersion=\"4.0\" DefaultTargets=\"Build\" "
+                      "xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">\n";
+    csproj_content += "  <PropertyGroup>\n";
+    csproj_content += "    <LangVersion>9.0</LangVersion>\n";
+    csproj_content += "  </PropertyGroup>\n";
+    csproj_content += "  <PropertyGroup>\n";
+    csproj_content += "    <Configuration Condition=\" '$(Configuration)' == '' \">Debug</Configuration>\n";
+    csproj_content += "    <Platform Condition=\" '$(Platform)' == '' \">AnyCPU</Platform>\n";
+    csproj_content += "    <ProductVersion>10.0.20506</ProductVersion>\n";
+    csproj_content += "    <SchemaVersion>2.0</SchemaVersion>\n";
+    csproj_content += "    <RootNamespace></RootNamespace>\n";
+    csproj_content += "    <ProjectGuid>{" + hpp::to_string_upper(uid) + "}</ProjectGuid>\n";
+    csproj_content += "    <OutputType>Library</OutputType>\n";
+    csproj_content += "    <AppDesignerFolder>Properties</AppDesignerFolder>\n";
+    csproj_content += "    <AssemblyName>" + project_name + "</AssemblyName>\n";
+    csproj_content += "    <TargetFrameworkVersion>" + dotnet_framework_version + "</TargetFrameworkVersion>\n";
+    csproj_content += "    <FileAlignment>512</FileAlignment>\n";
+    csproj_content += "    <BaseDirectory>.</BaseDirectory>\n";
+    csproj_content += "    <OutputPath>" + output_path.string() + "</OutputPath>\n";
+    csproj_content +=
+        "    <IntermediateOutputPath>" + intermediate_output_path.string() + "</IntermediateOutputPath>\n";
+
+    csproj_content += "  </PropertyGroup>\n";
+
+    // Add other necessary PropertyGroups as needed (similar to the Unity example)
+    // ...
+
+    // ItemGroup for Compile (C# files)
+    csproj_content += "  <ItemGroup>\n";
+    csproj_content += csharp_source_items;
+    csproj_content += "  </ItemGroup>\n";
+
+    // ItemGroup for References
+    csproj_content += "  <ItemGroup>\n";
+    csproj_content += external_dll_references;
+    csproj_content += "  </ItemGroup>\n";
+
+    // Add other ItemGroups as needed (e.g., Analyzers, etc.)
+    // ...
+
+    // Import the C# targets
+    csproj_content += "  <Import Project=\"$(MSBuildToolsPath)\\Microsoft.CSharp.targets\" />\n";
+
+    // Optionally add custom Targets
+    csproj_content += "  <Target Name=\"GenerateTargetFrameworkMonikerAttribute\" />\n";
+
+    // Optionally add BeforeBuild and AfterBuild targets
+    csproj_content +=
+        "  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.\n";
+    csproj_content += "       Other similar extension points exist, see Microsoft.Common.targets.\n";
+    csproj_content += "  <Target Name=\"BeforeBuild\">\n";
+    csproj_content += "  </Target>\n";
+    csproj_content += "  <Target Name=\"AfterBuild\">\n";
+    csproj_content += "  </Target>\n";
+    csproj_content += "  -->\n";
+
+    csproj_content += "</Project>\n";
+
+    // Define the path to the .csproj file
+    fs::path csproj_path = output_directory / (project_name + ".csproj");
+
+    // Write the .csproj file
+    std::ofstream csproj_file(csproj_path);
+    if(!csproj_file.is_open())
+    {
+        APPLOG_ERROR("Failed to create .csproj file at {}", csproj_path.string());
+        return;
+    }
+
+    csproj_file << csproj_content;
+
+    APPLOG_TRACE("Generated {}", csproj_path.string());
 }
 
 auto trim_line = [](std::string& line)
@@ -730,15 +980,18 @@ void editor_actions::generate_script_workspace(const std::string& project_name)
     auto workspace_folder = fs::resolve_protocol("app:/.vscode");
     fs::create_directories(workspace_folder, err);
 
-    auto workspace_launch_file = workspace_folder / "launch.json";
-    generate_launch_json(workspace_launch_file.string());
-
     auto formats = ex::get_all_formats();
     remove_extensions(formats, ex::get_suported_formats<gfx::shader>());
     remove_extensions(formats, ex::get_suported_formats<script>());
 
     auto workspace_file = workspace_folder / fmt::format("{}-workspace.code-workspace", project_name);
     generate_workspace_file(workspace_file.string(), formats);
+
+    auto source_path = fs::resolve_protocol("app:/data");
+    auto engine_dep = fs::resolve_protocol("engine:/compiled/engine_script.dll");
+    auto output_path = fs::resolve_protocol("app:/");
+
+    generate_csproj_legacy(source_path, {engine_dep}, output_path, project_name);
 }
 
 void editor_actions::open_workspace_on_file(const std::string& project_name, const fs::path& file, int line)
@@ -752,11 +1005,12 @@ void editor_actions::open_workspace_on_file(const std::string& project_name, con
                 auto workspace_key = fmt::format("app:/.vscode/{}-workspace.code-workspace", project_name);
                 auto workspace_path = fs::resolve_protocol(workspace_key);
 
-                subprocess::call(external_tool.string(), {workspace_path.string(), "-g", fmt::format("{}:{}", file.string(), line)});
+                subprocess::call(external_tool.string(),
+                                 {workspace_path.string(), "-g", fmt::format("{}:{}", file.string(), line)});
             }
             catch(const std::exception& e)
             {
-                APPLOG_ERROR("Cannot open external tool for file {}", file.string());
+                APPLOG_ERROR("Cannot open external tool for file {} with {}", file.string(), e.what());
             }
         });
 }

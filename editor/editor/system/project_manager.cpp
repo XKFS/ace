@@ -1,8 +1,8 @@
 #include "project_manager.h"
 #include <editor/assets/asset_watcher.h>
 #include <editor/editing/editing_manager.h>
-#include <editor/editing/thumbnail_manager.h>
 #include <editor/editing/editor_actions.h>
+#include <editor/editing/thumbnail_manager.h>
 #include <editor/meta/deploy/deploy.hpp>
 #include <editor/meta/system/project_manager.hpp>
 
@@ -11,6 +11,7 @@
 #include <engine/assets/impl/asset_compiler.h>
 #include <engine/assets/impl/asset_extensions.h>
 #include <engine/ecs/ecs.h>
+#include <engine/events.h>
 #include <engine/meta/settings/settings.hpp>
 #include <engine/rendering/material.h>
 #include <engine/rendering/mesh.h>
@@ -26,7 +27,6 @@
 
 namespace ace
 {
-
 
 void project_manager::close_project(rtti::context& ctx)
 {
@@ -218,9 +218,19 @@ void project_manager::save_config()
     try_save(ar, ser20::make_nvp("options", options_));
 }
 
-project_manager::project_manager()
+project_manager::project_manager(rtti::context& ctx)
 {
     load_config();
+
+    auto& ev = ctx.get<events>();
+    ev.on_script_recompile.connect(sentinel_,
+                                   [this](rtti::context& ctx, const std::string& protocol)
+                                   {
+                                       if(protocol == "app" && has_open_project())
+                                       {
+                                           editor_actions::generate_script_workspace(get_name());
+                                       }
+                                   });
 }
 
 auto project_manager::init(rtti::context& ctx) -> bool

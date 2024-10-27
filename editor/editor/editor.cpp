@@ -40,7 +40,7 @@ auto editor::create(rtti::context& ctx, cmd_line::parser& parser) -> bool
     fs::add_path_protocol("editor", editor_data);
 
     ctx.add<ui_events>();
-    ctx.add<project_manager>();
+    ctx.add<project_manager>(ctx);
     ctx.add<imgui_interface>(ctx);
     ctx.add<hub>(ctx);
     ctx.add<editing_manager>();

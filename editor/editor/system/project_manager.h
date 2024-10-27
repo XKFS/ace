@@ -22,7 +22,7 @@ public:
         std::vector<project> recent_projects;
     };
 
-    project_manager();
+    project_manager(rtti::context& ctx);
     ~project_manager();
 
     auto init(rtti::context& ctx) -> bool;
@@ -62,6 +62,7 @@ private:
                             fs::syncer& syncer,
                             const fs::path& meta_dir,
                             const fs::path& cache_dir);
+    std::shared_ptr<int> sentinel_ = std::make_shared<int>(0);
     /// Project options
     options options_;
 

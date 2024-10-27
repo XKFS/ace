@@ -292,8 +292,10 @@ void script_system::check_for_recompile(rtti::context& ctx, delta_t dt)
                                   {
                                       unload_app_domain();
                                       load_app_domain(ctx);
+
                                   }
                               }
+                              ev.on_script_recompile(ctx, protocol.string());
                           });
             }
         }

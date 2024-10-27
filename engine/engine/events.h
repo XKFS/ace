@@ -28,6 +28,8 @@ struct events
     /// os events
     hpp::event<void(rtti::context&, const os::event& e)> on_os_event;
 
+    hpp::event<void(rtti::context&, const std::string&)> on_script_recompile;
+
     void toggle_play_mode(rtti::context& ctx);
     void set_play_mode(rtti::context& ctx, bool play);
     void toggle_pause(rtti::context& ctx);

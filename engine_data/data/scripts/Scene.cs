@@ -11,9 +11,6 @@ public class Scene
 	public Scene()
 	{
 		Internal_CreateScene();
-		
-		var e = Entity.Null;
-		e = CreateEntity("Test");
 	}
 
 	~Scene()

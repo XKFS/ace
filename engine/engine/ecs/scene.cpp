@@ -9,6 +9,9 @@
 #include <engine/animation/ecs/components/animation_component.h>
 #include <engine/animation/ecs/systems/animation_system.h>
 
+#include <engine/scripting/ecs/components/script_component.h>
+#include <engine/scripting/script_system.h>
+
 
 #include <engine/events.h>
 #include <engine/meta/ecs/entity.hpp>
@@ -65,6 +68,9 @@ scene::scene()
 
     registry->on_construct<physics_component>().connect<&physics_system::on_create_component>();
     registry->on_destroy<physics_component>().connect<&physics_system::on_destroy_component>();
+
+    registry->on_construct<script_component>().connect<&script_system::on_create_component>();
+    registry->on_destroy<script_component>().connect<&script_system::on_destroy_component>();
 }
 
 scene::~scene()

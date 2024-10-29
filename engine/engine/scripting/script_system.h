@@ -1,5 +1,6 @@
 #pragma once
 #include <engine/engine_export.h>
+#include <engine/scripting/ecs/components/script_component.h>
 #include <engine/threading/threader.h>
 
 #include <base/basetypes.hpp>
@@ -14,19 +15,35 @@ namespace ace
 
 struct script_system
 {
-    auto init(rtti::context& ctx) -> bool;
-    auto deinit(rtti::context& ctx) -> bool;
-
     static void set_needs_recompile(const fs::path& protocol);
     static auto get_lib_name(const fs::path& protocol) -> fs::path;
     static auto get_lib_data_key(const fs::path& protocol) -> fs::path;
     static auto get_lib_compiled_key(const fs::path& protocol) -> fs::path;
+
+    auto init(rtti::context& ctx) -> bool;
+    auto deinit(rtti::context& ctx) -> bool;
 
     void load_core_domain(rtti::context& ctx);
     void unload_core_domain();
 
     void load_app_domain(rtti::context& ctx);
     void unload_app_domain();
+
+    auto get_all_scriptable_components() const -> const std::vector<mono::mono_type>&;
+
+    /**
+     * @brief Called when a physics component is created.
+     * @param r The registry containing the component.
+     * @param e The entity associated with the component.
+     */
+    static void on_create_component(entt::registry& r, const entt::entity e);
+
+    /**
+     * @brief Called when a physics component is destroyed.
+     * @param r The registry containing the component.
+     * @param e The entity associated with the component.
+     */
+    static void on_destroy_component(entt::registry& r, const entt::entity e);
 
 private:
     /**
@@ -73,12 +90,27 @@ private:
 
     auto create_compilation_job(rtti::context& ctx, const fs::path& protocol) -> itc::job_future<bool>;
 
-    std::shared_ptr<int> sentinel_ = std::make_shared<int>(0); ///< Sentinel value to manage shared resources.
+    ///< Sentinel value to manage shared resources.
+    std::shared_ptr<int> sentinel_ = std::make_shared<int>(0);
 
     delta_t time_since_last_check_{};
     script_glue glue_;
 
     std::unique_ptr<mono::mono_domain> domain_;
+
+    struct mono_cache
+    {
+        mono::mono_type update_manager_type;
+
+    } cache_;
+
     std::unique_ptr<mono::mono_domain> app_domain_;
+
+    struct mono_app_cache
+    {
+        std::vector<mono::mono_type> scriptable_component_types;
+        std::vector<mono::mono_type> scriptable_system_types;
+
+    } app_cache_;
 };
 } // namespace ace

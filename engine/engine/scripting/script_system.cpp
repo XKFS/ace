@@ -147,9 +147,12 @@ void script_system::load_core_domain(rtti::context& ctx)
 
     auto assembly = domain_->get_assembly(engine_script_lib.string());
     print_assembly_info(assembly);
+
+    cache_.update_manager_type = assembly.get_type("Ace.Core", "SystemManager");
 }
 void script_system::unload_core_domain()
 {
+    cache_ = {};
     domain_.reset();
     mono::mono_domain::set_current_domain(nullptr);
 }
@@ -170,6 +173,18 @@ void script_system::load_app_domain(rtti::context& ctx)
     {
         auto assembly = app_domain_->get_assembly(app_script_lib.string());
         print_assembly_info(assembly);
+
+
+        auto engine_script_lib = fs::resolve_protocol(get_lib_compiled_key("engine"));
+        auto engine_assembly = domain_->get_assembly(engine_script_lib.string());
+
+        auto system_type = engine_assembly.get_type("Ace.Core", "ISystem");
+        app_cache_.scriptable_system_types = assembly.get_types_derived_from(system_type);
+
+        auto comp_type = engine_assembly.get_type("Ace.Core", "ScriptComponent");
+        app_cache_.scriptable_component_types = assembly.get_types_derived_from(comp_type);
+
+
     }
     catch(const mono::mono_exception& e)
     {
@@ -178,8 +193,18 @@ void script_system::load_app_domain(rtti::context& ctx)
 }
 void script_system::unload_app_domain()
 {
+    app_cache_ = {};
     app_domain_.reset();
     mono::mono_domain::set_current_domain(domain_.get());
+}
+
+void script_system::on_create_component(entt::registry& r, const entt::entity e)
+{
+    script_component::on_create_component(r, e);
+}
+void script_system::on_destroy_component(entt::registry& r, const entt::entity e)
+{
+    script_component::on_destroy_component(r, e);
 }
 
 void script_system::on_play_begin(rtti::context& ctx)
@@ -190,26 +215,74 @@ void script_system::on_play_begin(rtti::context& ctx)
     }
     try
     {
-        auto app_script_lib = fs::resolve_protocol(get_lib_compiled_key("app"));
-        auto assembly = app_domain_->get_assembly(app_script_lib.string());
-
-        auto engine_script_lib = fs::resolve_protocol(get_lib_compiled_key("engine"));
-        auto engine_assembly = domain_->get_assembly(engine_script_lib.string());
-
-        auto system_type = engine_assembly.get_type("Ace.Core", "ISystem");
-
-        auto systems = assembly.get_types_derived_from(system_type);
-
-        for(const auto& type : systems)
         {
-            auto obj = type.new_instance();
+            std::vector<mono::mono_object> systems;
+            systems.reserve(app_cache_.scriptable_system_types.size());
+            for(const auto& type : app_cache_.scriptable_system_types)
+            {
+                auto obj = type.new_instance();
+                systems.emplace_back(obj);
+            }
+
+            for(const auto& obj : systems)
+            {
+                auto method = mono::make_method_invoker<void()>(obj.get_type(), "OnCreate");
+                method(obj);
+            }
+
+            for(const auto& obj : systems)
+            {
+                auto method = mono::make_method_invoker<void()>(obj.get_type(), "OnStart");
+                method(obj);
+            }
         }
+
+        // {
+        //     std::vector<mono::mono_object> systems;
+        //     systems.reserve(app_cache_.scriptable_component_types.size());
+        //     for(const auto& type : app_cache_.scriptable_component_types)
+        //     {
+        //         auto obj = type.new_instance();
+        //         systems.emplace_back(obj);
+        //     }
+
+        //     for(const auto& obj : systems)
+        //     {
+        //         auto method = mono::make_method_invoker<void()>(obj.get_type(), "OnCreate");
+        //         method(obj);
+        //     }
+
+        //     for(const auto& obj : systems)
+        //     {
+        //         auto method = mono::make_method_invoker<void()>(obj.get_type(), "OnStart");
+        //         method(obj);
+        //     }
+        // }
+
+        {
+
+            auto& ec = ctx.get<ecs>();
+            auto& scn = ec.get_scene();
+            auto& registry = *scn.registry;
+
+
+            registry.view<script_component>().each(
+                [&](auto e, auto&& comp)
+                {
+                });
+            }
     }
     catch(const mono::mono_exception& e)
     {
         APPLOG_ERROR("{}", e.what());
     }
 }
+
+auto script_system::get_all_scriptable_components() const -> const std::vector<mono::mono_type>&
+{
+    return app_cache_.scriptable_component_types;
+}
+
 
 void script_system::on_play_end(rtti::context& ctx)
 {
@@ -238,11 +311,7 @@ void script_system::on_frame_update(rtti::context& ctx, delta_t dt)
     }
     try
     {
-        auto engine_script_lib = fs::resolve_protocol(get_lib_compiled_key("engine"));
-        auto engine_assembly = domain_->get_assembly(engine_script_lib.string());
-
-        auto system_type = engine_assembly.get_type("Ace.Core", "SystemManager");
-        auto method_thunk = mono::make_method_invoker<void()>(system_type, "Update");
+        auto method_thunk = mono::make_method_invoker<void()>(cache_.update_manager_type, "Update");
         method_thunk();
     }
     catch(const mono::mono_exception& e)

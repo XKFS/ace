@@ -5,25 +5,14 @@ namespace Ace
 {
 namespace Core
 {
-
-public static class SystemManager
+public abstract class ScriptComponent
 {
-    public static event Action OnUpdate;
-
-    public static void Update()
-    {
-        OnUpdate?.Invoke();
-    }
-}
-
-public abstract class ISystem
-{
-    public ISystem()
+    public ScriptComponent()
     {
         SystemManager.OnUpdate += OnUpdate;
     }
 
-    ~ISystem()
+    ~ScriptComponent()
     {
         SystemManager.OnUpdate -= OnUpdate;
     }
@@ -31,11 +20,9 @@ public abstract class ISystem
     public abstract void OnCreate();
     public abstract void OnStart();
     public abstract void OnUpdate();
-}
-
 
 }
-
+}
 }
 
 

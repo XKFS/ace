@@ -29,6 +29,13 @@ auto inspect_array(rtti::context& ctx,
                    const rttr::property& prop,
                    const var_info& info = {},
                    const inspector::meta_getter& get_metadata = get_meta_empty) -> inspect_result;
+
+auto inspect_array(rtti::context& ctx,
+                   rttr::variant& var,
+                   const std::string& name,
+                   const std::string& tooltip,
+                   const var_info& info = {},
+                   const inspector::meta_getter& get_metadata = get_meta_empty) -> inspect_result;
 auto inspect_associative_container(rtti::context& ctx,
                                    rttr::variant& var,
                                    const rttr::property& prop,

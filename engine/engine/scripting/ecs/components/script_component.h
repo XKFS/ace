@@ -4,6 +4,8 @@
 #include <engine/ecs/components/basic_component.h>
 #include <engine/scripting/script.h>
 #include <engine/assets/asset_handle.h>
+#include <monort/monort.h>
+
 #include <math/math.h>
 
 namespace ace
@@ -17,7 +19,14 @@ namespace ace
 class script_component : public component_crtp<script_component, owned_component>
 {
 public:
-    using script_collection_t = std::vector<std::string>;
+
+    using scoped_object_ptr = std::shared_ptr<mono::mono_scoped_object>;
+    struct script_object
+    {
+        scoped_object_ptr scoped;
+        bool marked_for_destroy{};
+    };
+    using script_components_t = std::vector<script_object>;
     /**
      * @brief Called when the component is created.
      * @param r The registry containing the component.
@@ -32,13 +41,18 @@ public:
      */
     static void on_destroy_component(entt::registry& r, const entt::entity e);
 
-    void set_scripts(const script_collection_t& scripts);
-    auto get_scripts() const -> const script_collection_t&;
+    void process_pending_deletions();
+
+    auto add_script_component(const mono::mono_type& type) -> script_object;
+    auto remove_script_component(const mono::mono_object& obj) -> bool;
+    auto get_script_component(const mono::mono_type& type) -> script_object;
+
+    auto get_script_components() const -> const script_components_t&;
 
 
 private:
 
-    script_collection_t scripts_;
+    script_components_t components_;
 };
 
 } // namespace ace

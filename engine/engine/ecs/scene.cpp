@@ -10,7 +10,7 @@
 #include <engine/animation/ecs/systems/animation_system.h>
 
 #include <engine/scripting/ecs/components/script_component.h>
-#include <engine/scripting/script_system.h>
+#include <engine/scripting/ecs/systems/script_system.h>
 
 
 #include <engine/events.h>

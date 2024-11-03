@@ -16,14 +16,14 @@ public static class SystemManager
     }
 }
 
-public abstract class ISystem
+public abstract class ScriptSystem
 {
-    public ISystem()
+    public ScriptSystem()
     {
         SystemManager.OnUpdate += OnUpdate;
     }
 
-    ~ISystem()
+    ~ScriptSystem()
     {
         SystemManager.OnUpdate -= OnUpdate;
     }

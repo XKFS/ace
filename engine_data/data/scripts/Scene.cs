@@ -33,6 +33,11 @@ public class Scene
 			Internal_DestroyEntity(entity.Id);
 		}
 	}
+
+	public static bool IsEntityValid(Entity entity)
+	{
+		return Internal_IsEntityValid(entity.Id);
+	}
 	
 
 	[MethodImpl(MethodImplOptions.InternalCall)] 

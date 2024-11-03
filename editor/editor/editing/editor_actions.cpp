@@ -323,7 +323,7 @@ void generate_workspace_file(const std::string& file_path,
         file << json_stream.str();
     }
 
-    APPLOG_INFO("Workspace {}", file_path);
+    APPLOG_TRACE("Workspace {}", file_path);
 }
 
 /**

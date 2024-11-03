@@ -1,7 +1,7 @@
 #include "script_system.h"
-#include "script.h"
 #include <engine/ecs/ecs.h>
 #include <engine/events.h>
+#include <engine/scripting/script.h>
 
 #include <engine/engine.h>
 #include <monopp/mono_exception.h>
@@ -23,7 +23,7 @@ std::chrono::seconds check_interval(2);
 
 std::atomic_bool needs_recompile{};
 std::mutex container_mutex;
-std::set<fs::path> needs_to_recompile;
+std::set<std::string> needs_to_recompile;
 
 auto find_mono() -> mono::compiler_paths
 {
@@ -60,7 +60,7 @@ auto print_assembly_info(const mono::mono_assembly& assembly)
         ss << fmt::format("\n{}", ref);
     }
 
-    APPLOG_INFO("\n{}", ss.str());
+    APPLOG_TRACE("\n{}", ss.str());
 
     auto types = assembly.get_types();
 
@@ -77,7 +77,7 @@ auto print_assembly_info(const mono::mono_assembly& assembly)
             ss << fmt::format("\n Attribute : {}", attrib.get_fullname());
         }
     }
-    APPLOG_INFO("\n{}", ss.str());
+    APPLOG_TRACE("\n{}", ss.str());
 }
 
 } // namespace
@@ -96,7 +96,7 @@ auto script_system::init(rtti::context& ctx) -> bool
 
     if(mono::init(find_mono(), true))
     {
-        glue_.init(ctx);
+        bind_internal_calls(ctx);
 
         mono::mono_domain::set_assemblies_path(fs::resolve_protocol("engine:/compiled").string());
 
@@ -120,8 +120,6 @@ auto script_system::deinit(rtti::context& ctx) -> bool
 {
     APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
 
-    glue_.deinit(ctx);
-
     unload_core_domain();
 
     mono::shutdown();
@@ -133,7 +131,6 @@ void script_system::load_core_domain(rtti::context& ctx)
 {
     while(true)
     {
-
         if(create_compilation_job(ctx, "engine").get())
         {
             break;
@@ -174,17 +171,14 @@ void script_system::load_app_domain(rtti::context& ctx)
         auto assembly = app_domain_->get_assembly(app_script_lib.string());
         print_assembly_info(assembly);
 
-
         auto engine_script_lib = fs::resolve_protocol(get_lib_compiled_key("engine"));
         auto engine_assembly = domain_->get_assembly(engine_script_lib.string());
 
-        auto system_type = engine_assembly.get_type("Ace.Core", "ISystem");
+        auto system_type = engine_assembly.get_type("Ace.Core", "ScriptSystem");
         app_cache_.scriptable_system_types = assembly.get_types_derived_from(system_type);
 
         auto comp_type = engine_assembly.get_type("Ace.Core", "ScriptComponent");
         app_cache_.scriptable_component_types = assembly.get_types_derived_from(comp_type);
-
-
     }
     catch(const mono::mono_exception& e)
     {
@@ -260,17 +254,15 @@ void script_system::on_play_begin(rtti::context& ctx)
         // }
 
         {
-
             auto& ec = ctx.get<ecs>();
             auto& scn = ec.get_scene();
             auto& registry = *scn.registry;
-
 
             registry.view<script_component>().each(
                 [&](auto e, auto&& comp)
                 {
                 });
-            }
+        }
     }
     catch(const mono::mono_exception& e)
     {
@@ -282,7 +274,6 @@ auto script_system::get_all_scriptable_components() const -> const std::vector<m
 {
     return app_cache_.scriptable_component_types;
 }
-
 
 void script_system::on_play_end(rtti::context& ctx)
 {
@@ -313,6 +304,16 @@ void script_system::on_frame_update(rtti::context& ctx, delta_t dt)
     {
         auto method_thunk = mono::make_method_invoker<void()>(cache_.update_manager_type, "Update");
         method_thunk();
+
+        auto& ec = ctx.get<ecs>();
+        auto& scn = ec.get_scene();
+        auto& registry = *scn.registry;
+
+        registry.view<script_component>().each(
+            [&](auto e, auto&& comp)
+            {
+                comp.process_pending_deletions();
+            });
     }
     catch(const mono::mono_exception& e)
     {
@@ -361,50 +362,49 @@ void script_system::check_for_recompile(rtti::context& ctx, delta_t dt)
                                   {
                                       unload_app_domain();
                                       load_app_domain(ctx);
-
                                   }
                               }
-                              ev.on_script_recompile(ctx, protocol.string());
+                              ev.on_script_recompile(ctx, protocol);
                           });
             }
         }
     }
 }
 
-auto script_system::create_compilation_job(rtti::context& ctx, const fs::path& protocol) -> itc::job_future<bool>
+auto script_system::create_compilation_job(rtti::context& ctx, const std::string& protocol) -> itc::job_future<bool>
 {
     auto& thr = ctx.get<threader>();
     auto& am = ctx.get<asset_manager>();
     return thr.pool->schedule(
         [&am, protocol]()
         {
-            auto key = get_lib_data_key(protocol).generic_string();
+            auto key = get_lib_data_key(protocol);
             auto output = get_lib_compiled_key(protocol);
 
             return asset_compiler::compile<script_library>(am, key, fs::resolve_protocol(output));
         });
 }
-void script_system::set_needs_recompile(const fs::path& protocol)
+void script_system::set_needs_recompile(const std::string& protocol)
 {
     needs_recompile = true;
     std::lock_guard<std::mutex> lock(container_mutex);
     needs_to_recompile.emplace(protocol);
 }
 
-auto script_system::get_lib_name(const fs::path& protocol) -> fs::path
+auto script_system::get_lib_name(const std::string& protocol) -> std::string
 {
-    return fs::path(protocol).concat("_script.dll");
+    return protocol + "-script.dll";
 }
 
-auto script_system::get_lib_data_key(const fs::path& protocol) -> fs::path
+auto script_system::get_lib_data_key(const std::string& protocol) -> std::string
 {
-    std::string output = protocol.string() + ":/data/" + protocol.string() + "_script.dll";
+    std::string output = get_lib_name(protocol + ":/data/" + protocol);
     return output;
 }
 
-auto script_system::get_lib_compiled_key(const fs::path& protocol) -> fs::path
+auto script_system::get_lib_compiled_key(const std::string& protocol) -> std::string
 {
-    std::string output = protocol.string() + ":/compiled/" + protocol.string() + "_script.dll";
+    std::string output = get_lib_name(protocol + ":/compiled/" + protocol);
     return output;
 }
 

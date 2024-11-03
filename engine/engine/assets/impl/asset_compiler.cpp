@@ -21,7 +21,7 @@
 #include <engine/meta/rendering/mesh.hpp>
 #include <engine/meta/scripting/script.hpp>
 
-#include <engine/scripting/script_system.h>
+#include <engine/scripting/ecs/systems/script_system.h>
 
 #include <monopp/mono_jit.h>
 #include <subprocess/subprocess.hpp>
@@ -55,7 +55,10 @@ auto escape_str(const std::string& str) -> std::string
     return "\"" + str + "\"";
 }
 
-auto run_process(const std::string& process, const std::vector<std::string>& args_array, bool chekc_retcode, std::string& err) -> bool
+auto run_process(const std::string& process,
+                 const std::vector<std::string>& args_array,
+                 bool chekc_retcode,
+                 std::string& err) -> bool
 {
     auto result = subprocess::call(process, args_array);
 
@@ -536,8 +539,7 @@ auto compile<script_library>(asset_manager& am, const fs::path& key, const fs::p
     bool result = true;
     fs::error_code err;
     fs::path temp = fs::temp_directory_path(err);
-    //temp /= hpp::to_string(generate_uuid()) + ".buildtemp.dll";
-
+    // temp /= hpp::to_string(generate_uuid()) + ".buildtemp.dll";
 
     mono::compiler_params params;
 
@@ -545,13 +547,15 @@ auto compile<script_library>(asset_manager& am, const fs::path& key, const fs::p
 
     if(protocol != "engine")
     {
+        auto lib_data_key = script_system::get_lib_data_key("engine");
+        auto lib_compiled_key = fs::resolve_protocol(script_system::get_lib_compiled_key("engine"));
         result &= compile<script_library>(am,
-                                "engine:/data/engine_script.dll",
-                                fs::resolve_protocol("engine:/compiled/engine_script.dll"));
+                                          lib_data_key,
+                                          lib_compiled_key);
 
-        params.references.emplace_back("engine_script.dll");
+        params.references.emplace_back(lib_compiled_key.filename().string());
 
-        params.references_locations.emplace_back(fs::resolve_protocol("engine:/compiled").string());
+        params.references_locations.emplace_back(lib_compiled_key.parent_path().string());
     }
 
     auto assets = am.get_assets<script>(protocol);
@@ -563,13 +567,12 @@ auto compile<script_library>(asset_manager& am, const fs::path& key, const fs::p
         }
     }
 
-    temp /= protocol + "_script.dll";
+    temp /= script_system::get_lib_name(protocol);
 
     auto temp_mdb = temp;
     temp_mdb.concat(".mdb");
     auto output_mdb = output;
     output_mdb.concat(".mdb");
-
 
     std::string str_output = temp.string();
 
@@ -592,7 +595,6 @@ auto compile<script_library>(asset_manager& am, const fs::path& key, const fs::p
     auto cmd = mono::create_compile_command_detailed(params);
 
     APPLOG_TRACE("Script Compile : \n {0} {1}", cmd.cmd, cmd.args);
-
 
     if(!run_process(cmd.cmd, cmd.args, true, error))
     {
@@ -622,7 +624,7 @@ auto compile<script>(asset_manager& am, const fs::path& key, const fs::path& out
     fs::error_code er;
     fs::copy_file(absolute_path, output, fs::copy_options::overwrite_existing, er);
 
-    script_system::set_needs_recompile(fs::extract_protocol(fs::convert_to_protocol(key)));
+    script_system::set_needs_recompile(fs::extract_protocol(fs::convert_to_protocol(key)).string());
 
     return true;
 }

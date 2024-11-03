@@ -3,7 +3,7 @@
 #include <engine/defaults/defaults.h>
 #include <engine/profiler/profiler.h>
 #include <engine/rendering/renderer.h>
-#include <engine/scripting/script_system.h>
+#include <engine/scripting/ecs/systems/script_system.h>
 #include <engine/threading/threader.h>
 
 #include <engine/ecs/ecs.h>

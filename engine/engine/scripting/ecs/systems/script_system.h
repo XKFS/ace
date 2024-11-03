@@ -7,18 +7,17 @@
 #include <context/context.hpp>
 #include <filesystem/filesystem.h>
 #include <monort/monort.h>
-
-#include "script_glue.h"
+#include <monopp/mono_method_invoker.h>
 
 namespace ace
 {
 
 struct script_system
 {
-    static void set_needs_recompile(const fs::path& protocol);
-    static auto get_lib_name(const fs::path& protocol) -> fs::path;
-    static auto get_lib_data_key(const fs::path& protocol) -> fs::path;
-    static auto get_lib_compiled_key(const fs::path& protocol) -> fs::path;
+    static void set_needs_recompile(const std::string& protocol);
+    static auto get_lib_name(const std::string& protocol) -> std::string;
+    static auto get_lib_data_key(const std::string& protocol) -> std::string;
+    static auto get_lib_compiled_key(const std::string& protocol) -> std::string;
 
     auto init(rtti::context& ctx) -> bool;
     auto deinit(rtti::context& ctx) -> bool;
@@ -83,25 +82,27 @@ private:
      */
     void on_skip_next_frame(rtti::context& ctx);
 
+    auto bind_internal_calls(rtti::context& ctx) -> bool;
     auto get_engine_assembly() const -> mono::mono_assembly;
     auto get_app_assembly() const -> mono::mono_assembly;
 
     void check_for_recompile(rtti::context& ctx, delta_t dt);
 
-    auto create_compilation_job(rtti::context& ctx, const fs::path& protocol) -> itc::job_future<bool>;
+    auto create_compilation_job(rtti::context& ctx, const std::string& protocol) -> itc::job_future<bool>;
 
     ///< Sentinel value to manage shared resources.
     std::shared_ptr<int> sentinel_ = std::make_shared<int>(0);
 
     delta_t time_since_last_check_{};
-    script_glue glue_;
 
     std::unique_ptr<mono::mono_domain> domain_;
 
     struct mono_cache
     {
         mono::mono_type update_manager_type;
-
+        mono::mono_type script_system_type;
+        mono::mono_type native_component_type;
+        mono::mono_type script_component_type;
     } cache_;
 
     std::unique_ptr<mono::mono_domain> app_domain_;

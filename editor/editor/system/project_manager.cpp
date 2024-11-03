@@ -15,7 +15,7 @@
 #include <engine/meta/settings/settings.hpp>
 #include <engine/rendering/material.h>
 #include <engine/rendering/mesh.h>
-#include <engine/scripting/script_system.h>
+#include <engine/scripting/ecs/systems/script_system.h>
 #include <engine/threading/threader.h>
 
 #include <filesystem/watcher.h>

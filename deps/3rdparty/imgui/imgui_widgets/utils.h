@@ -79,6 +79,10 @@ IMGUI_API void ImageWithAspect(ImTextureID texture,
                                const ImVec4& tint_col = ImVec4(1, 1, 1, 1),
                                const ImVec4& border_col = ImVec4(0, 0, 0, 0));
 
+IMGUI_API void SetNextWindowViewportToCurrent();
+
+IMGUI_API bool BeginItemTooltipCurrentViewport();                                                 // begin/append a tooltip window if preceding item was hovered.
+IMGUI_API void SetItemTooltipCurrentViewport(const char* fmt, ...) IM_FMTARGS(1);                 // set a text-only tooltip if preceding item was hovered. override any previous call to SetTooltip().
 
 struct IMGUI_API ContentItem
 {

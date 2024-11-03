@@ -1006,4 +1006,37 @@ bool BeginPopupContextWindowEx(const char* str_id, ImGuiPopupFlags popup_flags)
                                    ImGuiWindowFlags_NoSavedSettings);
 }
 
+void SetNextWindowViewportToCurrent()
+{
+    auto win = GetCurrentWindow();
+    if(win)
+    {
+        SetNextWindowViewport(win->ViewportId);
+    }
+}
+
+// Shortcut to use 'style.HoverFlagsForTooltipMouse' or 'style.HoverFlagsForTooltipNav'.
+// Defaults to == ImGuiHoveredFlags_Stationary | ImGuiHoveredFlags_DelayShort when using the mouse.
+void SetItemTooltipCurrentViewport(const char* fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    if (IsItemHovered(ImGuiHoveredFlags_ForTooltip))
+    {
+        SetNextWindowViewportToCurrent();
+        SetTooltipV(fmt, args);
+    }
+    va_end(args);
+}
+
+bool BeginItemTooltipCurrentViewport()
+{
+    if (!IsItemHovered(ImGuiHoveredFlags_ForTooltip))
+        return false;
+
+    SetNextWindowViewportToCurrent();
+    return BeginTooltipEx(ImGuiTooltipFlags_None, ImGuiWindowFlags_None);
+}
+
+
 } // namespace ImGui

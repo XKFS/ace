@@ -70,6 +70,7 @@ console_log_panel::console_log_panel()
     set_pattern("[%H:%M:%S] %v");
 
     enabled_categories_.fill(true);
+    enabled_categories_[level::trace] = false;
 }
 
 void console_log_panel::sink_it_(const details::log_msg& msg)
@@ -312,11 +313,23 @@ auto console_log_panel::draw_last_log() -> bool
 {
     log_entry msg;
 
+
     {
         std::lock_guard<std::recursive_mutex> lock(entries_mutex_);
-        if(!entries_.empty())
+        for(auto it = std::rbegin(entries_); it != std::rend(entries_); ++it)
         {
-            msg = entries_.back();
+            const auto& check = *it;
+            if(!enabled_categories_[check.level])
+            {
+                continue;
+            }
+
+            if(!filter_.PassFilter(check.formatted.data(), check.formatted.data() + check.formatted.size()))
+            {
+                continue;
+            }
+            msg = check;
+            break;
         }
     }
 

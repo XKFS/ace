@@ -248,8 +248,8 @@ auto inspector_transform::inspect(rtti::context& ctx,
 
     math::quat old_quat(math::radians(euler_angles));
 
-    float dotProduct = math::dot(old_quat, rotation);
-    bool equal = (dotProduct > (1.0f - math::epsilon<float>()));
+    float dot_product = math::dot(old_quat, rotation);
+    bool equal = (dot_product > (1.0f - math::epsilon<float>()));
     if(!equal && (!ImGui::IsMouseDragging(ImGuiMouseButton_Left) || ImGuizmo::IsUsing()))
     {
         euler_angles = data.get_rotation_euler_degrees();
@@ -263,7 +263,7 @@ auto inspector_transform::inspect(rtti::context& ctx,
             result.changed |= true;
         }
         result.edit_finished |= ImGui::IsItemDeactivatedAfterEdit();
-        ImGui::SetItemTooltip("Translation");
+        ImGui::SetItemTooltipCurrentViewport("Translation");
         ImGui::SameLine();
 
         ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
@@ -275,6 +275,7 @@ auto inspector_transform::inspect(rtti::context& ctx,
                 result.changed |= true;
             }
             result.edit_finished |= ImGui::IsItemDeactivatedAfterEdit();
+
         }
         ImGui::PopItemWidth();
     }
@@ -289,7 +290,7 @@ auto inspector_transform::inspect(rtti::context& ctx,
         }
         result.edit_finished |= ImGui::IsItemDeactivatedAfterEdit();
 
-        ImGui::SetItemTooltip("Rotation");
+        ImGui::SetItemTooltipCurrentViewport("Rotation");
 
         ImGui::SameLine();
 
@@ -317,7 +318,7 @@ auto inspector_transform::inspect(rtti::context& ctx,
         }
         result.edit_finished |= ImGui::IsItemDeactivatedAfterEdit();
 
-        ImGui::SetItemTooltip("Scale");
+        ImGui::SetItemTooltipCurrentViewport("Scale");
 
         ImGui::SameLine();
 
@@ -344,7 +345,7 @@ auto inspector_transform::inspect(rtti::context& ctx,
             result.changed |= true;
         }
         result.edit_finished |= ImGui::IsItemDeactivatedAfterEdit();
-        ImGui::SetItemTooltip("Skew");
+        ImGui::SetItemTooltipCurrentViewport("Skew");
 
         ImGui::SameLine();
 

@@ -50,7 +50,7 @@ void inspector_panel::on_frame_ui_render(rtti::context& ctx, const char* name)
                 }
             }
 
-            ImGui::SetItemTooltip("%s", "Lock/Unlock Inspector");
+            ImGui::SetItemTooltipCurrentViewport("%s", "Lock/Unlock Inspector");
 
             ImGui::EndMenuBar();
         }

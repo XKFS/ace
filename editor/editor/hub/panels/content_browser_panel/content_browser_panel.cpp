@@ -568,7 +568,7 @@ void content_browser_panel::draw_as_explorer(rtti::context& ctx, const fs::path&
                        {
                            ImGui::PushItemWidth(80.0f);
                            ImGui::SliderFloat("##scale", &scale_, 0.5f, 1.0f);
-                           ImGui::SetItemTooltip("%s", "Icons scale");
+                           ImGui::SetItemTooltipCurrentViewport("%s", "Icons scale");
                            ImGui::PopItemWidth();
                        });
 

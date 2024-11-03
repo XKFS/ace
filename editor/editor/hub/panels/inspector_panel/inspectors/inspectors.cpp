@@ -230,7 +230,7 @@ auto inspect_array(rtti::context& ctx,
                 {
                     index_to_remove = i;
                 }
-                ImGui::SetItemTooltip("Remove element.");
+                ImGui::SetItemTooltipCurrentViewport("Remove element.");
                 ImGui::PopID();
                 ImGui::SetCursorPos(pos_after);
                 ImGui::Dummy({});

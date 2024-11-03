@@ -196,7 +196,7 @@ void header_panel::draw_play_toolbar(rtti::context& ctx, float headerSize)
                            {
                                sim.set_time_scale(time_scale);
                            }
-                           ImGui::SetItemTooltip("%s", "Time scale.");
+                           ImGui::SetItemTooltipCurrentViewport("%s", "Time scale.");
                            ImGui::SameLine();
                            auto& rend = ctx.get<renderer>();
                            auto vsync = rend.get_vsync();

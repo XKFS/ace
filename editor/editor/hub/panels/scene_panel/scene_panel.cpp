@@ -395,27 +395,27 @@ void scene_panel::draw_menubar(rtti::context& ctx)
         {
             em.operation = ImGuizmo::OPERATION::TRANSLATE;
         }
-        ImGui::SetItemTooltip("%s", "Translate Tool");
+        ImGui::SetItemTooltipCurrentViewport("%s", "Translate Tool");
 
         if(ImGui::MenuItem(ICON_MDI_ROTATE_3D_VARIANT, nullptr, em.operation == ImGuizmo::OPERATION::ROTATE))
         {
             em.operation = ImGuizmo::OPERATION::ROTATE;
         }
-        ImGui::SetItemTooltip("%s", "Rotate Tool");
+        ImGui::SetItemTooltipCurrentViewport("%s", "Rotate Tool");
 
         if(ImGui::MenuItem(ICON_MDI_RELATIVE_SCALE, nullptr, em.operation == ImGuizmo::OPERATION::SCALE))
         {
             em.operation = ImGuizmo::OPERATION::SCALE;
             em.mode = ImGuizmo::MODE::LOCAL;
         }
-        ImGui::SetItemTooltip("%s", "Scale Tool");
+        ImGui::SetItemTooltipCurrentViewport("%s", "Scale Tool");
 
         if(ImGui::MenuItem(ICON_MDI_MOVE_RESIZE, nullptr, em.operation == ImGuizmo::OPERATION::UNIVERSAL))
         {
             em.operation = ImGuizmo::OPERATION::UNIVERSAL;
             em.mode = ImGuizmo::MODE::LOCAL;
         }
-        ImGui::SetItemTooltip("%s", "Transform Tool");
+        ImGui::SetItemTooltipCurrentViewport("%s", "Transform Tool");
 
         auto icon = em.mode == ImGuizmo::MODE::LOCAL ? ICON_MDI_CUBE "Local" ICON_MDI_ARROW_DOWN_BOLD
                                                      : ICON_MDI_WEB "Global" ICON_MDI_ARROW_DOWN_BOLD;
@@ -426,23 +426,23 @@ void scene_panel::draw_menubar(rtti::context& ctx)
             {
                 em.mode = ImGuizmo::MODE::LOCAL;
             }
-            ImGui::SetItemTooltip("%s", "Local Coordinate System");
+            ImGui::SetItemTooltipCurrentViewport("%s", "Local Coordinate System");
 
             if(ImGui::MenuItem(ICON_MDI_WEB "Global", nullptr, em.mode == ImGuizmo::MODE::WORLD))
             {
                 em.mode = ImGuizmo::MODE::WORLD;
             }
-            ImGui::SetItemTooltip("%s", "Global Coordinate System");
+            ImGui::SetItemTooltipCurrentViewport("%s", "Global Coordinate System");
 
             ImGui::EndMenu();
         }
-        ImGui::SetItemTooltip("%s", "Tool's Coordinate System");
+        ImGui::SetItemTooltipCurrentViewport("%s", "Tool's Coordinate System");
 
         if(ImGui::MenuItem(ICON_MDI_GRID, nullptr, em.show_grid))
         {
             em.show_grid = !em.show_grid;
         }
-        ImGui::SetItemTooltip("%s", "Show/Hide Grid");
+        ImGui::SetItemTooltipCurrentViewport("%s", "Show/Hide Grid");
 
         if(ImGui::BeginMenu(ICON_MDI_ARROW_DOWN_BOLD, em.show_grid))
         {
@@ -455,13 +455,13 @@ void scene_panel::draw_menubar(rtti::context& ctx)
 
             ImGui::EndMenu();
         }
-        ImGui::SetItemTooltip("%s", "Grid Properties");
+        ImGui::SetItemTooltipCurrentViewport("%s", "Grid Properties");
 
         // if(ImGui::MenuItem(ICON_MDI_DRAW, nullptr, visualize_passes_))
         // {
         //     visualize_passes_ = !visualize_passes_;
         // }
-        // ImGui::SetItemTooltip("%s", "Visualize Render Passes");
+        // ImGui::SetItemTooltipCurrentViewport("%s", "Visualize Render Passes");
 
         if(ImGui::BeginMenu(ICON_MDI_DRAWING_BOX ICON_MDI_ARROW_DOWN_BOLD))
         {
@@ -480,7 +480,7 @@ void scene_panel::draw_menubar(rtti::context& ctx)
 
             ImGui::EndMenu();
         }
-        ImGui::SetItemTooltip("%s", "Visualize Render Passes");
+        ImGui::SetItemTooltipCurrentViewport("%s", "Visualize Render Passes");
 
         if(ImGui::BeginMenu(ICON_MDI_GRID_LARGE ICON_MDI_ARROW_DOWN_BOLD))
         {
@@ -499,7 +499,7 @@ void scene_panel::draw_menubar(rtti::context& ctx)
             ImGui::PopItemWidth();
             ImGui::EndMenu();
         }
-        ImGui::SetItemTooltip("%s", "Snapping Properties");
+        ImGui::SetItemTooltipCurrentViewport("%s", "Snapping Properties");
 
         ImGui::SetNextWindowSizeConstraints({}, {300.0f, ImGui::GetContentRegionAvail().x});
         if(ImGui::BeginMenu(ICON_MDI_CAMERA ICON_MDI_ARROW_DOWN_BOLD))
@@ -511,7 +511,7 @@ void scene_panel::draw_menubar(rtti::context& ctx)
 
             ImGui::EndMenu();
         }
-        ImGui::SetItemTooltip("%s", "Settings for the Scene view camera.");
+        ImGui::SetItemTooltipCurrentViewport("%s", "Settings for the Scene view camera.");
 
         ImGui::PushFont(ImGui::Font::Mono);
         auto& io = ImGui::GetIO();

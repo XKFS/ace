@@ -3,7 +3,7 @@
 
 #include <editor/imgui/imgui_interface.h>
 #include <engine/meta/ecs/components/all_components.h>
-#include <engine/scripting/script_system.h>
+#include <engine/scripting/ecs/systems/script_system.h>
 #include <hpp/type_name.hpp>
 #include <hpp/utility.hpp>
 
@@ -141,38 +141,6 @@ auto inspector_entity::inspect(rtti::context& ctx,
         return result;
     }
 
-    auto script_comp = data.try_get<script_component>();
-    if(script_comp)
-    {
-        const auto& scripts = script_comp->get_scripts();
-
-        for(const auto& script : scripts)
-        {
-            inspect_callbacks callbacks;
-            callbacks.on_inspect = []() -> inspect_result
-            {
-                return {};
-            };
-
-            callbacks.on_add = []()
-            {
-            };
-
-            callbacks.on_remove = []()
-            {
-            };
-
-            callbacks.can_remove = []()
-            {
-                return true;
-            };
-
-            callbacks.icon = ICON_MDI_SCRIPT;
-
-            result |= inspect_component(script, callbacks);
-        }
-    }
-
     hpp::for_each_tuple_type<ace::all_inspectable_components>(
         [&](auto index)
         {
@@ -214,6 +182,63 @@ auto inspector_entity::inspect(rtti::context& ctx,
             result |= inspect_component(name, callbacks);
         });
 
+    auto script_comp = data.try_get<script_component>();
+    if(script_comp)
+    {
+        const auto& comps = script_comp->get_script_components();
+
+        int index_to_remove = -1;
+        int index_to_add = -1;
+        for(size_t i = 0; i < comps.size(); ++i)
+        {
+            ImGui::PushID(i);
+            const auto& script = comps[i];
+            auto type = script.scoped->object.get_type();
+            inspect_callbacks callbacks;
+            callbacks.on_inspect = [&]() -> inspect_result
+            {
+                auto& obj = static_cast<mono::mono_object&>(script.scoped->object);
+                return ::ace::inspect(ctx, obj);
+            };
+
+            callbacks.on_add = [&]()
+            {
+                index_to_add = i;
+            };
+
+            callbacks.on_remove = [&]()
+            {
+                index_to_remove = i;
+            };
+
+            callbacks.can_remove = []()
+            {
+                return true;
+            };
+
+            callbacks.icon = ICON_MDI_SCRIPT;
+
+            result |= inspect_component(type.get_fullname(), callbacks);
+
+            ImGui::PopID();
+        }
+
+        if(index_to_remove != -1)
+        {
+            auto comp_to_remove = comps[index_to_remove];
+
+            script_component::script_object comp_to_add;
+
+            auto type = comp_to_remove.scoped->object.get_type();
+            script_comp->remove_script_component(comp_to_remove.scoped->object);
+
+            if(index_to_add != -1)
+            {
+                script_comp->add_script_component(type);
+            }
+        }
+    }
+
     ImGui::Separator();
     ImGui::NextLine();
     static const auto label = "Add Component";
@@ -250,6 +275,7 @@ auto inspector_entity::inspect(rtti::context& ctx,
 
             callbacks.on_add = [&]()
             {
+                data.get_or_emplace<script_component>().add_script_component(type);
             };
 
             callbacks.on_remove = [&]()

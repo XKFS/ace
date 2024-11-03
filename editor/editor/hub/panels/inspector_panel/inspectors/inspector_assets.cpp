@@ -139,7 +139,7 @@ auto pick_asset(ImGuiTextFilter& filter,
     bool clicked = ImGui::Button(item.c_str(), ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetFrameHeight()));
     ImGui::DrawItemActivityOutline();
 
-    ImGui::SetItemTooltip("%s\n\nPick an Asset", item.c_str());
+    ImGui::SetItemTooltipCurrentViewport("%s\n\nPick an Asset", item.c_str());
     if(clicked)
     {
         filter.Clear();
@@ -154,7 +154,7 @@ auto pick_asset(ImGuiTextFilter& filter,
     }
     ImGui::DrawItemActivityOutline();
 
-    ImGui::SetItemTooltip("Locate the asset in the content browser.\n%s", data.id().c_str());
+    ImGui::SetItemTooltipCurrentViewport("Locate the asset in the content browser.\n%s", data.id().c_str());
 
     ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
 
@@ -166,7 +166,7 @@ auto pick_asset(ImGuiTextFilter& filter,
     }
     ImGui::DrawItemActivityOutline();
 
-    ImGui::SetItemTooltip("Reset to default.");
+    ImGui::SetItemTooltipCurrentViewport("Reset to default.");
 
     ImGui::EndGroup();
 

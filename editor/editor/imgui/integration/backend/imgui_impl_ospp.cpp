@@ -6,7 +6,6 @@
 #include <filesystem/filesystem.h>
 #include <utility>
 
-
 #if defined(_WIN32)
 #if !defined(_WINDOWS_)
 #define WIN32_LEAN_AND_MEAN
@@ -738,8 +737,24 @@ void ImGui_ImplOSPP_Shutdown()
 // available in OSPP < 2.0.4.
 static void ImGui_ImplOSPP_UpdateMouseData()
 {
+
     ImGui_ImplOSPP_Data* bd = ImGui_ImplOSPP_GetBackendData();
     ImGuiIO& io = ImGui::GetIO();
+
+    if(bd->PendingMouseLeaveFrame && bd->PendingMouseLeaveFrame >= ImGui::GetFrameCount() && bd->MouseButtonsDown == 0)
+    {
+        bd->MouseWindowID = 0;
+        bd->PendingMouseLeaveFrame = 0;
+        io.AddMousePosEvent(-FLT_MAX, -FLT_MAX);
+    }
+
+           // Our io.AddMouseViewportEvent() calls will only be valid when not capturing.
+           // Technically speaking testing for 'bd->MouseButtonsDown == 0' would be more rygorous, but testing for
+           // payload reduces noise and potential side-effects.
+    if(bd->MouseCanReportHoveredViewport && ImGui::GetDragDropPayload() == nullptr)
+        io.BackendFlags |= ImGuiBackendFlags_HasMouseHoveredViewport;
+    else
+        io.BackendFlags &= ~ImGuiBackendFlags_HasMouseHoveredViewport;
 
     // We forward mouse input when hovered or captured (via OSPP_EVENT_MOUSE_MOTION) or when focused (below)
 #if OSPP_HAS_CAPTURE_AND_GLOBAL_MOUSE
@@ -812,6 +827,7 @@ static void ImGui_ImplOSPP_UpdateMouseData()
         }
         io.AddMouseViewportEvent(mouse_viewport_id);
     }
+
 }
 
 static void ImGui_ImplOSPP_UpdateMouseCursor()
@@ -913,20 +929,6 @@ void ImGui_ImplOSPP_NewFrame(float delta_time)
     if(bd->WantUpdateMonitors)
         ImGui_ImplOSPP_UpdateMonitors();
 
-    if(bd->PendingMouseLeaveFrame && bd->PendingMouseLeaveFrame >= ImGui::GetFrameCount() && bd->MouseButtonsDown == 0)
-    {
-        bd->MouseWindowID = 0;
-        bd->PendingMouseLeaveFrame = 0;
-        io.AddMousePosEvent(-FLT_MAX, -FLT_MAX);
-    }
-
-    // Our io.AddMouseViewportEvent() calls will only be valid when not capturing.
-    // Technically speaking testing for 'bd->MouseButtonsDown == 0' would be more rygorous, but testing for
-    // payload reduces noise and potential side-effects.
-    if(bd->MouseCanReportHoveredViewport && ImGui::GetDragDropPayload() == nullptr)
-        io.BackendFlags |= ImGuiBackendFlags_HasMouseHoveredViewport;
-    else
-        io.BackendFlags &= ~ImGuiBackendFlags_HasMouseHoveredViewport;
 
     ImGui_ImplOSPP_UpdateMouseData();
     ImGui_ImplOSPP_UpdateMouseCursor();
@@ -1000,6 +1002,8 @@ static void ImGui_ImplOSPP_DestroyWindow(ImGuiViewport* viewport)
 static void ImGui_ImplOSPP_ShowWindow(ImGuiViewport* viewport)
 {
     ImGui_ImplOSPP_ViewportData* vd = ImGui_ImplOSPP_GetViewportData(viewport);
+
+    os::set_hint("HINT_WINDOW_ACTIVATE_WHEN_SHOWN", (viewport->Flags & ImGuiViewportFlags_NoFocusOnAppearing) ? "0" : "1");
 
     vd->Window->get_window().show();
 }

@@ -220,7 +220,7 @@ auto inspector_path::inspect(rtti::context& ctx,
                 result.edit_finished |= true;
             }
         }
-        ImGui::SetItemTooltip("Pick a location...");
+        ImGui::SetItemTooltipCurrentViewport("Pick a location...");
         ImGui::SameLine();
     }
 

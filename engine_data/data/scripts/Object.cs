@@ -5,9 +5,9 @@ namespace Ace
 {
 namespace Core
 {
-public class NativeObject : IEquatable<NativeObject>
+public abstract class NativeObject : IEquatable<NativeObject>
 {
-    protected bool m_alive = false;
+    public abstract bool IsValid();
 
     // Implement IEquatable<NativeObject>
     public bool Equals(NativeObject other)
@@ -20,14 +20,14 @@ public class NativeObject : IEquatable<NativeObject>
             return true;
 
         // If either object is not alive, they are not equal.
-        if (!m_alive || !other.m_alive)
+        if (!IsValid() || !other.IsValid())
             return false;
 
         // Add additional field comparisons here if needed.
         // For example, if you have an 'id' field:
         // return this.id == other.id;
 
-        // If there's no additional state to compare, and 'm_alive' is true, 
+        // If there's no additional state to compare, and 'IsValid()' is true, 
         // you might consider them equal only if they are the same instance.
         return false;
     }
@@ -38,7 +38,7 @@ public class NativeObject : IEquatable<NativeObject>
         if (ReferenceEquals(obj, null))
             return false;
 
-        if (!m_alive)
+        if (!IsValid())
             return false;
 
         if (ReferenceEquals(this, obj))
@@ -54,14 +54,14 @@ public class NativeObject : IEquatable<NativeObject>
     // Override GetHashCode()
     public override int GetHashCode()
     {
-        if (!m_alive)
+        if (!IsValid())
             return 0; // Or some constant to represent 'not alive' state.
 
-        // Include 'm_alive' in the hash code if it's part of equality.
+        // Include 'IsValid()' in the hash code if it's part of equality.
         // If you have other fields, include them in the hash code.
         // For example:
         // int hash = 17;
-        // hash = hash * 23 + m_alive.GetHashCode();
+        // hash = hash * 23 + IsValid().GetHashCode();
         // hash = hash * 23 + id.GetHashCode();
         // return hash;
 
@@ -75,10 +75,10 @@ public class NativeObject : IEquatable<NativeObject>
         if (ReferenceEquals(left, right))
             return true;
 
-        if (ReferenceEquals(left, null) || !left.m_alive)
-            return ReferenceEquals(right, null) || !right.m_alive;
+        if (ReferenceEquals(left, null) || !left.IsValid())
+            return ReferenceEquals(right, null) || !right.IsValid();
 
-        if (ReferenceEquals(right, null) || !right.m_alive)
+        if (ReferenceEquals(right, null) || !right.IsValid())
             return false;
 
         return left.Equals(right);

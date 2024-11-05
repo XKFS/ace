@@ -2,6 +2,7 @@
 #include <engine/ecs/ecs.h>
 #include <engine/events.h>
 #include <engine/scripting/script.h>
+#include <engine/scripting/ecs/components/script_component.h>
 
 #include <engine/engine.h>
 #include <monopp/mono_exception.h>
@@ -220,38 +221,16 @@ void script_system::on_play_begin(rtti::context& ctx)
 
             for(const auto& obj : systems)
             {
-                auto method = mono::make_method_invoker<void()>(obj.get_type(), "OnCreate");
+                auto method = mono::make_method_invoker<void()>(obj.get_type().get_base_type(), "internal_n2m_on_create");
                 method(obj);
             }
 
             for(const auto& obj : systems)
             {
-                auto method = mono::make_method_invoker<void()>(obj.get_type(), "OnStart");
+                auto method = mono::make_method_invoker<void()>(obj.get_type().get_base_type(), "internal_n2m_on_start");
                 method(obj);
             }
         }
-
-        // {
-        //     std::vector<mono::mono_object> systems;
-        //     systems.reserve(app_cache_.scriptable_component_types.size());
-        //     for(const auto& type : app_cache_.scriptable_component_types)
-        //     {
-        //         auto obj = type.new_instance();
-        //         systems.emplace_back(obj);
-        //     }
-
-        //     for(const auto& obj : systems)
-        //     {
-        //         auto method = mono::make_method_invoker<void()>(obj.get_type(), "OnCreate");
-        //         method(obj);
-        //     }
-
-        //     for(const auto& obj : systems)
-        //     {
-        //         auto method = mono::make_method_invoker<void()>(obj.get_type(), "OnStart");
-        //         method(obj);
-        //     }
-        // }
 
         {
             auto& ec = ctx.get<ecs>();
@@ -302,7 +281,7 @@ void script_system::on_frame_update(rtti::context& ctx, delta_t dt)
     }
     try
     {
-        auto method_thunk = mono::make_method_invoker<void()>(cache_.update_manager_type, "Update");
+        auto method_thunk = mono::make_method_invoker<void()>(cache_.update_manager_type, "internal_n2m_update");
         method_thunk();
 
         auto& ec = ctx.get<ecs>();

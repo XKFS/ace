@@ -12,7 +12,6 @@
 #include <engine/scripting/ecs/components/script_component.h>
 #include <engine/scripting/ecs/systems/script_system.h>
 
-
 #include <engine/events.h>
 #include <engine/meta/ecs/entity.hpp>
 
@@ -57,6 +56,8 @@ auto clone_entity_impl(entt::registry& r, entt::handle entity) -> entt::handle
 scene::scene()
 {
     registry = std::make_unique<entt::registry>();
+    unload();
+
     registry->on_construct<transform_component>().connect<&transform_component::on_create_component>();
     registry->on_destroy<transform_component>().connect<&transform_component::on_destroy_component>();
 
@@ -81,6 +82,7 @@ scene::~scene()
 void scene::unload()
 {
     registry->clear();
+    auto reserved_entity = registry->create();
     source = {};
 }
 

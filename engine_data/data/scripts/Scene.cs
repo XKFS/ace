@@ -10,50 +10,60 @@ public class Scene
 
 	public Scene()
 	{
-		Internal_CreateScene();
+		internal_m2n_create_scene();
 	}
 
 	~Scene()
 	{
-		Internal_DestroyScene();
+		internal_m2n_destroy_scene();
 	}
 	
 	public static Entity CreateEntity(string tag = "Unnamed")
 	{
-		unsafe { return new Entity(Internal_CreateEntity(tag)); }
+		unsafe { return new Entity(internal_m2n_create_entity(tag)); }
 	}
 
 	public static void DestroyEntity(Entity entity)
 	{
 		unsafe
 		{
-			if (!Internal_IsEntityValid(entity.Id))
+			if (!internal_m2n_is_entity_valid(entity.Id))
 				return;
 
-			Internal_DestroyEntity(entity.Id);
+			internal_m2n_destroy_entity(entity.Id);
 		}
 	}
 
 	public static bool IsEntityValid(Entity entity)
 	{
-		return Internal_IsEntityValid(entity.Id);
+		return internal_m2n_is_entity_valid(entity.Id);
 	}
 	
+	public static Entity FindEntityByTag(string tag = "Unnamed")
+	{
+		unsafe { return new Entity(internal_m2n_find_entity_by_tag(tag)); }
+	}
+
+
 
 	[MethodImpl(MethodImplOptions.InternalCall)] 
-	private extern void Internal_CreateScene();
+	private extern void internal_m2n_create_scene();
 
 	[MethodImpl(MethodImplOptions.InternalCall)] 
-	private extern void Internal_DestroyScene();
+	private extern void internal_m2n_destroy_scene();
 	
 	[MethodImpl(MethodImplOptions.InternalCall)] 
-	private static extern uint Internal_CreateEntity(string tag);
+	private static extern uint internal_m2n_create_entity(string tag);
 	
 	[MethodImpl(MethodImplOptions.InternalCall)] 
-	private static extern bool Internal_DestroyEntity(uint id);
+	private static extern bool internal_m2n_destroy_entity(uint id);
 
 	[MethodImpl(MethodImplOptions.InternalCall)] 
-	private static extern bool Internal_IsEntityValid(uint id);
+	private static extern bool internal_m2n_is_entity_valid(uint id);
+
+	[MethodImpl(MethodImplOptions.InternalCall)] 
+	private static extern uint internal_m2n_find_entity_by_tag(string tag);
+	
 }
 
 }

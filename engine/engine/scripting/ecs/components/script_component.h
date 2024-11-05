@@ -1,9 +1,9 @@
 #pragma once
 #include <engine/engine_export.h>
 
+#include <engine/assets/asset_handle.h>
 #include <engine/ecs/components/basic_component.h>
 #include <engine/scripting/script.h>
-#include <engine/assets/asset_handle.h>
 #include <monort/monort.h>
 
 #include <math/math.h>
@@ -19,7 +19,6 @@ namespace ace
 class script_component : public component_crtp<script_component, owned_component>
 {
 public:
-
     using scoped_object_ptr = std::shared_ptr<mono::mono_scoped_object>;
     struct script_object
     {
@@ -44,15 +43,19 @@ public:
     void process_pending_deletions();
 
     auto add_script_component(const mono::mono_type& type) -> script_object;
+    auto add_native_component(const mono::mono_type& type) -> script_object;
+
     auto remove_script_component(const mono::mono_object& obj) -> bool;
+    auto remove_native_component(const mono::mono_object& obj) -> bool;
+
     auto get_script_component(const mono::mono_type& type) -> script_object;
+    auto get_native_component(const mono::mono_type& type) -> script_object;
 
     auto get_script_components() const -> const script_components_t&;
 
-
 private:
-
-    script_components_t components_;
+    script_components_t script_components_;
+    script_components_t native_components_;
 };
 
 } // namespace ace

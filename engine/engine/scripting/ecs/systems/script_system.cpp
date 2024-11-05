@@ -221,13 +221,13 @@ void script_system::on_play_begin(rtti::context& ctx)
 
             for(const auto& obj : systems)
             {
-                auto method = mono::make_method_invoker<void()>(obj.get_type().get_base_type(), "internal_n2m_on_create");
+                auto method = mono::make_method_invoker<void()>(obj, "internal_n2m_on_create");
                 method(obj);
             }
 
             for(const auto& obj : systems)
             {
-                auto method = mono::make_method_invoker<void()>(obj.get_type().get_base_type(), "internal_n2m_on_start");
+                auto method = mono::make_method_invoker<void()>(obj, "internal_n2m_on_start");
                 method(obj);
             }
         }

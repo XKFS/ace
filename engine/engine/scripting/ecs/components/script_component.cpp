@@ -43,21 +43,17 @@ auto script_component::add_script_component(const mono::mono_type& type) -> scri
     script_obj.scoped = std::make_shared<mono::mono_scoped_object>(obj);
 
     {
-
-        auto method = mono::make_method_invoker<void(uint32_t, bool)>(obj.get_type().get_base_type().get_base_type(),
-                                                                      "internal_n2m_set_entity");
+        auto method = mono::make_method_invoker<void(uint32_t, bool)>(obj, "internal_n2m_set_entity");
         method(obj, static_cast<uint32_t>(get_owner().entity()), true);
     }
 
     {
-        auto method = mono::make_method_invoker<void()>(obj.get_type().get_base_type(),
-                                                                      "internal_n2m_on_create");
+        auto method = mono::make_method_invoker<void()>(obj, "internal_n2m_on_create");
         method(obj);
     }
 
     {
-        auto method = mono::make_method_invoker<void()>(obj.get_type().get_base_type(),
-                                                        "internal_n2m_on_start");
+        auto method = mono::make_method_invoker<void()>(obj, "internal_n2m_on_start");
         method(obj);
     }
 
@@ -69,11 +65,9 @@ auto script_component::add_native_component(const mono::mono_type& type) -> scri
     auto& script_obj = native_components_.emplace_back();
     auto obj = type.new_instance();
 
-
     script_obj.scoped = std::make_shared<mono::mono_scoped_object>(obj);
 
-    auto method = mono::make_method_invoker<void(uint32_t, bool)>(obj.get_type().get_base_type(),
-                                                                  "internal_n2m_set_entity");
+    auto method = mono::make_method_invoker<void(uint32_t, bool)>(obj, "internal_n2m_set_entity");
     method(obj, static_cast<uint32_t>(get_owner().entity()), true);
 
     return script_obj;
@@ -124,8 +118,7 @@ auto script_component::remove_script_component(const mono::mono_object& obj) -> 
 
     if(it != std::end(script_components_))
     {
-        auto method = mono::make_method_invoker<void(uint32_t, bool)>(obj.get_type().get_base_type().get_base_type(),
-                                                                      "internal_n2m_set_entity");
+        auto method = mono::make_method_invoker<void(uint32_t, bool)>(obj, "internal_n2m_set_entity");
         method(obj, static_cast<uint32_t>(entt::handle{}.entity()), false);
 
         it->marked_for_destroy = true;
@@ -146,8 +139,7 @@ auto script_component::remove_native_component(const mono::mono_object& obj) -> 
 
     if(it != std::end(native_components_))
     {
-        auto method =
-            mono::make_method_invoker<void(uint32_t, bool)>(obj.get_type().get_base_type(), "internal_n2m_set_entity");
+        auto method = mono::make_method_invoker<void(uint32_t, bool)>(obj, "internal_n2m_set_entity");
         method(obj, static_cast<uint32_t>(entt::handle{}.entity()), false);
 
         it->marked_for_destroy = true;

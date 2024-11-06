@@ -8,6 +8,7 @@
 #include <engine/events.h>
 #include <engine/meta/assets/asset_database.hpp>
 #include <engine/meta/ecs/entity.hpp>
+#include <engine/scripting/ecs/systems/script_system.h>
 
 #include <editor/editing/editing_manager.h>
 #include <editor/system/project_manager.h>
@@ -988,7 +989,8 @@ void editor_actions::generate_script_workspace(const std::string& project_name)
     generate_workspace_file(workspace_file.string(), formats);
 
     auto source_path = fs::resolve_protocol("app:/data");
-    auto engine_dep = fs::resolve_protocol("engine:/compiled/engine_script.dll");
+
+    auto engine_dep = fs::resolve_protocol(script_system::get_lib_compiled_key("engine"));
     auto output_path = fs::resolve_protocol("app:/");
 
     generate_csproj_legacy(source_path, {engine_dep}, output_path, project_name);

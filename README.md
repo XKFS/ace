@@ -31,7 +31,7 @@ cmake ..
 ## LIBRARIES
 bgfx - https://github.com/bkaradzic/bgfx
 
-cereal - https://github.com/USCiLab/cereal
+ser20 - https://github.com/volcoma/ser20
 
 rttr - https://github.com/rttrorg/rttr
 
@@ -43,4 +43,10 @@ assimp - https://github.com/assimp/assimp
 
 glm - https://github.com/g-truc/glm
 
-openal-soft = https://github.com/kcat/openal-soft
+openal-soft - https://github.com/kcat/openal-soft
+
+yaml-cpp - https://github.com/jbeder/yaml-cpp
+
+bullet3 - https://github.com/bulletphysics/bullet3
+
+entt - https://github.com/skypjack/entt

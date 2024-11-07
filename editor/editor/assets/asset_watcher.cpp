@@ -275,9 +275,7 @@ auto watch_assets_depenencies(rtti::context& ctx, const fs::path& dir, const fs:
 
 template<typename T>
 static void add_to_syncer(rtti::context& ctx,
-                          std::vector<uint64_t>& watchers,
                           fs::syncer& syncer,
-                          const fs::path& dir,
                           const fs::syncer::on_entry_removed_t& on_removed,
                           const fs::syncer::on_entry_renamed_t& on_renamed)
 {
@@ -312,6 +310,14 @@ static void add_to_syncer(rtti::context& ctx,
     for(const auto& type : ex::get_suported_formats<T>())
     {
         syncer.set_mapping(type + ".meta", {".asset"}, on_modified, on_modified, on_removed, on_renamed);
+    }
+}
+
+template<typename T>
+static void watch_synced(rtti::context& ctx, std::vector<uint64_t>& watchers, const fs::path& dir)
+{
+    for(const auto& type : ex::get_suported_formats<T>())
+    {
         const auto watch_id = watch_assets<T>(ctx, dir, "*" + type, true);
         watchers.push_back(watch_id);
     }
@@ -319,9 +325,7 @@ static void add_to_syncer(rtti::context& ctx,
 
 template<>
 void add_to_syncer<gfx::shader>(rtti::context& ctx,
-                                std::vector<uint64_t>& watchers,
                                 fs::syncer& syncer,
-                                const fs::path& dir,
                                 const fs::syncer::on_entry_removed_t& on_removed,
                                 const fs::syncer::on_entry_renamed_t& on_renamed)
 {
@@ -366,7 +370,6 @@ void add_to_syncer<gfx::shader>(rtti::context& ctx,
         }
     };
 
-    const auto& renderer_extension = gfx::get_current_renderer_filename_extension();
     for(const auto& type : ex::get_suported_formats<gfx::shader>())
     {
         syncer.set_mapping(type + ".meta",
@@ -375,7 +378,15 @@ void add_to_syncer<gfx::shader>(rtti::context& ctx,
                            on_modified,
                            on_removed,
                            on_renamed);
+    }
+}
 
+template<>
+void watch_synced<gfx::shader>(rtti::context& ctx, std::vector<uint64_t>& watchers, const fs::path& dir)
+{
+    const auto& renderer_extension = gfx::get_current_renderer_filename_extension();
+    for(const auto& type : ex::get_suported_formats<gfx::shader>())
+    {
         const auto watch_id = watch_assets<gfx::shader>(ctx, dir, "*" + type + ".asset" + renderer_extension, true);
         watchers.push_back(watch_id);
     }
@@ -516,16 +527,16 @@ void asset_watcher::setup_cache_syncer(rtti::context& ctx,
         }
     };
 
-    add_to_syncer<gfx::texture>(ctx, watchers, syncer, cache_dir, on_removed, on_renamed);
-    add_to_syncer<gfx::shader>(ctx, watchers, syncer, cache_dir, on_removed, on_renamed);
-    add_to_syncer<mesh>(ctx, watchers, syncer, cache_dir, on_removed, on_renamed);
-    add_to_syncer<material>(ctx, watchers, syncer, cache_dir, on_removed, on_renamed);
-    add_to_syncer<animation_clip>(ctx, watchers, syncer, cache_dir, on_removed, on_renamed);
-    add_to_syncer<prefab>(ctx, watchers, syncer, cache_dir, on_removed, on_renamed);
-    add_to_syncer<scene_prefab>(ctx, watchers, syncer, cache_dir, on_removed, on_renamed);
-    add_to_syncer<physics_material>(ctx, watchers, syncer, cache_dir, on_removed, on_renamed);
-    add_to_syncer<audio_clip>(ctx, watchers, syncer, cache_dir, on_removed, on_renamed);
-    add_to_syncer<script>(ctx, watchers, syncer, cache_dir, on_removed, on_renamed);
+    add_to_syncer<gfx::texture>(ctx, syncer, on_removed, on_renamed);
+    add_to_syncer<gfx::shader>(ctx, syncer, on_removed, on_renamed);
+    add_to_syncer<mesh>(ctx, syncer, on_removed, on_renamed);
+    add_to_syncer<material>(ctx, syncer, on_removed, on_renamed);
+    add_to_syncer<animation_clip>(ctx, syncer, on_removed, on_renamed);
+    add_to_syncer<prefab>(ctx, syncer, on_removed, on_renamed);
+    add_to_syncer<scene_prefab>(ctx, syncer, on_removed, on_renamed);
+    add_to_syncer<physics_material>(ctx, syncer, on_removed, on_renamed);
+    add_to_syncer<audio_clip>(ctx, syncer, on_removed, on_renamed);
+    add_to_syncer<script>(ctx, syncer, on_removed, on_renamed);
 
     syncer.sync(meta_dir, cache_dir);
 
@@ -534,6 +545,18 @@ void asset_watcher::setup_cache_syncer(rtti::context& ctx,
         auto& ts = ctx.get<threader>();
         ts.pool->wait_all();
     }
+
+    watch_synced<gfx::texture>(ctx, watchers, cache_dir);
+    watch_synced<gfx::shader>(ctx, watchers, cache_dir);
+    watch_synced<mesh>(ctx, watchers, cache_dir);
+    watch_synced<material>(ctx, watchers, cache_dir);
+    watch_synced<animation_clip>(ctx, watchers, cache_dir);
+    watch_synced<prefab>(ctx, watchers, cache_dir);
+    watch_synced<scene_prefab>(ctx, watchers, cache_dir);
+    watch_synced<physics_material>(ctx, watchers, cache_dir);
+    watch_synced<audio_clip>(ctx, watchers, cache_dir);
+    watch_synced<script>(ctx, watchers, cache_dir);
+
 }
 
 asset_watcher::asset_watcher()

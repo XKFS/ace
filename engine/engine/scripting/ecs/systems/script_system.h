@@ -22,10 +22,10 @@ struct script_system
     auto init(rtti::context& ctx) -> bool;
     auto deinit(rtti::context& ctx) -> bool;
 
-    void load_core_domain(rtti::context& ctx);
-    void unload_core_domain();
+    void load_engine_domain(rtti::context& ctx);
+    void unload_engine_domain();
 
-    void load_app_domain(rtti::context& ctx);
+    void load_app_domain(rtti::context& ctx, bool recompile);
     void unload_app_domain();
 
     auto get_all_scriptable_components() const -> const std::vector<mono::mono_type>&;
@@ -86,6 +86,7 @@ private:
     auto get_engine_assembly() const -> mono::mono_assembly;
     auto get_app_assembly() const -> mono::mono_assembly;
 
+
     void check_for_recompile(rtti::context& ctx, delta_t dt);
 
     auto create_compilation_job(rtti::context& ctx, const std::string& protocol) -> itc::job_future<bool>;
@@ -113,5 +114,8 @@ private:
         std::vector<mono::mono_type> scriptable_system_types;
 
     } app_cache_;
+
+
+    std::vector<mono::mono_object> scriptable_systems_;
 };
 } // namespace ace

@@ -40,4 +40,9 @@ struct events
     bool is_paused{};
 };
 
+struct deploy
+{
+
+};
+
 } // namespace ace

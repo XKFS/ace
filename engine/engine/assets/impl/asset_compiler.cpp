@@ -539,7 +539,6 @@ auto compile<script_library>(asset_manager& am, const fs::path& key, const fs::p
     bool result = true;
     fs::error_code err;
     fs::path temp = fs::temp_directory_path(err);
-    // temp /= hpp::to_string(generate_uuid()) + ".buildtemp.dll";
 
     mono::compiler_params params;
 
@@ -547,11 +546,7 @@ auto compile<script_library>(asset_manager& am, const fs::path& key, const fs::p
 
     if(protocol != "engine")
     {
-        auto lib_data_key = script_system::get_lib_data_key("engine");
         auto lib_compiled_key = fs::resolve_protocol(script_system::get_lib_compiled_key("engine"));
-        result &= compile<script_library>(am,
-                                          lib_data_key,
-                                          lib_compiled_key);
 
         params.references.emplace_back(lib_compiled_key.filename().string());
 
@@ -619,10 +614,11 @@ template<>
 auto compile<script>(asset_manager& am, const fs::path& key, const fs::path& output) -> bool
 {
     auto absolute_path = resolve_input_file(key);
-    std::string str_input = absolute_path.string();
 
     fs::error_code er;
     fs::copy_file(absolute_path, output, fs::copy_options::overwrite_existing, er);
+
+    APPLOG_INFO("Successful copy to {0}", output.string());
 
     script_system::set_needs_recompile(fs::extract_protocol(fs::convert_to_protocol(key)).string());
 

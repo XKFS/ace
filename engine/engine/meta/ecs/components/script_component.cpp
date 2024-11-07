@@ -15,6 +15,11 @@ REFLECT(script_component)
 
 SAVE(script_component)
 {
+    // const auto& comps = obj.get_script_components();
+    // for(const auto& comp : comps)
+    // {
+    //     comp.
+    // }
 }
 SAVE_INSTANTIATE(script_component, ser20::oarchive_associative_t);
 SAVE_INSTANTIATE(script_component, ser20::oarchive_binary_t);

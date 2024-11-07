@@ -29,11 +29,11 @@ auto physics_system::init(rtti::context& ctx) -> bool
     auto& ev = ctx.get<events>();
     ev.on_frame_update.connect(sentinel_, this, &physics_system::on_frame_update);
 
-    ev.on_play_begin.connect(sentinel_, -100, this, &physics_system::on_play_begin);
-    ev.on_play_end.connect(sentinel_, 100, this, &physics_system::on_play_end);
-    ev.on_pause.connect(sentinel_, -100, this, &physics_system::on_pause);
-    ev.on_resume.connect(sentinel_, 100, this, &physics_system::on_resume);
-    ev.on_skip_next_frame.connect(sentinel_, -100, this, &physics_system::on_skip_next_frame);
+    ev.on_play_begin.connect(sentinel_, 10, this, &physics_system::on_play_begin);
+    ev.on_play_end.connect(sentinel_, -10, this, &physics_system::on_play_end);
+    ev.on_pause.connect(sentinel_, 10, this, &physics_system::on_pause);
+    ev.on_resume.connect(sentinel_, -10, this, &physics_system::on_resume);
+    ev.on_skip_next_frame.connect(sentinel_, -10, this, &physics_system::on_skip_next_frame);
 
     return true;
 }
@@ -47,6 +47,8 @@ auto physics_system::deinit(rtti::context& ctx) -> bool
 
 void physics_system::on_play_begin(rtti::context& ctx)
 {
+    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+
     auto& ec = ctx.get<ecs>();
     auto& scn = ec.get_scene();
     auto& registry = *scn.registry;
@@ -57,6 +59,8 @@ void physics_system::on_play_begin(rtti::context& ctx)
 
 void physics_system::on_play_end(rtti::context& ctx)
 {
+    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+
     backend_.on_play_end(ctx);
 
     auto& ec = ctx.get<ecs>();

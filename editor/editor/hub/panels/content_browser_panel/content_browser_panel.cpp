@@ -49,6 +49,18 @@ auto get_new_file(const fs::path& path, const std::string& name, const std::stri
     return path / (fmt::format("{} ({})", name.c_str(), i) + ext);
 }
 
+auto get_new_file_simple(const fs::path& path, const std::string& name, const std::string& ext = "") -> fs::path
+{
+    int i = 0;
+    fs::error_code err;
+    while(fs::exists(path / (fmt::format("{}{}", name.c_str(), i) + ext), err))
+    {
+        ++i;
+    }
+
+    return path / (fmt::format("{}{}", name.c_str(), i) + ext);
+}
+
 auto process_drag_drop_source(const gfx::texture::ptr& preview, const fs::path& absolute_path) -> bool
 {
     if(ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
@@ -790,6 +802,29 @@ void content_browser_panel::context_create_menu(rtti::context& ctx)
         }
 
         ImGui::Separator();
+
+        if(ImGui::MenuItem("C# Script Component"))
+        {
+            auto& am = ctx.get<asset_manager>();
+
+            const auto available = get_new_file_simple(cache_.get_path(), "NewScriptComponent", ex::get_format<script>());
+
+            fs::error_code ec;
+            auto new_script_template = fs::resolve_protocol("engine:/data/scripts/template/TemplateComponent" + ex::get_format<script>());
+            fs::copy(new_script_template, available, ec);
+        }
+
+        if(ImGui::MenuItem("C# Script System"))
+        {
+            auto& am = ctx.get<asset_manager>();
+
+            const auto available = get_new_file_simple(cache_.get_path(), "NewScriptSystem", ex::get_format<script>());
+
+            fs::error_code ec;
+            auto new_script_template = fs::resolve_protocol("engine:/data/scripts/template/TemplateSystem" + ex::get_format<script>());
+            fs::copy(new_script_template, available, ec);
+        }
+
 
         if(ImGui::MenuItem("Material"))
         {

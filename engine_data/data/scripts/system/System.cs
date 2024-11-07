@@ -28,10 +28,24 @@ public abstract class ScriptSystem
         SystemManager.OnUpdate -= OnUpdate;
     }
 
-    public abstract void OnCreate();
-    public abstract void OnStart();
-    public abstract void OnUpdate();
+    public virtual void OnCreate()
+    {
 
+    }
+    public virtual void OnStart()
+    {
+
+    }
+
+    public virtual void OnDestroy()
+    {
+
+    }
+
+    public virtual void OnUpdate()
+    {
+
+    }
 
     private void internal_n2m_on_create()
     {

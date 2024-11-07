@@ -24,7 +24,14 @@ void events::set_play_mode(rtti::context& ctx, bool play)
         }
     }
 
-    is_playing ? on_play_begin(ctx) : on_play_end(ctx);
+    if(is_playing)
+    {
+        on_play_begin(ctx);
+    }
+    else
+    {
+        on_play_end(ctx);
+    }
 }
 
 void events::toggle_pause(rtti::context& ctx)

@@ -87,7 +87,7 @@ auto project_manager::open_project(rtti::context& ctx, const fs::path& project_p
     aw.watch_assets(ctx, "app:/");
 
     auto& scr = ctx.get<script_system>();
-    scr.load_app_domain(ctx);
+    scr.load_app_domain(ctx, true);
 
     load_project_settings();
     save_project_settings();
@@ -224,6 +224,7 @@ project_manager::project_manager(rtti::context& ctx)
 
     auto& ev = ctx.get<events>();
     ev.on_script_recompile.connect(sentinel_,
+                                   -1000,
                                    [this](rtti::context& ctx, const std::string& protocol)
                                    {
                                        if(protocol == "app" && has_open_project())

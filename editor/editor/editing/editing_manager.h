@@ -139,6 +139,13 @@ struct editing_manager
     grid grid_data;
 
 private:
+    void on_script_recompile(rtti::context& ctx, const std::string& protocol);
+    void save_checkpoint(rtti::context& ctx);
+    void load_checkpoint(rtti::context& ctx);
+
     std::shared_ptr<int> sentinel_ = std::make_shared<int>(0);
+
+    std::stringstream scene_cache_;
+
 };
 } // namespace ace

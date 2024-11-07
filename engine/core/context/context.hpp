@@ -25,6 +25,13 @@ struct context
     }
 
     template<typename T>
+    auto has() const -> bool
+    {
+        const auto id = hpp::type_id<T>();
+        return objects_.find(id) != objects_.end();
+    }
+
+    template<typename T>
     auto get() -> T&
     {
         const auto id = hpp::type_id<T>();

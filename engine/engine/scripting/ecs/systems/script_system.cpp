@@ -1,10 +1,10 @@
 #include "script_system.h"
 #include <engine/ecs/ecs.h>
-#include <engine/events.h>
-#include <engine/scripting/script.h>
-#include <engine/scripting/ecs/components/script_component.h>
-
 #include <engine/engine.h>
+#include <engine/events.h>
+#include <engine/meta/ecs/entity.hpp>
+#include <engine/scripting/ecs/components/script_component.h>
+#include <engine/scripting/script.h>
 #include <monopp/mono_exception.h>
 #include <monopp/mono_internal_call.h>
 #include <monopp/mono_jit.h>
@@ -21,6 +21,7 @@ namespace ace
 namespace
 {
 std::chrono::seconds check_interval(2);
+std::atomic_bool initted{};
 
 std::atomic_bool needs_recompile{};
 std::mutex container_mutex;
@@ -89,10 +90,10 @@ auto script_system::init(rtti::context& ctx) -> bool
 
     auto& ev = ctx.get<events>();
     ev.on_frame_update.connect(sentinel_, this, &script_system::on_frame_update);
-    ev.on_play_begin.connect(sentinel_, -100, this, &script_system::on_play_begin);
-    ev.on_play_end.connect(sentinel_, 100, this, &script_system::on_play_end);
-    ev.on_pause.connect(sentinel_, -100, this, &script_system::on_pause);
-    ev.on_resume.connect(sentinel_, 100, this, &script_system::on_resume);
+    ev.on_play_begin.connect(sentinel_, -1000, this, &script_system::on_play_begin);
+    ev.on_play_end.connect(sentinel_, 1000, this, &script_system::on_play_end);
+    ev.on_pause.connect(sentinel_, 100, this, &script_system::on_pause);
+    ev.on_resume.connect(sentinel_, -100, this, &script_system::on_resume);
     ev.on_skip_next_frame.connect(sentinel_, -100, this, &script_system::on_skip_next_frame);
 
     if(mono::init(find_mono(), true))
@@ -103,7 +104,7 @@ auto script_system::init(rtti::context& ctx) -> bool
 
         try
         {
-            load_core_domain(ctx);
+            load_engine_domain(ctx);
         }
         catch(const mono::mono_exception& e)
         {
@@ -111,6 +112,7 @@ auto script_system::init(rtti::context& ctx) -> bool
             return false;
         }
 
+        initted = true;
         return true;
     }
 
@@ -121,21 +123,18 @@ auto script_system::deinit(rtti::context& ctx) -> bool
 {
     APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
 
-    unload_core_domain();
+    unload_engine_domain();
 
     mono::shutdown();
 
     return true;
 }
 
-void script_system::load_core_domain(rtti::context& ctx)
+void script_system::load_engine_domain(rtti::context& ctx)
 {
-    while(true)
+    if(!ctx.has<deploy>())
     {
-        if(create_compilation_job(ctx, "engine").get())
-        {
-            break;
-        }
+        create_compilation_job(ctx, "engine").get();
     }
 
     domain_ = std::make_unique<mono::mono_domain>("Ace.Engine");
@@ -148,24 +147,34 @@ void script_system::load_core_domain(rtti::context& ctx)
 
     cache_.update_manager_type = assembly.get_type("Ace.Core", "SystemManager");
 }
-void script_system::unload_core_domain()
+void script_system::unload_engine_domain()
 {
     cache_ = {};
     domain_.reset();
     mono::mono_domain::set_current_domain(nullptr);
 }
 
-void script_system::load_app_domain(rtti::context& ctx)
+void script_system::load_app_domain(rtti::context& ctx, bool recompile)
 {
-    if(!create_compilation_job(ctx, "app").get())
+    if(!ctx.has<deploy>() && recompile)
     {
-        // return false;
+        create_compilation_job(ctx, "app").get();
     }
 
     app_domain_ = std::make_unique<mono::mono_domain>("Ace.App");
     mono::mono_domain::set_current_domain(app_domain_.get());
 
     auto app_script_lib = fs::resolve_protocol(get_lib_compiled_key("app"));
+
+    auto& am = ctx.get<asset_manager>();
+    auto assets = am.get_assets<script>("app");
+
+
+    // assets include the empty asset
+    if(assets.size() <= 1)
+    {
+        return;
+    }
 
     try
     {
@@ -204,6 +213,8 @@ void script_system::on_destroy_component(entt::registry& r, const entt::entity e
 
 void script_system::on_play_begin(rtti::context& ctx)
 {
+    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+
     if(!app_domain_ || !domain_)
     {
         return;
@@ -211,21 +222,21 @@ void script_system::on_play_begin(rtti::context& ctx)
     try
     {
         {
-            std::vector<mono::mono_object> systems;
-            systems.reserve(app_cache_.scriptable_system_types.size());
+            scriptable_systems_.clear();
+            scriptable_systems_.reserve(app_cache_.scriptable_system_types.size());
             for(const auto& type : app_cache_.scriptable_system_types)
             {
                 auto obj = type.new_instance();
-                systems.emplace_back(obj);
+                scriptable_systems_.emplace_back(obj);
             }
 
-            for(const auto& obj : systems)
+            for(const auto& obj : scriptable_systems_)
             {
                 auto method = mono::make_method_invoker<void()>(obj, "internal_n2m_on_create");
                 method(obj);
             }
 
-            for(const auto& obj : systems)
+            for(const auto& obj : scriptable_systems_)
             {
                 auto method = mono::make_method_invoker<void()>(obj, "internal_n2m_on_start");
                 method(obj);
@@ -249,15 +260,28 @@ void script_system::on_play_begin(rtti::context& ctx)
     }
 }
 
-auto script_system::get_all_scriptable_components() const -> const std::vector<mono::mono_type>&
-{
-    return app_cache_.scriptable_component_types;
-}
-
 void script_system::on_play_end(rtti::context& ctx)
 {
-    unload_app_domain();
-    load_app_domain(ctx);
+    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+
+    try
+    {
+        for(const auto& obj : scriptable_systems_)
+        {
+            auto method = mono::make_method_invoker<void()>(obj, "internal_n2m_on_stop");
+            method(obj);
+        }
+
+        for(const auto& obj : scriptable_systems_)
+        {
+            auto method = mono::make_method_invoker<void()>(obj, "internal_n2m_on_destroy");
+            method(obj);
+        }
+    }
+    catch(const mono::mono_exception& e)
+    {
+        APPLOG_ERROR("{}", e.what());
+    }
 }
 
 void script_system::on_pause(rtti::context& ctx)
@@ -300,6 +324,11 @@ void script_system::on_frame_update(rtti::context& ctx, delta_t dt)
     }
 }
 
+auto script_system::get_all_scriptable_components() const -> const std::vector<mono::mono_type>&
+{
+    return app_cache_.scriptable_component_types;
+}
+
 void script_system::check_for_recompile(rtti::context& ctx, delta_t dt)
 {
     auto& ev = ctx.get<events>();
@@ -335,17 +364,14 @@ void script_system::check_for_recompile(rtti::context& ctx, delta_t dt)
                                   return;
                               }
 
-                              if(protocol == "app")
+                              bool result = f.get();
+                              if(result)
                               {
-                                  if(f.get())
-                                  {
-                                      unload_app_domain();
-                                      load_app_domain(ctx);
-                                  }
+                                  ev.on_script_recompile(ctx, protocol);
                               }
-                              ev.on_script_recompile(ctx, protocol);
                           });
             }
+
         }
     }
 }
@@ -365,6 +391,10 @@ auto script_system::create_compilation_job(rtti::context& ctx, const std::string
 }
 void script_system::set_needs_recompile(const std::string& protocol)
 {
+    if(!initted)
+    {
+        return;
+    }
     needs_recompile = true;
     std::lock_guard<std::mutex> lock(container_mutex);
     needs_to_recompile.emplace(protocol);

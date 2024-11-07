@@ -19,18 +19,17 @@ auto runner::init(rtti::context& ctx) -> bool
 
     ev.on_frame_update.connect(sentinel_, this, &runner::on_frame_update);
     ev.on_frame_render.connect(sentinel_, this, &runner::on_frame_render);
+    ev.on_play_begin.connect(sentinel_, -100000, this, &runner::on_play_begin);
+    ev.on_play_end.connect(sentinel_, 100000, this, &runner::on_play_end);
 
-    auto& am = ctx.get<asset_manager>();
     auto& s = ctx.get<settings>();
-
     auto scn = s.standalone.startup_scene;
     if(!scn)
     {
         APPLOG_CRITICAL("Failed to load initial scene {}", scn.id());
         return false;
     }
-    auto& ec = ctx.get<ecs>();
-    return ec.get_scene().load_from(scn);
+    return true;
 }
 
 auto runner::deinit(rtti::context& ctx) -> bool
@@ -66,5 +65,30 @@ void runner::on_frame_render(rtti::context& ctx, delta_t dt)
     auto& window = rend.get_main_window();
 
     path.render_scene(window->get_surface(), scene, dt);
+}
+
+void runner::on_play_begin(rtti::context& ctx)
+{
+    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+
+    auto& s = ctx.get<settings>();
+
+    auto scn = s.standalone.startup_scene;
+    if(!scn)
+    {
+        APPLOG_CRITICAL("Failed to load initial scene {}", scn.id());
+        return;
+    }
+    auto& ec = ctx.get<ecs>();
+    if(!ec.get_scene().load_from(scn))
+    {
+        return;
+    }
+}
+
+void runner::on_play_end(rtti::context& ctx)
+{
+    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+
 }
 } // namespace ace

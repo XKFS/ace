@@ -35,11 +35,11 @@ auto audio_system::init(rtti::context& ctx) -> bool
     auto& ev = ctx.get<events>();
     ev.on_frame_update.connect(sentinel_, this, &audio_system::on_frame_update);
 
-    ev.on_play_begin.connect(sentinel_, -100, this, &audio_system::on_play_begin);
-    ev.on_play_end.connect(sentinel_, 100, this, &audio_system::on_play_end);
-    ev.on_pause.connect(sentinel_, -100, this, &audio_system::on_pause);
-    ev.on_resume.connect(sentinel_, 100, this, &audio_system::on_resume);
-    ev.on_skip_next_frame.connect(sentinel_, -100, this, &audio_system::on_skip_next_frame);
+    ev.on_play_begin.connect(sentinel_, 10, this, &audio_system::on_play_begin);
+    ev.on_play_end.connect(sentinel_, -10, this, &audio_system::on_play_end);
+    ev.on_pause.connect(sentinel_, 10, this, &audio_system::on_pause);
+    ev.on_resume.connect(sentinel_, -10, this, &audio_system::on_resume);
+    ev.on_skip_next_frame.connect(sentinel_, -10, this, &audio_system::on_skip_next_frame);
 
     audio::set_info_logger(
         [](const std::string& s)
@@ -72,6 +72,8 @@ auto audio_system::deinit(rtti::context& ctx) -> bool
 
 void audio_system::on_play_begin(rtti::context& ctx)
 {
+    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+
     auto& ec = ctx.get<ecs>();
     auto& scn = ec.get_scene();
     auto& registry = *scn.registry;
@@ -88,6 +90,8 @@ void audio_system::on_play_begin(rtti::context& ctx)
 
 void audio_system::on_play_end(rtti::context& ctx)
 {
+    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+
     auto& ec = ctx.get<ecs>();
     auto& scn = ec.get_scene();
     auto& registry = *scn.registry;

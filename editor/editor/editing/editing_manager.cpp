@@ -1,40 +1,29 @@
 #include "editing_manager.h"
 #include <engine/ecs/ecs.h>
 #include <engine/events.h>
+#include <engine/meta/ecs/entity.hpp>
+#include <engine/scripting/ecs/systems/script_system.h>
 #include <imgui_widgets/gizmo.h>
 
 namespace ace
 {
-namespace
-{
-
-auto get_cached_scene() -> std::unique_ptr<scene>&
-{
-    static std::unique_ptr<scene> scn;
-    return scn;
-}
-} // namespace
 
 auto editing_manager::init(rtti::context& ctx) -> bool
 {
     auto& ev = ctx.get<events>();
 
-    ev.on_play_begin.connect(sentinel_, this, &editing_manager::on_play_begin);
+    ev.on_play_begin.connect(sentinel_, 1000, this, &editing_manager::on_play_begin);
 
-    ev.on_play_end.connect(sentinel_, this, &editing_manager::on_play_end);
-    ev.on_frame_update.connect(sentinel_, this, &editing_manager::on_frame_update);
+    ev.on_play_end.connect(sentinel_, -1000, this, &editing_manager::on_play_end);
+    ev.on_frame_update.connect(sentinel_, 1000, this, &editing_manager::on_frame_update);
+    ev.on_script_recompile.connect(sentinel_, 1000, this, &editing_manager::on_script_recompile);
 
     return true;
 }
 
 auto editing_manager::deinit(rtti::context& ctx) -> bool
 {
-    auto& cached_scene = get_cached_scene();
-    if(cached_scene)
-    {
-        cached_scene->unload();
-        cached_scene.reset();
-    }
+    scene_cache_ = {};
 
     unselect();
     unfocus();
@@ -43,31 +32,71 @@ auto editing_manager::deinit(rtti::context& ctx) -> bool
 
 void editing_manager::on_play_begin(rtti::context& ctx)
 {
-    auto& ec = ctx.get<ecs>();
-    auto& scn = ec.get_scene();
-
-    auto& cached_scene = get_cached_scene();
-    cached_scene = std::make_unique<scene>();
-    scene::clone_scene(scn, *cached_scene);
+    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
 
     unselect();
     unfocus();
+
+    save_checkpoint(ctx);
+    auto& scripting = ctx.get<script_system>();
+    scripting.unload_app_domain();
+    scripting.load_app_domain(ctx, false);
+    load_checkpoint(ctx);
+
 }
 
 void editing_manager::on_play_end(rtti::context& ctx)
 {
-    auto& ec = ctx.get<ecs>();
-    auto& scn = ec.get_scene();
+    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
 
-    auto& cached_scene = get_cached_scene();
-    scene::clone_scene(*cached_scene, scn);
-
-    cached_scene->unload();
-    cached_scene.reset();
 
     unselect();
     unfocus();
+
+    auto& scripting = ctx.get<script_system>();
+    scripting.unload_app_domain();
+    scripting.load_app_domain(ctx, true);
+    load_checkpoint(ctx);
 }
+
+void editing_manager::on_script_recompile(rtti::context& ctx, const std::string& protocol)
+{
+    if(protocol != "app")
+    {
+        return;
+    }
+
+
+    save_checkpoint(ctx);
+    auto& scripting = ctx.get<script_system>();
+    scripting.unload_app_domain();
+    scripting.load_app_domain(ctx, true);
+    load_checkpoint(ctx);
+}
+
+
+void editing_manager::save_checkpoint(rtti::context& ctx)
+{
+    auto& ec = ctx.get<ecs>();
+    auto& scn = ec.get_scene();
+
+    scene_cache_ = {};
+    // first save scene
+    save_to_stream(scene_cache_, scn);
+}
+
+void editing_manager::load_checkpoint(rtti::context& ctx)
+{
+    auto& ec = ctx.get<ecs>();
+    auto& scn = ec.get_scene();
+
+    // clear scene
+    scn.unload();
+
+    // recover scene with the new domain
+    load_from_stream(scene_cache_, scn);
+}
+
 void editing_manager::on_frame_update(rtti::context& ctx, delta_t)
 {
     if(focused_data.frames > 0)
@@ -96,7 +125,6 @@ void editing_manager::focus_path(const fs::path& object)
 {
     focused_data.focus_path = object;
 }
-
 
 void editing_manager::unselect()
 {

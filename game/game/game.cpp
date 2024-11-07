@@ -28,6 +28,8 @@ RTTR_REGISTRATION
 
 auto game::create(rtti::context& ctx, cmd_line::parser& parser) -> bool
 {
+    ctx.add<deploy>();
+
     if(!engine::create(ctx, parser))
     {
         return false;
@@ -155,7 +157,9 @@ auto game::destroy() -> bool
 {
     auto& ctx = engine::context();
 
+    ctx.remove<settings>();
     ctx.remove<runner>();
+    ctx.remove<deploy>();
 
     return engine::destroy();
 }

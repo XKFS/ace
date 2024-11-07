@@ -28,3 +28,19 @@ cd build
 cmake ..
 
 ```
+## LIBRARIES
+bgfx - https://github.com/bkaradzic/bgfx
+
+cereal - https://github.com/USCiLab/cereal
+
+rttr - https://github.com/rttrorg/rttr
+
+spdlog - https://github.com/gabime/spdlog
+
+imgui - https://github.com/ocornut/imgui
+
+assimp - https://github.com/assimp/assimp
+
+glm - https://github.com/g-truc/glm
+
+openal-soft = https://github.com/kcat/openal-soft

@@ -123,6 +123,7 @@ auto script_system::deinit(rtti::context& ctx) -> bool
 {
     APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
 
+    unload_app_domain();
     unload_engine_domain();
 
     mono::shutdown();
@@ -154,11 +155,13 @@ void script_system::unload_engine_domain()
     mono::mono_domain::set_current_domain(nullptr);
 }
 
-void script_system::load_app_domain(rtti::context& ctx, bool recompile)
+auto script_system::load_app_domain(rtti::context& ctx, bool recompile) -> bool
 {
+    bool result = true;
+
     if(!ctx.has<deploy>() && recompile)
     {
-        create_compilation_job(ctx, "app").get();
+        result &= create_compilation_job(ctx, "app").get();
     }
 
     app_domain_ = std::make_unique<mono::mono_domain>("Ace.App");
@@ -166,15 +169,18 @@ void script_system::load_app_domain(rtti::context& ctx, bool recompile)
 
     auto app_script_lib = fs::resolve_protocol(get_lib_compiled_key("app"));
 
-    auto& am = ctx.get<asset_manager>();
-    auto assets = am.get_assets<script>("app");
 
-
-    // assets include the empty asset
-    if(assets.size() <= 1)
+    if(!ctx.has<deploy>())
     {
-        return;
+        auto& am = ctx.get<asset_manager>();
+        auto assets = am.get_assets<script>("app");
+        // assets include the empty asset
+        if(assets.size() <= 1)
+        {
+            return result;
+        }
     }
+
 
     try
     {
@@ -193,7 +199,10 @@ void script_system::load_app_domain(rtti::context& ctx, bool recompile)
     catch(const mono::mono_exception& e)
     {
         APPLOG_ERROR("{}", e.what());
+        result = false;
     }
+
+    return result;
 }
 void script_system::unload_app_domain()
 {

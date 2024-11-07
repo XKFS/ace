@@ -25,7 +25,7 @@ struct script_system
     void load_engine_domain(rtti::context& ctx);
     void unload_engine_domain();
 
-    void load_app_domain(rtti::context& ctx, bool recompile);
+    auto load_app_domain(rtti::context& ctx, bool recompile) -> bool;
     void unload_app_domain();
 
     auto get_all_scriptable_components() const -> const std::vector<mono::mono_type>&;

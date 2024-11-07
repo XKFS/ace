@@ -6,7 +6,7 @@
 #include <engine/meta/settings/settings.hpp>
 #include <engine/assets/asset_manager.h>
 #include <engine/meta/assets/asset_database.hpp>
-
+#include <engine/scripting/ecs/systems/script_system.h>
 #include "runner/runner.h"
 
 #include <filesystem/filesystem.h>
@@ -74,6 +74,12 @@ auto game::init(const cmd_line::parser& parser) -> bool
     }
 
     if(!ctx.get<runner>().init(ctx))
+    {
+        return false;
+    }
+
+    auto& scr = ctx.get<script_system>();
+    if(!scr.load_app_domain(ctx, true))
     {
         return false;
     }

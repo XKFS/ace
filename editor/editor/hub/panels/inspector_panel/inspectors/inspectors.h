@@ -13,7 +13,6 @@ struct inspector_registry
 };
 
 auto get_meta_empty(const rttr::variant& other) -> rttr::variant;
-auto inspect_property(rttr::instance& object, const rttr::property& prop) -> inspect_result;
 auto inspect_var(rtti::context& ctx,
                  rttr::variant& var,
                  const var_info& info = {},

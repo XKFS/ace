@@ -18,8 +18,11 @@ struct events
     hpp::event<void(rtti::context&, delta_t)> on_frame_end;
 
     /// engine play events
+    hpp::event<void(rtti::context&)> on_play_before_begin;
     hpp::event<void(rtti::context&)> on_play_begin;
     hpp::event<void(rtti::context&)> on_play_end;
+    hpp::event<void(rtti::context&)> on_play_after_end;
+
 
     hpp::event<void(rtti::context&)> on_pause;
     hpp::event<void(rtti::context&)> on_resume;

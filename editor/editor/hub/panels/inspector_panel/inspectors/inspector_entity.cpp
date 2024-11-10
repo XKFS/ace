@@ -197,8 +197,8 @@ auto inspector_entity::inspect(rtti::context& ctx,
             inspect_callbacks callbacks;
             callbacks.on_inspect = [&]() -> inspect_result
             {
-                auto& obj = static_cast<mono::mono_object&>(script.scoped->object);
-                return ::ace::inspect(ctx, obj);
+                rttr::variant obj = static_cast<mono::mono_object&>(script.scoped->object);
+                return ::ace::inspect_var(ctx, obj);
             };
 
             callbacks.on_add = [&]()

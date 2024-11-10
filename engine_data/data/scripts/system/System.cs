@@ -55,6 +55,11 @@ public abstract class ScriptSystem
     {
         OnStart();
     }
+
+    private void internal_n2m_on_destroy()
+    {
+        OnDestroy();
+    }
 }
 
 

@@ -11,8 +11,9 @@
 
 #include <engine/scripting/ecs/components/script_component.h>
 
-#include <engine/ecs/components/transform_component.h>
+#include <engine/assets/asset_manager.h>
 #include <engine/ecs/components/id_component.h>
+#include <engine/ecs/components/transform_component.h>
 
 #include <filesystem/filesystem.h>
 #include <logging/logging.h>
@@ -99,6 +100,15 @@ auto get_entity_from_id(uint32_t id) -> entt::handle
     return ec.get_scene().create_entity(entt::entity(id));
 }
 
+void internal_m2n_load_scene(const std::string& key)
+{
+    auto& ctx = engine::context();
+    auto& ec = ctx.get<ecs>();
+
+    auto& am = ctx.get<asset_manager>();
+    ec.get_scene().load_from(am.get_asset<scene_prefab>(key));
+}
+
 void internal_m2n_create_scene(const mono::mono_object& this_ptr)
 {
     mono::ignore(this_ptr);
@@ -156,7 +166,8 @@ auto internal_m2n_find_entity_by_tag(const std::string& tag) -> uint32_t
     return static_cast<uint32_t>(invalid.entity());
 }
 
-auto internal_add_native_component(const mono::mono_type& type, entt::handle e, script_component& script_comp) -> mono::mono_object
+auto internal_add_native_component(const mono::mono_type& type, entt::handle e, script_component& script_comp)
+    -> mono::mono_object
 {
     bool add = false;
     if(type.get_name() == "TransformComponent")
@@ -179,7 +190,8 @@ auto internal_add_native_component(const mono::mono_type& type, entt::handle e, 
     return {};
 }
 
-auto internal_get_native_component(const mono::mono_type& type, entt::handle e, script_component& script_comp) -> mono::mono_object
+auto internal_get_native_component(const mono::mono_type& type, entt::handle e, script_component& script_comp)
+    -> mono::mono_object
 {
     bool native = false;
     bool has = false;
@@ -188,7 +200,6 @@ auto internal_get_native_component(const mono::mono_type& type, entt::handle e, 
         has = e.all_of<transform_component>();
         native = true;
     }
-
 
     if(native)
     {
@@ -208,7 +219,8 @@ auto internal_get_native_component(const mono::mono_type& type, entt::handle e, 
     return {};
 }
 
-auto internal_remove_native_component(const mono::mono_object& obj, entt::handle e, script_component& script_comp) -> bool
+auto internal_remove_native_component(const mono::mono_object& obj, entt::handle e, script_component& script_comp)
+    -> bool
 {
     if(obj.get_type().get_name() == "TransformComponent")
     {
@@ -218,7 +230,6 @@ auto internal_remove_native_component(const mono::mono_object& obj, entt::handle
 
     return false;
 }
-
 
 auto internal_m2n_add_component(uint32_t id, const mono::mono_type& type) -> mono::mono_object
 {
@@ -238,7 +249,6 @@ auto internal_m2n_get_component(uint32_t id, const mono::mono_type& type) -> mon
 {
     auto e = get_entity_from_id(id);
     auto& script_comp = e.get_or_emplace<script_component>();
-
 
     if(auto native_comp = internal_get_native_component(type, e, script_comp))
     {
@@ -299,7 +309,6 @@ void internal_m2n_log_error(const std::string& message, const std::string& func,
     APPLOG_ERROR_LOC(file.c_str(), line, func.c_str(), message);
 }
 
-
 //--------------------------------------------
 auto internal_m2n_get_position_global(uint32_t id) -> math::vec3
 {
@@ -348,7 +357,6 @@ void internal_m2n_set_position_local(uint32_t id, const math::vec3& value)
     auto& transform_comp = e.get<transform_component>();
     transform_comp.set_position_local(value);
 }
-
 
 //--------------------------------------------------
 auto internal_m2n_get_rotation_euler_global(uint32_t id) -> math::vec3
@@ -508,6 +516,7 @@ auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
     mono::add_internal_call("Ace.Core.Log::internal_m2n_log_warning", internal_call(internal_m2n_log_warning));
     mono::add_internal_call("Ace.Core.Log::internal_m2n_log_error", internal_call(internal_m2n_log_error));
 
+    mono::add_internal_call("Ace.Core.Scene::internal_m2n_load_scene", internal_call(internal_m2n_load_scene));
     mono::add_internal_call("Ace.Core.Scene::internal_m2n_create_scene", internal_call(internal_m2n_create_scene));
     mono::add_internal_call("Ace.Core.Scene::internal_m2n_destroy_scene", internal_call(internal_m2n_destroy_scene));
     mono::add_internal_call("Ace.Core.Scene::internal_m2n_create_entity", internal_call(internal_m2n_create_entity));
@@ -531,7 +540,6 @@ auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
                             internal_call(internal_m2n_get_position_local));
     mono::add_internal_call("Ace.Core.TransformComponent::internal_m2n_set_position_local",
                             internal_call(internal_m2n_set_position_local));
-
 
     mono::add_internal_call("Ace.Core.TransformComponent::internal_m2n_get_rotation_euler_global",
                             internal_call(internal_m2n_get_rotation_euler_global));
@@ -563,7 +571,5 @@ auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
 
     return true;
 }
-
-
 
 } // namespace ace

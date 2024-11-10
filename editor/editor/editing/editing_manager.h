@@ -46,8 +46,8 @@ struct editing_manager
     auto init(rtti::context& ctx) -> bool;
     auto deinit(rtti::context& ctx) -> bool;
 
-    void on_play_begin(rtti::context& ctx);
-    void on_play_end(rtti::context& ctx);
+    void on_play_before_begin(rtti::context& ctx);
+    void on_play_after_end(rtti::context& ctx);
     void on_frame_update(rtti::context& ctx, delta_t);
 
     //-----------------------------------------------------------------------------
@@ -146,6 +146,7 @@ private:
     std::shared_ptr<int> sentinel_ = std::make_shared<int>(0);
 
     std::stringstream scene_cache_;
+    asset_handle<scene_prefab> scene_cache_source_;
 
 };
 } // namespace ace

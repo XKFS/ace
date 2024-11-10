@@ -70,8 +70,8 @@ scene::scene()
     registry->on_construct<physics_component>().connect<&physics_system::on_create_component>();
     registry->on_destroy<physics_component>().connect<&physics_system::on_destroy_component>();
 
-    registry->on_construct<script_component>().connect<&script_system::on_create_component>();
-    registry->on_destroy<script_component>().connect<&script_system::on_destroy_component>();
+    registry->on_construct<script_component>().connect<&script_component::on_create_component>();
+    registry->on_destroy<script_component>().connect<&script_component::on_destroy_component>();
 }
 
 scene::~scene()

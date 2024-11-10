@@ -571,11 +571,25 @@ void hierarchy_panel::on_frame_ui_render(rtti::context& ctx, const char* name)
         {
             check_context_menu(gctx, {});
 
-            gctx.ec.get_scene().registry->view<transform_component, root_component>().each(
-                [&](auto e, auto&& comp, auto&& tag)
-                {
-                    draw_entity(gctx, comp.get_owner());
-                });
+            auto& scene = gctx.ec.get_scene();
+
+            std::string name = fs::path(scene.source.id()).stem().string();
+
+            if(name.empty())
+            {
+                name = "Unnamed";
+            }
+            ImGui::SetNextItemOpen(true, ImGuiCond_Appearing);
+            if(ImGui::CollapsingHeader(name.c_str()))
+            {
+                scene.registry->view<transform_component, root_component>().each(
+                    [&](auto e, auto&& comp, auto&& tag)
+                    {
+                        draw_entity(gctx, comp.get_owner());
+                    });
+            }
+
+
         }
         ImGui::EndChild();
         check_drag(gctx, {});

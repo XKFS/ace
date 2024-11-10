@@ -8,6 +8,7 @@
 #include <filesystem/filesystem.h>
 #include <monort/monort.h>
 #include <monopp/mono_method_invoker.h>
+#include <monopp/mono_jit.h>
 
 namespace ace
 {
@@ -18,7 +19,7 @@ struct script_system
     static auto get_lib_name(const std::string& protocol) -> std::string;
     static auto get_lib_data_key(const std::string& protocol) -> std::string;
     static auto get_lib_compiled_key(const std::string& protocol) -> std::string;
-
+    static auto find_mono(const rtti::context& ctx) -> mono::compiler_paths;
     auto init(rtti::context& ctx) -> bool;
     auto deinit(rtti::context& ctx) -> bool;
 
@@ -30,6 +31,8 @@ struct script_system
 
     auto get_all_scriptable_components() const -> const std::vector<mono::mono_type>&;
 
+    auto is_create_called() const -> bool;
+    auto is_start_called() const -> bool;
     /**
      * @brief Called when a physics component is created.
      * @param r The registry containing the component.
@@ -117,5 +120,17 @@ private:
 
 
     std::vector<mono::mono_object> scriptable_systems_;
+
+    enum class call_progress
+    {
+        not_called,
+        started,
+        finished
+    };
+
+
+
+    call_progress create_call_{call_progress::not_called};
+    call_progress start_call_{call_progress::not_called};
 };
 } // namespace ace

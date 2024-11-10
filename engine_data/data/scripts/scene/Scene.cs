@@ -17,6 +17,11 @@ public class Scene
 	{
 		internal_m2n_destroy_scene();
 	}
+
+	public static void LoadScene(string key)
+	{
+		internal_m2n_load_scene(key);
+	}
 	
 	public static Entity CreateEntity(string tag = "Unnamed")
 	{
@@ -44,7 +49,8 @@ public class Scene
 		unsafe { return new Entity(internal_m2n_find_entity_by_tag(tag)); }
 	}
 
-
+	[MethodImpl(MethodImplOptions.InternalCall)] 
+	private static extern void internal_m2n_load_scene(string key);
 
 	[MethodImpl(MethodImplOptions.InternalCall)] 
 	private extern void internal_m2n_create_scene();

@@ -14,23 +14,28 @@ void events::set_play_mode(rtti::context& ctx, bool play)
         return;
     }
 
-    is_playing = play;
 
-    if(!is_playing)
+    if(play)
+    {
+        on_play_before_begin(ctx);
+
+        is_playing = play;
+
+        on_play_begin(ctx);
+    }
+    else
     {
         if(is_paused)
         {
             set_paused(ctx, false);
         }
-    }
 
-    if(is_playing)
-    {
-        on_play_begin(ctx);
-    }
-    else
-    {
         on_play_end(ctx);
+
+        is_playing = play;
+
+        on_play_after_end(ctx);
+
     }
 }
 

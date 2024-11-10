@@ -856,7 +856,7 @@ auto editor_actions::deploy_project(rtti::context& ctx, const deploy_settings& p
                         APPLOG_TRACE("Copying {} -> {}", app_executable.string(), params.deploy_location.string());
                         fs::copy(app_executable, params.deploy_location, fs::copy_options::overwrite_existing, ec);
 
-                        APPLOG_INFO("Deploying Dependencies - Done...");
+                        APPLOG_INFO("Deploying Dependencies - Done");
                     })
                 .share();
         jobs["Deploying Dependencies"] = job;
@@ -882,7 +882,7 @@ auto editor_actions::deploy_project(rtti::context& ctx, const deploy_settings& p
                                APPLOG_TRACE("Copying {} -> {}", data.string(), dst.string());
                                fs::copy(data, dst, fs::copy_options::recursive, ec);
 
-                               APPLOG_INFO("Deploying Project Settings - Done...");
+                               APPLOG_INFO("Deploying Project Settings - Done");
                            })
                        .share();
 
@@ -916,7 +916,7 @@ auto editor_actions::deploy_project(rtti::context& ctx, const deploy_settings& p
                                    am.save_database("app:/", cached_data);
                                }
 
-                               APPLOG_INFO("Deploying Project Data - Done...");
+                               APPLOG_INFO("Deploying Project Data - Done");
                            })
                        .share();
 
@@ -950,10 +950,51 @@ auto editor_actions::deploy_project(rtti::context& ctx, const deploy_settings& p
                                    am.save_database("engine:/", cached_data);
                                }
 
-                               APPLOG_INFO("Deploying Engine Data - Done...");
+                               APPLOG_INFO("Deploying Engine Data - Done");
                            })
                        .share();
         jobs["Deploying Engine Data..."] = job;
+        jobs_seq.emplace_back(job);
+    }
+
+    {
+        auto job = th.pool
+                       ->schedule(
+                           [params, &am, &ctx]()
+                           {
+                               APPLOG_INFO("Deploying Mono...");
+
+                               auto paths = script_system::find_mono(ctx);
+
+                               fs::error_code ec;
+                               fs::path assembly_dir = paths.assembly_dir;
+                               {
+                                   fs::path cached_data = params.deploy_location / "data" / "engine" / "mono" / "lib";
+
+                                   APPLOG_TRACE("Clearing {}", cached_data.string());
+                                   fs::remove_all(cached_data, ec);
+                                   fs::create_directories(cached_data, ec);
+
+                                   APPLOG_TRACE("Copying {} -> {}", assembly_dir.string(), cached_data.string());
+                                   fs::copy(assembly_dir, cached_data, fs::copy_options::recursive, ec);
+                               }
+
+                               fs::path config_dir = paths.config_dir;
+                               {
+                                   fs::path cached_data = params.deploy_location / "data" / "engine" / "mono" / "etc";
+
+                                   APPLOG_TRACE("Clearing {}", cached_data.string());
+                                   fs::remove_all(cached_data, ec);
+                                   fs::create_directories(cached_data, ec);
+
+                                   APPLOG_TRACE("Copying {} -> {}", config_dir.string(), cached_data.string());
+                                   fs::copy(config_dir, cached_data, fs::copy_options::recursive, ec);
+                               }
+
+                               APPLOG_INFO("Deploying Mono - Done");
+                           })
+                       .share();
+        jobs["Deploying Mono..."] = job;
         jobs_seq.emplace_back(job);
     }
 

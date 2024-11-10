@@ -41,8 +41,13 @@ public:
     static void on_destroy_component(entt::registry& r, const entt::entity e);
 
     void process_pending_deletions();
+    void process_pending_creates();
+    void process_pending_starts();
 
     auto add_script_component(const mono::mono_type& type) -> script_object;
+    auto add_script_component(const mono::mono_object& obj) -> script_object;
+    auto add_script_component(const script_object& obj) -> script_object;
+
     auto add_native_component(const mono::mono_type& type) -> script_object;
 
     auto remove_script_component(const mono::mono_object& obj) -> bool;
@@ -53,8 +58,24 @@ public:
 
     auto get_script_components() const -> const script_components_t&;
 
+
+    void create();
+    void start();
+    void destroy();
+
 private:
+
+
+    void create(const mono::mono_object& obj);
+    void start(const mono::mono_object& obj);
+    void destroy(const mono::mono_object& obj);
+    void set_entity(const mono::mono_object& obj, entt::handle e);
+
+
     script_components_t script_components_;
+    script_components_t script_components_to_create_;
+    script_components_t script_components_to_start_;
+
     script_components_t native_components_;
 };
 

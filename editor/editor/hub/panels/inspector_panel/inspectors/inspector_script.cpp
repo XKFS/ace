@@ -1,5 +1,4 @@
 #include "inspector_script.h"
-#include "imgui/imgui.h"
 #include "inspectors.h"
 
 #include <monopp/mono_field_invoker.h>
@@ -57,7 +56,7 @@ inspect_result inspect_mono_property(rtti::context& ctx,
     rttr::variant var = val;
 
 
-    ImGui::PushReadonly(prop_info.is_property);
+    ImGui::PushReadonly(prop_info.read_only);
 
 
     {

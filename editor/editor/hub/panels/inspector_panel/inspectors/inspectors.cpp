@@ -141,9 +141,13 @@ auto inspect_var_properties(rtti::context& ctx,
     }
     else
     {
+        size_t i = 0;
         for(auto& prop : properties)
         {
+            ImGui::PushID(i);
             result |= inspect_property(ctx, object, prop);
+            ImGui::PopID();
+            i++;
         }
     }
 

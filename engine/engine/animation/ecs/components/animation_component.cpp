@@ -352,11 +352,12 @@ void animation_player::stop()
     target_layer_.state.elapsed = seconds_t(0);
 }
 
-void animation_player::update(seconds_t delta_time, const update_callback_t& set_transform_callback, bool force)
+auto animation_player::update_time(seconds_t delta_time, bool force)
+    -> bool
 {
     if((!current_layer_.is_valid() && !target_layer_.is_valid()) || (!force && !is_playing()))
     {
-        return;
+        return false;
     }
 
     // Update times
@@ -365,7 +366,6 @@ void animation_player::update(seconds_t delta_time, const update_callback_t& set
         update_state(delta_time, current_layer_.state);
 
         update_state(delta_time, target_layer_.state);
-
 
         // update overtime parameters
         hpp::visit(hpp::overload(
@@ -378,8 +378,13 @@ void animation_player::update(seconds_t delta_time, const update_callback_t& set
 
                        }),
                    blend_state_.state);
+        return true;
     }
+    return false;
+}
 
+void animation_player::update_poses(const update_callback_t& set_transform_callback)
+{
     // Update current layer
     update_pose(current_layer_);
 
@@ -460,7 +465,7 @@ auto animation_player::update_pose(animation_layer& layer) -> bool
     return false;
 }
 
-void animation_player::update_state(seconds_t delta_time,animation_state& state)
+void animation_player::update_state(seconds_t delta_time, animation_state& state)
 {
     if(state.clip)
     {
@@ -468,8 +473,7 @@ void animation_player::update_state(seconds_t delta_time,animation_state& state)
         auto target_anim = state.clip.get();
         if(state.elapsed > target_anim->duration)
         {
-            state.elapsed =
-                seconds_t(std::fmod(state.elapsed.count(), target_anim->duration.count()));
+            state.elapsed = seconds_t(std::fmod(state.elapsed.count(), target_anim->duration.count()));
         }
     }
 }

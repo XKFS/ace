@@ -153,7 +153,9 @@ public:
      * @param delta_time The time to advance the animation by.
      * @param set_transform_callback The callback function to set the transform of a node.
      */
-    void update(seconds_t delta_time, const update_callback_t& set_transform_callback, bool force = false);
+    auto update_time(seconds_t delta_time, bool force = false) -> bool;
+    void update_poses(const update_callback_t& set_transform_callback);
+
 
     /**
      * @brief Returns whether the animation is currently playing.

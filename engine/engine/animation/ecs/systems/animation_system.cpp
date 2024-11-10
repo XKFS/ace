@@ -147,27 +147,34 @@ void animation_system::on_update(scene& scn, delta_t dt, bool force)
                       auto& animation_comp = view.get<animation_component>(entity);
                       auto& model_comp = view.get<model_component>(entity);
 
+                      bool should_update_poses = true;
                       if(animation_comp.get_culling_mode() == animation_component::culling_mode::renderer_based)
                       {
-                          return;
+                          if(!model_comp.was_used_last_frame())
+                          {
+                              should_update_poses = false;
+                          }
                       }
 
                       auto& player = animation_comp.get_player();
 
                       player.blend_to(animation_comp.get_animation());
 
-                      player.update(
-                          dt,
-                          [&](/*const std::string& node_id, */ size_t node_index, const math::transform& transform)
-                          {
-                              auto armature = model_comp.get_armature_by_index(node_index);
-                              if(armature)
+                      bool updated = player.update_time(dt, force);
+
+                      if(updated && should_update_poses)
+                      {
+                          player.update_poses(
+                              [&](/*const std::string& node_id, */ size_t node_index, const math::transform& transform)
                               {
-                                  auto& armature_transform_comp = armature.template get<transform_component>();
-                                  armature_transform_comp.set_transform_local(transform);
-                              }
-                          },
-                          force);
+                                  auto armature = model_comp.get_armature_by_index(node_index);
+                                  if(armature)
+                                  {
+                                      auto& armature_transform_comp = armature.template get<transform_component>();
+                                      armature_transform_comp.set_transform_local(transform);
+                                  }
+                              });
+                      }
                   });
 }
 

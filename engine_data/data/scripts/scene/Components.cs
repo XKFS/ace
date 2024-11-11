@@ -27,7 +27,7 @@ public class TransformComponent : Component
     //
     // Summary:
     //     The world space position of the Transform.
-    public Vector3 globalPosition
+    public Vector3 positionGlobal
     {
         get
         {
@@ -42,7 +42,7 @@ public class TransformComponent : Component
     //
     // Summary:
     //     Position of the transform relative to the parent transform.
-    public Vector3 localPosition
+    public Vector3 positionLocal
     {
         get
         {
@@ -55,7 +55,7 @@ public class TransformComponent : Component
     }
 
 
-    public Vector3 globalRotationEuler
+    public Vector3 rotationEulerGlobal
     {
         get
         {
@@ -70,7 +70,7 @@ public class TransformComponent : Component
     //
     // Summary:
     //     Position of the transform relative to the parent transform.
-    public Vector3 localRotationEuler
+    public Vector3 rotationEulerLocal
     {
         get
         {
@@ -83,7 +83,34 @@ public class TransformComponent : Component
     }
 
 
-    public Vector3 globalScale
+    public Quaternion rotationGlobal
+    {
+        get
+        {
+            return internal_m2n_get_rotation_global(owner.Id);
+        }
+        set
+        {
+            internal_m2n_set_rotation_global(owner.Id, ref value);
+        }
+    }
+
+    //
+    // Summary:
+    //     Position of the transform relative to the parent transform.
+    public Quaternion rotationLocal
+    {
+        get
+        {
+            return internal_m2n_get_rotation_local(owner.Id);
+        }
+        set
+        {
+            internal_m2n_set_rotation_local(owner.Id, ref value);
+        }
+    }
+
+    public Vector3 scaleGlobal
     {
         get
         {
@@ -98,7 +125,7 @@ public class TransformComponent : Component
     //
     // Summary:
     //     Position of the transform relative to the parent transform.
-    public Vector3 localScale
+    public Vector3 scaleLocal
     {
         get
         {
@@ -110,7 +137,7 @@ public class TransformComponent : Component
         }
     }
 
-    public Vector3 globalSkew
+    public Vector3 skewGlobal
     {
         get
         {
@@ -125,7 +152,7 @@ public class TransformComponent : Component
     //
     // Summary:
     //     Position of the transform relative to the parent transform.
-    public Vector3 localSkew
+    public Vector3 skewLocal
     {
         get
         {
@@ -163,6 +190,19 @@ public class TransformComponent : Component
 
     [MethodImpl(MethodImplOptions.InternalCall)]
     private static extern void internal_m2n_set_rotation_euler_local(uint eid, ref Vector3 value);
+
+    
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    private static extern Quaternion internal_m2n_get_rotation_global(uint eid);
+
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    private static extern void internal_m2n_set_rotation_global(uint eid, ref Quaternion value);
+
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    private static extern Quaternion internal_m2n_get_rotation_local(uint eid);
+
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    private static extern void internal_m2n_set_rotation_local(uint eid, ref Quaternion value);
 
 
 

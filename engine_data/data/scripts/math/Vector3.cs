@@ -252,60 +252,15 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable
     //   t:
     public static Vector3 Slerp(Vector3 a, Vector3 b, float t)
     {
-        Slerp_Injected(ref a, ref b, t, out var ret);
-        return ret;
+        return internal_m2n_slerp(ref a, ref b, t);
     }
 
-    //
-    // Summary:
-    //     Spherically interpolates between two vectors.
-    //
-    // Parameters:
-    //   a:
-    //
-    //   b:
-    //
-    //   t:
-    public static Vector3 SlerpUnclamped(Vector3 a, Vector3 b, float t)
+    public static Vector3 SlerpClamped(Vector3 a, Vector3 b, float t)
     {
-        SlerpUnclamped_Injected(ref a, ref b, t, out var ret);
-        return ret;
+        t = Mathf.Clamp01(t);
+        return internal_m2n_slerp(ref a, ref b, t);
     }
 
-    public static void OrthoNormalize(ref Vector3 normal, ref Vector3 tangent)
-    {
-        OrthoNormalize_2_Injected(ref normal, ref tangent);
-    }
-
-    public static void OrthoNormalize(ref Vector3 normal, ref Vector3 tangent, ref Vector3 binormal)
-    {
-        OrthoNormalize_3_Injected(ref normal, ref tangent, ref binormal);
-    }
-
-    //
-    // Summary:
-    //     Rotates a vector current towards target.
-    //
-    // Parameters:
-    //   current:
-    //     The vector being managed.
-    //
-    //   target:
-    //     The vector.
-    //
-    //   maxRadiansDelta:
-    //     The maximum angle in radians allowed for this rotation.
-    //
-    //   maxMagnitudeDelta:
-    //     The maximum allowed change in vector magnitude for this rotation.
-    //
-    // Returns:
-    //     The location that RotateTowards generates.
-    public static Vector3 RotateTowards(Vector3 current, Vector3 target, float maxRadiansDelta, float maxMagnitudeDelta)
-    {
-        RotateTowards_Injected(ref current, ref target, maxRadiansDelta, maxMagnitudeDelta, out var ret);
-        return ret;
-    }
 
     //
     // Summary:
@@ -913,19 +868,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable
 
     
     [MethodImpl(MethodImplOptions.InternalCall)]
-    private static extern void OrthoNormalize_2_Injected(ref Vector3 a, ref Vector3 b);
+    private static extern Vector3 internal_m2n_slerp(ref Vector3 a, ref Vector3 b, float t);
 
-
-    [MethodImpl(MethodImplOptions.InternalCall)]
-    private static extern void OrthoNormalize_3_Injected(ref Vector3 a, ref Vector3 b, ref Vector3 c);
-
-    [MethodImpl(MethodImplOptions.InternalCall)]
-    private static extern void Slerp_Injected(ref Vector3 a, ref Vector3 b, float t, out Vector3 ret);
-
-    [MethodImpl(MethodImplOptions.InternalCall)]
-    private static extern void SlerpUnclamped_Injected(ref Vector3 a, ref Vector3 b, float t, out Vector3 ret);
-
-    [MethodImpl(MethodImplOptions.InternalCall)]
-    private static extern void RotateTowards_Injected(ref Vector3 current, ref Vector3 target, float maxRadiansDelta, float maxMagnitudeDelta, out Vector3 ret);
 }
 

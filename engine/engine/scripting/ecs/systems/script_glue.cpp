@@ -76,11 +76,43 @@ inline auto converter::convert(const vector4& v) -> math::vec4
 {
     return {v.x, v.y, v.z, v.w};
 }
+
+struct quaternion
+{
+    float x;
+    float y;
+    float z;
+    float w;
+};
+template<>
+inline auto converter::convert(const math::quat& q) -> quaternion
+{
+    quaternion result;
+    result.x = q.x;
+    result.y = q.y;
+    result.z = q.z;
+    result.w = q.w;
+
+    return result;
+}
+
+template<>
+inline auto converter::convert(const quaternion& q) -> math::quat
+{
+    math::quat result;
+    result.x = q.x;
+    result.y = q.y;
+    result.z = q.z;
+    result.w = q.w;
+
+    return result;
+}
 } // namespace managed_interface
 
 register_basic_mono_converter_for_pod(math::vec2, managed_interface::vector2);
 register_basic_mono_converter_for_pod(math::vec3, managed_interface::vector3);
 register_basic_mono_converter_for_pod(math::vec4, managed_interface::vector4);
+register_basic_mono_converter_for_pod(math::quat, managed_interface::quaternion);
 
 } // namespace mono
 
@@ -407,6 +439,54 @@ void internal_m2n_set_rotation_euler_local(uint32_t id, const math::vec3& value)
     transform_comp.set_rotation_euler_local(value);
 }
 
+auto internal_m2n_get_rotation_global(uint32_t id) -> math::quat
+{
+    auto e = get_entity_from_id(id);
+    if(!e)
+    {
+        return {};
+    }
+
+    const auto& transform_comp = e.get<transform_component>();
+    return transform_comp.get_rotation_global();
+}
+
+void internal_m2n_set_rotation_global(uint32_t id, const math::vec3& value)
+{
+    auto e = get_entity_from_id(id);
+    if(!e)
+    {
+        return;
+    }
+
+    auto& transform_comp = e.get<transform_component>();
+    transform_comp.set_rotation_global(value);
+}
+
+auto internal_m2n_get_rotation_local(uint32_t id) -> math::quat
+{
+    auto e = get_entity_from_id(id);
+    if(!e)
+    {
+        return {};
+    }
+
+    const auto& transform_comp = e.get<transform_component>();
+    return transform_comp.get_rotation_local();
+}
+
+void internal_m2n_set_rotation_local(uint32_t id, const math::quat& value)
+{
+    auto e = get_entity_from_id(id);
+    if(!e)
+    {
+        return;
+    }
+
+    auto& transform_comp = e.get<transform_component>();
+    transform_comp.set_rotation_local(value);
+}
+
 //--------------------------------------------------
 auto internal_m2n_get_scale_global(uint32_t id) -> math::vec3
 {
@@ -505,68 +585,81 @@ void internal_m2n_set_skew_local(uint32_t id, const math::vec3& value)
     transform_comp.set_skew_local(value);
 }
 
+auto internal_m2n_slerp(const math::vec3& a, const math::vec3& b, float t) -> math::vec3
+{
+    return math::slerp(a, b, t);
+}
+
 } // namespace
 
 auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
 {
     APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
 
-    mono::add_internal_call("Ace.Core.Log::internal_m2n_log_trace", internal_call(internal_m2n_log_trace));
-    mono::add_internal_call("Ace.Core.Log::internal_m2n_log_info", internal_call(internal_m2n_log_info));
-    mono::add_internal_call("Ace.Core.Log::internal_m2n_log_warning", internal_call(internal_m2n_log_warning));
-    mono::add_internal_call("Ace.Core.Log::internal_m2n_log_error", internal_call(internal_m2n_log_error));
+    {
+        auto reg = mono::internal_call_registry("Ace.Core.Log");
+        reg.add_internal_call("internal_m2n_log_trace", internal_call(internal_m2n_log_trace));
+        reg.add_internal_call("internal_m2n_log_info", internal_call(internal_m2n_log_info));
+        reg.add_internal_call("internal_m2n_log_warning", internal_call(internal_m2n_log_warning));
+        reg.add_internal_call("internal_m2n_log_error", internal_call(internal_m2n_log_error));
+    }
 
-    mono::add_internal_call("Ace.Core.Scene::internal_m2n_load_scene", internal_call(internal_m2n_load_scene));
-    mono::add_internal_call("Ace.Core.Scene::internal_m2n_create_scene", internal_call(internal_m2n_create_scene));
-    mono::add_internal_call("Ace.Core.Scene::internal_m2n_destroy_scene", internal_call(internal_m2n_destroy_scene));
-    mono::add_internal_call("Ace.Core.Scene::internal_m2n_create_entity", internal_call(internal_m2n_create_entity));
-    mono::add_internal_call("Ace.Core.Scene::internal_m2n_destroy_entity", internal_call(internal_m2n_destroy_entity));
-    mono::add_internal_call("Ace.Core.Scene::internal_m2n_is_entity_valid",
-                            internal_call(internal_m2n_is_entity_valid));
-    mono::add_internal_call("Ace.Core.Scene::internal_m2n_find_entity_by_tag",
-                            internal_call(internal_m2n_find_entity_by_tag));
+    {
+        auto reg = mono::internal_call_registry("Ace.Core.Scene");
+        reg.add_internal_call("internal_m2n_load_scene", internal_call(internal_m2n_load_scene));
+        reg.add_internal_call("internal_m2n_create_scene", internal_call(internal_m2n_create_scene));
+        reg.add_internal_call("internal_m2n_destroy_scene", internal_call(internal_m2n_destroy_scene));
+        reg.add_internal_call("internal_m2n_create_entity", internal_call(internal_m2n_create_entity));
+        reg.add_internal_call("internal_m2n_destroy_entity", internal_call(internal_m2n_destroy_entity));
+        reg.add_internal_call("internal_m2n_is_entity_valid", internal_call(internal_m2n_is_entity_valid));
+        reg.add_internal_call("internal_m2n_find_entity_by_tag", internal_call(internal_m2n_find_entity_by_tag));
+    }
 
-    mono::add_internal_call("Ace.Core.Entity::internal_m2n_add_component", internal_call(internal_m2n_add_component));
-    mono::add_internal_call("Ace.Core.Entity::internal_m2n_get_component", internal_call(internal_m2n_get_component));
-    mono::add_internal_call("Ace.Core.Entity::internal_m2n_has_component", internal_call(internal_m2n_has_component));
-    mono::add_internal_call("Ace.Core.Entity::internal_m2n_remove_component",
-                            internal_call(internal_m2n_remove_component));
+    {
+        auto reg = mono::internal_call_registry("Ace.Core.Entity");
+        reg.add_internal_call("internal_m2n_add_component", internal_call(internal_m2n_add_component));
+        reg.add_internal_call("internal_m2n_get_component", internal_call(internal_m2n_get_component));
+        reg.add_internal_call("internal_m2n_has_component", internal_call(internal_m2n_has_component));
+        reg.add_internal_call("internal_m2n_remove_component", internal_call(internal_m2n_remove_component));
+    }
 
-    mono::add_internal_call("Ace.Core.TransformComponent::internal_m2n_get_position_global",
-                            internal_call(internal_m2n_get_position_global));
-    mono::add_internal_call("Ace.Core.TransformComponent::internal_m2n_set_position_global",
-                            internal_call(internal_m2n_set_position_global));
-    mono::add_internal_call("Ace.Core.TransformComponent::internal_m2n_get_position_local",
-                            internal_call(internal_m2n_get_position_local));
-    mono::add_internal_call("Ace.Core.TransformComponent::internal_m2n_set_position_local",
-                            internal_call(internal_m2n_set_position_local));
+    {
+        auto reg = mono::internal_call_registry("Ace.Core.TransformComponent");
+        reg.add_internal_call("internal_m2n_get_position_global", internal_call(internal_m2n_get_position_global));
+        reg.add_internal_call("internal_m2n_set_position_global", internal_call(internal_m2n_set_position_global));
+        reg.add_internal_call("internal_m2n_get_position_local", internal_call(internal_m2n_get_position_local));
+        reg.add_internal_call("internal_m2n_set_position_local", internal_call(internal_m2n_set_position_local));
 
-    mono::add_internal_call("Ace.Core.TransformComponent::internal_m2n_get_rotation_euler_global",
-                            internal_call(internal_m2n_get_rotation_euler_global));
-    mono::add_internal_call("Ace.Core.TransformComponent::internal_m2n_set_rotation_euler_global",
-                            internal_call(internal_m2n_set_rotation_euler_global));
-    mono::add_internal_call("Ace.Core.TransformComponent::internal_m2n_get_rotation_euler_local",
-                            internal_call(internal_m2n_get_rotation_euler_local));
-    mono::add_internal_call("Ace.Core.TransformComponent::internal_m2n_set_rotation_euler_local",
-                            internal_call(internal_m2n_set_rotation_euler_local));
+        reg.add_internal_call("internal_m2n_get_rotation_euler_global",
+                              internal_call(internal_m2n_get_rotation_euler_global));
+        reg.add_internal_call("internal_m2n_set_rotation_euler_global",
+                              internal_call(internal_m2n_set_rotation_euler_global));
+        reg.add_internal_call("Ainternal_m2n_get_rotation_euler_local",
+                              internal_call(internal_m2n_get_rotation_euler_local));
+        reg.add_internal_call("internal_m2n_set_rotation_euler_local",
+                              internal_call(internal_m2n_set_rotation_euler_local));
 
-    mono::add_internal_call("Ace.Core.TransformComponent::internal_m2n_get_scale_global",
-                            internal_call(internal_m2n_get_scale_global));
-    mono::add_internal_call("Ace.Core.TransformComponent::internal_m2n_set_scale_global",
-                            internal_call(internal_m2n_set_scale_global));
-    mono::add_internal_call("Ace.Core.TransformComponent::internal_m2n_get_scale_local",
-                            internal_call(internal_m2n_get_scale_local));
-    mono::add_internal_call("Ace.Core.TransformComponent::internal_m2n_set_scale_local",
-                            internal_call(internal_m2n_set_scale_local));
+        reg.add_internal_call("internal_m2n_get_rotation_global", internal_call(internal_m2n_get_rotation_global));
+        reg.add_internal_call("internal_m2n_set_rotation_global", internal_call(internal_m2n_set_rotation_global));
+        reg.add_internal_call("internal_m2n_get_rotation_local", internal_call(internal_m2n_get_rotation_local));
+        reg.add_internal_call("internal_m2n_set_rotation_local", internal_call(internal_m2n_set_rotation_local));
 
-    mono::add_internal_call("Ace.Core.TransformComponent::internal_m2n_get_skew_global",
-                            internal_call(internal_m2n_get_skew_global));
-    mono::add_internal_call("Ace.Core.TransformComponent::internal_m2n_setl_skew_globa",
-                            internal_call(internal_m2n_setl_skew_globa));
-    mono::add_internal_call("Ace.Core.TransformComponent::internal_m2n_get_skew_local",
-                            internal_call(internal_m2n_get_skew_local));
-    mono::add_internal_call("Ace.Core.TransformComponent::internal_m2n_set_skew_local",
-                            internal_call(internal_m2n_set_skew_local));
+        reg.add_internal_call("internal_m2n_get_scale_global", internal_call(internal_m2n_get_scale_global));
+        reg.add_internal_call("internal_m2n_set_scale_global", internal_call(internal_m2n_set_scale_global));
+        reg.add_internal_call("internal_m2n_get_scale_local", internal_call(internal_m2n_get_scale_local));
+        reg.add_internal_call("internal_m2n_set_scale_local", internal_call(internal_m2n_set_scale_local));
+
+        reg.add_internal_call("internal_m2n_get_skew_global", internal_call(internal_m2n_get_skew_global));
+        reg.add_internal_call("internal_m2n_setl_skew_globa", internal_call(internal_m2n_setl_skew_globa));
+        reg.add_internal_call("internal_m2n_get_skew_local", internal_call(internal_m2n_get_skew_local));
+        reg.add_internal_call("internal_m2n_set_skew_local", internal_call(internal_m2n_set_skew_local));
+    }
+
+    {
+        auto reg = mono::internal_call_registry("Vector3");
+        reg.add_internal_call("Vector3::internal_m2n_slerp", internal_call(internal_m2n_slerp));
+    }
+
     // mono::managed_interface::init(assembly);
 
     return true;

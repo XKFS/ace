@@ -12,6 +12,7 @@
 #include <engine/rendering/mesh.h>
 #include <engine/rendering/renderer.h>
 #include <engine/scripting/script.h>
+#include <engine/scripting/ecs/systems/script_system.h>
 
 #include <engine/meta/assets/asset_database.hpp>
 #include <engine/threading/threader.h>
@@ -166,6 +167,11 @@ auto watch_assets(rtti::context& ctx, const fs::path& dir, const fs::path& wildc
                 {
                     removed.emplace(am.get_asset<T>(key).uid());
                     am.unload_asset<T>(key);
+
+                    if constexpr(std::is_same<T, script>::value)
+                    {
+                        script_system::set_needs_recompile(fs::extract_protocol(fs::convert_to_protocol(key)).string());
+                    }
                 }
                 else if(entry.status == fs::watcher::entry_status::renamed)
                 {

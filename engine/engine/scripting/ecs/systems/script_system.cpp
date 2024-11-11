@@ -49,10 +49,36 @@ auto print_assembly_info(const mono::mono_assembly& assembly)
     {
         ss << fmt::format("\n{}", type.get_fullname());
 
-        auto attribs = type.get_attributes();
-        for(const auto& attrib : attribs)
         {
-            ss << fmt::format("\n Attribute : {}", attrib.get_fullname());
+            auto attribs = type.get_attributes();
+            for(const auto& attrib : attribs)
+            {
+                ss << fmt::format("\n - Attribute : {}", attrib.get_fullname());
+            }
+        }
+
+        auto fields = type.get_fields();
+        for(const auto& field : fields)
+        {
+            ss << fmt::format("\n - Field : {}", field.get_fullname());
+
+            auto attribs = field.get_attributes();
+            for(const auto& attrib : attribs)
+            {
+                ss << fmt::format("\n -- Attribute : {}", attrib.get_fullname());
+            }
+        }
+
+        auto properties = type.get_properties();
+        for(const auto& prop : properties)
+        {
+            ss << fmt::format("\n - Property : {}", prop.get_fullname());
+
+            auto attribs = prop.get_attributes();
+            for(const auto& attrib : attribs)
+            {
+                ss << fmt::format("\n -- Attribute : {}", attrib.get_fullname());
+            }
         }
     }
     APPLOG_TRACE("\n{}", ss.str());
@@ -312,7 +338,6 @@ void script_system::on_play_begin(rtti::context& ctx)
 void script_system::on_play_end(rtti::context& ctx)
 {
     APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
-
 
     auto& ec = ctx.get<ecs>();
     auto& scn = ec.get_scene();

@@ -172,7 +172,9 @@ auto script_system::deinit(rtti::context& ctx) -> bool
 
 void script_system::load_engine_domain(rtti::context& ctx)
 {
-    if(!ctx.has<deploy>())
+    bool is_deploy_mode = ctx.has<deploy>();
+
+    if(!is_deploy_mode)
     {
         create_compilation_job(ctx, "engine").get();
     }
@@ -196,9 +198,11 @@ void script_system::unload_engine_domain()
 
 auto script_system::load_app_domain(rtti::context& ctx, bool recompile) -> bool
 {
+    bool is_deploy_mode = ctx.has<deploy>();
+
     bool result = true;
 
-    if(!ctx.has<deploy>() && recompile)
+    if(!is_deploy_mode && recompile)
     {
         result &= create_compilation_job(ctx, "app").get();
     }
@@ -208,7 +212,7 @@ auto script_system::load_app_domain(rtti::context& ctx, bool recompile) -> bool
 
     auto app_script_lib = fs::resolve_protocol(get_lib_compiled_key("app"));
 
-    if(!ctx.has<deploy>())
+    if(!is_deploy_mode)
     {
         auto& am = ctx.get<asset_manager>();
         auto assets = am.get_assets<script>("app");

@@ -634,7 +634,7 @@ auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
                               internal_call(internal_m2n_get_rotation_euler_global));
         reg.add_internal_call("internal_m2n_set_rotation_euler_global",
                               internal_call(internal_m2n_set_rotation_euler_global));
-        reg.add_internal_call("Ainternal_m2n_get_rotation_euler_local",
+        reg.add_internal_call("internal_m2n_get_rotation_euler_local",
                               internal_call(internal_m2n_get_rotation_euler_local));
         reg.add_internal_call("internal_m2n_set_rotation_euler_local",
                               internal_call(internal_m2n_set_rotation_euler_local));
@@ -657,7 +657,7 @@ auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
 
     {
         auto reg = mono::internal_call_registry("Vector3");
-        reg.add_internal_call("Vector3::internal_m2n_slerp", internal_call(internal_m2n_slerp));
+        reg.add_internal_call("internal_m2n_slerp", internal_call(internal_m2n_slerp));
     }
 
     // mono::managed_interface::init(assembly);

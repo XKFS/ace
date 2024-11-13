@@ -968,8 +968,10 @@ auto editor_actions::deploy_project(rtti::context& ctx, const deploy_settings& p
 
                                fs::error_code ec;
                                fs::path assembly_dir = paths.assembly_dir;
+                               assembly_dir /= "mono";
                                {
                                    fs::path cached_data = params.deploy_location / "data" / "engine" / "mono" / "lib";
+                                   cached_data /= "mono";
 
                                    APPLOG_TRACE("Clearing {}", cached_data.string());
                                    fs::remove_all(cached_data, ec);
@@ -980,8 +982,11 @@ auto editor_actions::deploy_project(rtti::context& ctx, const deploy_settings& p
                                }
 
                                fs::path config_dir = paths.config_dir;
+                               config_dir /= "mono";
+
                                {
                                    fs::path cached_data = params.deploy_location / "data" / "engine" / "mono" / "etc";
+                                   cached_data /= "mono";
 
                                    APPLOG_TRACE("Clearing {}", cached_data.string());
                                    fs::remove_all(cached_data, ec);

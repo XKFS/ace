@@ -23,5 +23,6 @@ private:
     void on_os_event(rtti::context& ctx, const os::event& e);
 
     std::shared_ptr<int> sentinel_ = std::make_shared<int>(0);
+    bool inited_{};
 };
 } // namespace ace

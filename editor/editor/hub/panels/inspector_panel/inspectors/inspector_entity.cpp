@@ -52,7 +52,7 @@ auto inspect_component(const std::string& name, const inspect_callbacks& callbac
 
     ImGui::SetCursorPos(pos);
     ImGui::AlignTextToFramePadding();
-    ImGui::TextColored(ImColor(col_header), "       %s", callbacks.icon.c_str());
+    ImGui::Text("       %s", callbacks.icon.c_str());
 
     ImGui::SameLine();
     auto settingsSize = ImGui::CalcTextSize(ICON_MDI_COG).x + ImGui::GetStyle().FramePadding.x * 2.0f;

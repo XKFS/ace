@@ -10,6 +10,7 @@
 #include <monopp/mono_method_invoker.h>
 #include <monort/monort.h>
 
+#include <core/base/platform/config.hpp>
 #include <filesystem/filesystem.h>
 #include <logging/logging.h>
 
@@ -48,36 +49,38 @@ auto print_assembly_info(const mono::mono_assembly& assembly)
     for(const auto& type : types)
     {
         ss << fmt::format("\n{}", type.get_fullname());
+        ss << fmt::format("\n sizeof {}", type.get_sizeof());
+        ss << fmt::format("\n alignof {}", type.get_alignof());
 
         {
             auto attribs = type.get_attributes();
             for(const auto& attrib : attribs)
             {
-                ss << fmt::format("\n - Attribute : {}", attrib.get_fullname());
+                ss << fmt::format("\n - Attribute : {}", attrib.get_type().get_fullname());
             }
         }
 
         auto fields = type.get_fields();
         for(const auto& field : fields)
         {
-            ss << fmt::format("\n - Field : {}", field.get_fullname());
+            ss << fmt::format("\n - Field : {}", field.get_name());
 
             auto attribs = field.get_attributes();
             for(const auto& attrib : attribs)
             {
-                ss << fmt::format("\n -- Attribute : {}", attrib.get_fullname());
+                ss << fmt::format("\n -- Attribute : {}", attrib.get_type().get_fullname());
             }
         }
 
         auto properties = type.get_properties();
         for(const auto& prop : properties)
         {
-            ss << fmt::format("\n - Property : {}", prop.get_fullname());
+            ss << fmt::format("\n - Property : {}", prop.get_name());
 
             auto attribs = prop.get_attributes();
             for(const auto& attrib : attribs)
             {
-                ss << fmt::format("\n -- Attribute : {}", attrib.get_fullname());
+                ss << fmt::format("\n -- Attribute : {}", attrib.get_type().get_fullname());
             }
         }
     }
@@ -106,7 +109,11 @@ auto script_system::find_mono(const rtti::context& ctx) -> mono::compiler_paths
         auto found_library = fs::find_library(names, paths);
 
         result.assembly_dir = fs::absolute(found_library.parent_path() / ".." / "lib").string();
+#ifdef ACE_PLATFORM_WINDOWS
         result.config_dir = fs::absolute(fs::path(result.assembly_dir) / ".." / "etc").string();
+#else
+        result.config_dir = fs::absolute(fs::path(result.assembly_dir) / ".." / ".." /"etc").string();
+#endif
     }
 
     {
@@ -143,7 +150,10 @@ auto script_system::init(rtti::context& ctx) -> bool
 
         try
         {
-            load_engine_domain(ctx);
+            if(!load_engine_domain(ctx))
+            {
+                return false;
+            }
         }
         catch(const mono::mono_exception& e)
         {
@@ -170,13 +180,16 @@ auto script_system::deinit(rtti::context& ctx) -> bool
     return true;
 }
 
-void script_system::load_engine_domain(rtti::context& ctx)
+auto script_system::load_engine_domain(rtti::context& ctx) -> bool
 {
     bool is_deploy_mode = ctx.has<deploy>();
 
     if(!is_deploy_mode)
     {
-        create_compilation_job(ctx, "engine").get();
+        if(!create_compilation_job(ctx, "engine").get())
+        {
+            return false;
+        }
     }
 
     domain_ = std::make_unique<mono::mono_domain>("Ace.Engine");
@@ -188,6 +201,8 @@ void script_system::load_engine_domain(rtti::context& ctx)
     print_assembly_info(assembly);
 
     cache_.update_manager_type = assembly.get_type("Ace.Core", "SystemManager");
+
+    return true;
 }
 void script_system::unload_engine_domain()
 {

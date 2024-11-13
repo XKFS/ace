@@ -7,11 +7,26 @@
 namespace ace
 {
 
+auto find_attribute(const std::string& name, const std::vector<mono::mono_object>& attribs) -> mono::mono_object
+{
+    auto it = std::find_if(std::begin(attribs),
+                           std::end(attribs),
+                           [&](const mono::mono_object& obj)
+                           {
+                               return obj.get_type().get_name() == name;
+                           });
+
+    if(it != std::end(attribs))
+    {
+        return *it;
+    }
+
+    return {};
+}
+
 template<typename T>
-inspect_result inspect_mono_field(rtti::context& ctx,
-                                  mono::mono_object& obj,
-                                  mono::mono_field& field,
-                                  const var_info& info)
+auto inspect_mono_field(rtti::context& ctx, mono::mono_object& obj, mono::mono_field& field, const var_info& info)
+    -> inspect_result
 {
     inspect_result result;
 
@@ -22,6 +37,21 @@ inspect_result inspect_mono_field(rtti::context& ctx,
     auto mutable_field = mono::make_field_invoker<T>(field);
     auto val = mutable_field.get_value(obj);
 
+    auto attribs = field.get_attributes();
+    auto range_attrib = find_attribute("RangeAttribute", attribs);
+
+    if(range_attrib.valid())
+    {
+        int a = 0;
+        a++;
+    }
+
+    auto tooltip_attrib = find_attribute("TooltipAttribute", attribs);
+
+    if(tooltip_attrib.valid())
+    {
+        auto invoker = mono::make_field_invoker<std::string>(tooltip_attrib.get_type(), "tooltip");
+    }
     rttr::variant var = val;
 
     {
@@ -39,10 +69,8 @@ inspect_result inspect_mono_field(rtti::context& ctx,
 }
 
 template<typename T>
-inspect_result inspect_mono_property(rtti::context& ctx,
-                                     mono::mono_object& obj,
-                                     mono::mono_property& prop,
-                                     const var_info& info)
+auto inspect_mono_property(rtti::context& ctx, mono::mono_object& obj, mono::mono_property& prop, const var_info& info)
+    -> inspect_result
 {
     inspect_result result;
 
@@ -55,15 +83,12 @@ inspect_result inspect_mono_property(rtti::context& ctx,
 
     rttr::variant var = val;
 
-
     ImGui::PushReadonly(prop_info.read_only);
-
 
     {
         property_layout layout(prop.get_name());
         result |= inspect_var(ctx, var, prop_info);
     }
-
 
     if(result.changed)
     {
@@ -73,14 +98,13 @@ inspect_result inspect_mono_property(rtti::context& ctx,
 
     ImGui::PopReadonly();
 
-
     return result;
 }
 
-inspect_result inspector_mono_object::inspect(rtti::context& ctx,
-                                              rttr::variant& var,
-                                              const var_info& info,
-                                              const meta_getter& get_metadata)
+auto inspector_mono_object::inspect(rtti::context& ctx,
+                                    rttr::variant& var,
+                                    const var_info& info,
+                                    const meta_getter& get_metadata) -> inspect_result
 {
     auto& data = var.get_value<mono::mono_object>();
 

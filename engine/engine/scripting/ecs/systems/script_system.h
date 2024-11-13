@@ -26,7 +26,7 @@ struct script_system
     auto init(rtti::context& ctx) -> bool;
     auto deinit(rtti::context& ctx) -> bool;
 
-    void load_engine_domain(rtti::context& ctx);
+    auto load_engine_domain(rtti::context& ctx) -> bool;
     void unload_engine_domain();
 
     auto load_app_domain(rtti::context& ctx, bool recompile) -> bool;

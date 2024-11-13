@@ -17,7 +17,10 @@ imgui_interface::imgui_interface(rtti::context& ctx)
 
 imgui_interface::~imgui_interface()
 {
-    imguiDestroy();
+    if(inited_)
+    {
+        imguiDestroy();
+    }
 }
 
 auto imgui_interface::init(rtti::context& ctx) -> bool
@@ -28,6 +31,7 @@ auto imgui_interface::init(rtti::context& ctx) -> bool
     const auto& main_window = rend.get_main_window();
     imguiCreate(main_window.get(), 16.0f);
 
+    inited_ = true;
     return true;
 }
 

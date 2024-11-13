@@ -35,7 +35,7 @@ public class TransformComponent : Component
         }
         set
         {
-            internal_m2n_set_position_global(owner.Id, ref value);
+            internal_m2n_set_position_global(owner.Id, value);
         }
     }
 
@@ -50,7 +50,7 @@ public class TransformComponent : Component
         }
         set
         {
-            internal_m2n_set_position_local(owner.Id, ref value);
+            internal_m2n_set_position_local(owner.Id, value);
         }
     }
 
@@ -63,7 +63,7 @@ public class TransformComponent : Component
         }
         set
         {
-            internal_m2n_set_rotation_euler_global(owner.Id, ref value);
+            internal_m2n_set_rotation_euler_global(owner.Id, value);
         }
     }
 
@@ -78,7 +78,7 @@ public class TransformComponent : Component
         }
         set
         {
-            internal_m2n_set_rotation_euler_local(owner.Id, ref value);
+            internal_m2n_set_rotation_euler_local(owner.Id, value);
         }
     }
 
@@ -91,7 +91,7 @@ public class TransformComponent : Component
         }
         set
         {
-            internal_m2n_set_rotation_global(owner.Id, ref value);
+            internal_m2n_set_rotation_global(owner.Id, value);
         }
     }
 
@@ -106,7 +106,7 @@ public class TransformComponent : Component
         }
         set
         {
-            internal_m2n_set_rotation_local(owner.Id, ref value);
+            internal_m2n_set_rotation_local(owner.Id, value);
         }
     }
 
@@ -118,7 +118,7 @@ public class TransformComponent : Component
         }
         set
         {
-            internal_m2n_set_scale_global(owner.Id, ref value);
+            internal_m2n_set_scale_global(owner.Id, value);
         }
     }
 
@@ -133,7 +133,7 @@ public class TransformComponent : Component
         }
         set
         {
-            internal_m2n_set_scale_local(owner.Id, ref value);
+            internal_m2n_set_scale_local(owner.Id, value);
         }
     }
 
@@ -145,7 +145,7 @@ public class TransformComponent : Component
         }
         set
         {
-            internal_m2n_set_skew_global(owner.Id, ref value);
+            internal_m2n_set_skew_global(owner.Id, value);
         }
     }
 
@@ -160,7 +160,7 @@ public class TransformComponent : Component
         }
         set
         {
-            internal_m2n_set_skew_local(owner.Id, ref value);
+            internal_m2n_set_skew_local(owner.Id, value);
         }
     }
 
@@ -169,13 +169,13 @@ public class TransformComponent : Component
     private static extern Vector3 internal_m2n_get_position_global(uint eid);
 
     [MethodImpl(MethodImplOptions.InternalCall)]
-    private static extern void internal_m2n_set_position_global(uint eid, ref Vector3 value);
+    private static extern void internal_m2n_set_position_global(uint eid, Vector3 value);
 
     [MethodImpl(MethodImplOptions.InternalCall)]
     private static extern Vector3 internal_m2n_get_position_local(uint eid);
 
     [MethodImpl(MethodImplOptions.InternalCall)]
-    private static extern void internal_m2n_set_position_local(uint eid, ref Vector3 value);
+    private static extern void internal_m2n_set_position_local(uint eid, Vector3 value);
 
 
 
@@ -183,26 +183,26 @@ public class TransformComponent : Component
     private static extern Vector3 internal_m2n_get_rotation_euler_global(uint eid);
 
     [MethodImpl(MethodImplOptions.InternalCall)]
-    private static extern void internal_m2n_set_rotation_euler_global(uint eid, ref Vector3 value);
+    private static extern void internal_m2n_set_rotation_euler_global(uint eid, Vector3 value);
 
     [MethodImpl(MethodImplOptions.InternalCall)]
     private static extern Vector3 internal_m2n_get_rotation_euler_local(uint eid);
 
     [MethodImpl(MethodImplOptions.InternalCall)]
-    private static extern void internal_m2n_set_rotation_euler_local(uint eid, ref Vector3 value);
+    private static extern void internal_m2n_set_rotation_euler_local(uint eid, Vector3 value);
 
     
     [MethodImpl(MethodImplOptions.InternalCall)]
     private static extern Quaternion internal_m2n_get_rotation_global(uint eid);
 
     [MethodImpl(MethodImplOptions.InternalCall)]
-    private static extern void internal_m2n_set_rotation_global(uint eid, ref Quaternion value);
+    private static extern void internal_m2n_set_rotation_global(uint eid, Quaternion value);
 
     [MethodImpl(MethodImplOptions.InternalCall)]
     private static extern Quaternion internal_m2n_get_rotation_local(uint eid);
 
     [MethodImpl(MethodImplOptions.InternalCall)]
-    private static extern void internal_m2n_set_rotation_local(uint eid, ref Quaternion value);
+    private static extern void internal_m2n_set_rotation_local(uint eid, Quaternion value);
 
 
 
@@ -210,13 +210,13 @@ public class TransformComponent : Component
     private static extern Vector3 internal_m2n_get_scale_global(uint eid);
 
     [MethodImpl(MethodImplOptions.InternalCall)]
-    private static extern void internal_m2n_set_scale_global(uint eid, ref Vector3 value);
+    private static extern void internal_m2n_set_scale_global(uint eid, Vector3 value);
 
     [MethodImpl(MethodImplOptions.InternalCall)]
     private static extern Vector3 internal_m2n_get_scale_local(uint eid);
 
     [MethodImpl(MethodImplOptions.InternalCall)]
-    private static extern void internal_m2n_set_scale_local(uint eid, ref Vector3 value);
+    private static extern void internal_m2n_set_scale_local(uint eid, Vector3 value);
 
 
 
@@ -224,13 +224,16 @@ public class TransformComponent : Component
     private static extern Vector3 internal_m2n_get_skew_global(uint eid);
 
     [MethodImpl(MethodImplOptions.InternalCall)]
-    private static extern void internal_m2n_set_skew_global(uint eid, ref Vector3 value);
+    private static extern void internal_m2n_set_skew_global(uint eid, Vector3 value);
 
     [MethodImpl(MethodImplOptions.InternalCall)]
     private static extern Vector3 internal_m2n_get_skew_local(uint eid);
 
     [MethodImpl(MethodImplOptions.InternalCall)]
-    private static extern void internal_m2n_set_skew_local(uint eid, ref Vector3 value);
+    private static extern void internal_m2n_set_skew_local(uint eid, Vector3 value);
+
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    public static extern int[] internal_m2n_test(int[] ints);
 }
 
 public abstract class ScriptComponent : Component

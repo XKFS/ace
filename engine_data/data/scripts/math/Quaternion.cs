@@ -31,8 +31,6 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable
 
     private static readonly Quaternion identityQuaternion = new Quaternion(0f, 0f, 0f, 1f);
 
-    public const float kEpsilon = 1E-06f;
-
     //
     // Summary:
     //     The identity rotation (Read Only).

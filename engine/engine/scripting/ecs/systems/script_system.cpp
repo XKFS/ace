@@ -104,16 +104,23 @@ auto script_system::find_mono(const rtti::context& ctx) -> mono::compiler_paths
     else
     {
         const auto& names = mono::get_common_library_names();
-        const auto& paths = mono::get_common_library_paths();
+        const auto& library_paths = mono::get_common_library_paths();
+        const auto& config_paths = mono::get_common_config_paths();
 
-        auto found_library = fs::find_library(names, paths);
+        for(size_t i = 0; i < library_paths.size(); ++i)
+        {
+            const auto& library_path = library_paths.at(i);
+            const auto& config_path = config_paths.at(i);
+            auto found_library = fs::find_library(names, {fs::path(library_path)});
 
-        result.assembly_dir = fs::absolute(found_library.parent_path() / ".." / "lib").string();
-#ifdef ACE_PLATFORM_WINDOWS
-        result.config_dir = fs::absolute(fs::path(result.assembly_dir) / ".." / "etc").string();
-#else
-        result.config_dir = fs::absolute(fs::path(result.assembly_dir) / ".." / ".." /"etc").string();
-#endif
+            if(!found_library.empty())
+            {
+                result.assembly_dir = library_path;
+                result.config_dir = config_path;
+
+                break;
+            }
+        }
     }
 
     {

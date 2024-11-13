@@ -6,10 +6,6 @@ using System.Runtime.InteropServices;
 [StructLayout(LayoutKind.Sequential)]
 public struct Vector2 : IEquatable<Vector2>, IFormattable
 {
-    public const float kEpsilon = 1E-05f;
-
-    public const float kEpsilonNormalSqrt = 1E-15f;
-
         //
     // Summary:
     //     X component of the vector.
@@ -19,6 +15,7 @@ public struct Vector2 : IEquatable<Vector2>, IFormattable
     // Summary:
     //     Y component of the vector.
     public float y;
+    
 
     private static readonly Vector2 zeroVector = new Vector2(0f, 0f);
 

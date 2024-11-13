@@ -42,6 +42,10 @@ public struct Mathf
 
     internal const int kMaxDecimals = 15;
 
+
+    public const float kEpsilon = 1E-05f;
+
+    public const float kEpsilonNormalSqrt = 1E-15f;
     //
     // Summary:
     //     A tiny floating point value (Read Only).

@@ -585,6 +585,11 @@ void internal_m2n_set_skew_local(uint32_t id, const math::vec3& value)
     transform_comp.set_skew_local(value);
 }
 
+std::vector<int> internal_m2n_test(const std::vector<int>& vec)
+{
+    return vec;
+}
+
 auto internal_m2n_slerp(const math::vec3& a, const math::vec3& b, float t) -> math::vec3
 {
     return math::slerp(a, b, t);
@@ -653,6 +658,8 @@ auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
         reg.add_internal_call("internal_m2n_setl_skew_globa", internal_call(internal_m2n_setl_skew_globa));
         reg.add_internal_call("internal_m2n_get_skew_local", internal_call(internal_m2n_get_skew_local));
         reg.add_internal_call("internal_m2n_set_skew_local", internal_call(internal_m2n_set_skew_local));
+        reg.add_internal_call("internal_m2n_test", internal_call(internal_m2n_test));
+
     }
 
     {

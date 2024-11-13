@@ -48,15 +48,29 @@ auto inspect_mono_field(rtti::context& ctx, mono::mono_object& obj, mono::mono_f
 
     auto tooltip_attrib = find_attribute("TooltipAttribute", attribs);
 
+
+    std::string tooltip;
     if(tooltip_attrib.valid())
     {
         auto invoker = mono::make_field_invoker<std::string>(tooltip_attrib.get_type(), "tooltip");
+        tooltip = invoker.get_value(tooltip_attrib);
     }
+
+    inspector::meta_getter getter = [&](const rttr::variant& name) -> rttr::variant
+    {
+        if(!name.is_type<std::string>())
+        {
+            return {};
+        }
+        //const auto& key = name.get_value<std::string>();
+        return {};
+    };
+
     rttr::variant var = val;
 
     {
-        property_layout layout(field.get_name());
-        result |= inspect_var(ctx, var, field_info);
+        property_layout layout(field.get_name(), tooltip);
+        result |= inspect_var(ctx, var, field_info, getter);
     }
 
     if(result.changed)

@@ -111,7 +111,8 @@ auto script_system::find_mono(const rtti::context& ctx) -> mono::compiler_paths
         {
             const auto& library_path = library_paths.at(i);
             const auto& config_path = config_paths.at(i);
-            auto found_library = fs::find_library(names, {fs::path(library_path)});
+            std::vector<std::string> paths{library_path};
+            auto found_library = fs::find_library(names, paths);
 
             if(!found_library.empty())
             {

@@ -17,16 +17,17 @@ auto inspect_range_scalar(rtti::context& ctx,
     T* min_ptr{};
     T* max_ptr{};
     auto min_var = get_metadata("min");
-    if(min_var)
+    if(min_var && min_var.can_convert<T>())
     {
-        min = min_var.get_value<T>();
+        min = min_var.convert<T>();
         min_ptr = &min;
     }
 
     auto max_var = get_metadata("max");
-    if(max_var)
+    if(max_var && max_var.can_convert<T>())
     {
-        max = max_var.get_value<T>();
+
+        max = max_var.convert<T>();
         max_ptr = &max;
     }
 

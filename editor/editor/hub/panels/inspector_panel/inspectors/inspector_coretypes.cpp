@@ -16,23 +16,33 @@ auto inspect_scalar(rtti::context& ctx,
     auto& data = var.get_value<T>();
 
     {
-        T min{};
-        T max{};
+        T min{std::numeric_limits<T>::min()};
+        T max{std::numeric_limits<T>::max()};
         float step{0.5};
+        bool has_min{};
+        bool has_max{};
 
         auto min_var = get_metadata("min");
-        if(min_var)
-            min = min_var.get_value<T>();
+        if(min_var && min_var.can_convert<T>())
+        {
+            min = min_var.convert<T>();
+            has_min = true;
+        }
 
         auto max_var = get_metadata("max");
-        if(max_var)
-            max = max_var.get_value<T>();
+        if(max_var && max_var.can_convert<T>())
+        {
+            max = max_var.convert<T>();
+            has_max = true;
+        }
 
         auto step_var = get_metadata("step");
-        if(step_var)
-            step = step_var.get_value<float>();
+        if(step_var && step_var.can_convert<float>())
+        {
+            step = step_var.convert<float>();
+        }
 
-        bool is_range = max_var.is_valid();
+        bool is_range = has_min && has_max;
 
         if(is_range)
         {
@@ -58,7 +68,9 @@ auto inspect_scalar(rtti::context& ctx,
         else
         {
             if(min_var)
+            {
                 max = std::numeric_limits<T>::max();
+            }
 
             result.changed = ImGui::DragScalarT("##", &data, step, min, max, format);
             ImGui::ActiveItemWrapMousePos();

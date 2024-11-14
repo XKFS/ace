@@ -39,15 +39,10 @@ auto inspect_mono_field(rtti::context& ctx, mono::mono_object& obj, mono::mono_f
 
     auto attribs = field.get_attributes();
     auto range_attrib = find_attribute("RangeAttribute", attribs);
-
-    if(range_attrib.valid())
-    {
-        int a = 0;
-        a++;
-    }
-
+    auto min_attrib = find_attribute("MinAttribute", attribs);
+    auto max_attrib = find_attribute("MaxAttribute", attribs);
+    auto step_attrib = find_attribute("StepAttribute", attribs);
     auto tooltip_attrib = find_attribute("TooltipAttribute", attribs);
-
 
     std::string tooltip;
     if(tooltip_attrib.valid())
@@ -62,7 +57,49 @@ auto inspect_mono_field(rtti::context& ctx, mono::mono_object& obj, mono::mono_f
         {
             return {};
         }
-        //const auto& key = name.get_value<std::string>();
+        const auto& key = name.get_value<std::string>();
+        if(key == "min")
+        {
+            if(min_attrib.valid())
+            {
+                auto invoker = mono::make_field_invoker<float>(min_attrib.get_type(), "min");
+                float min_value = invoker.get_value(min_attrib);
+                return min_value;
+            }
+            else if(range_attrib.valid())
+            {
+                auto invoker = mono::make_field_invoker<float>(range_attrib.get_type(), "min");
+                float min_value = invoker.get_value(range_attrib);
+                return min_value;
+            }
+        }
+
+        else if(key == "max")
+        {
+            if(max_attrib.valid())
+            {
+                auto invoker = mono::make_field_invoker<float>(max_attrib.get_type(), "max");
+                float max_value = invoker.get_value(max_attrib);
+                return max_value;
+            }
+            else if(range_attrib.valid())
+            {
+                auto invoker = mono::make_field_invoker<float>(range_attrib.get_type(), "max");
+                float max_value = invoker.get_value(range_attrib);
+                return max_value;
+            }
+        }
+
+        else if(key == "step")
+        {
+            if(step_attrib.valid())
+            {
+                auto invoker = mono::make_field_invoker<float>(step_attrib.get_type(), "step");
+                float value = invoker.get_value(step_attrib);
+                return value;
+            }
+        }
+
         return {};
     };
 

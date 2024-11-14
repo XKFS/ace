@@ -182,6 +182,7 @@ auto inspector_mono_object::inspect(rtti::context& ctx,
                                                                   {"Char", &inspect_mono_field<char16_t>},
                                                                   {"String", &inspect_mono_field<std::string>}};
 
+
         auto it = reg.find(type_name);
         if(it != reg.end())
         {

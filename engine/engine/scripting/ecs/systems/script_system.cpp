@@ -87,6 +87,14 @@ auto print_assembly_info(const mono::mono_assembly& assembly)
     APPLOG_TRACE("\n{}", ss.str());
 }
 
+void set_env(const std::string& var_name, const std::string& value) {
+#if ACE_PLATFORM_WINDOWS
+    _putenv_s(var_name.c_str(), value.c_str());
+#else
+    setenv(var_name.c_str(), value.c_str(), 1); // 1 means overwrite if it already exists
+#endif
+}
+
 } // namespace
 
 auto script_system::find_mono(const rtti::context& ctx) -> mono::compiler_paths
@@ -149,6 +157,14 @@ auto script_system::init(rtti::context& ctx) -> bool
     ev.on_pause.connect(sentinel_, 100, this, &script_system::on_pause);
     ev.on_resume.connect(sentinel_, -100, this, &script_system::on_resume);
     ev.on_skip_next_frame.connect(sentinel_, -100, this, &script_system::on_skip_next_frame);
+
+#if ACE_PLATFORM_LINUX
+    // Adjust GC threads suspending mode on Linux
+    set_env("MONO_THREADS_SUSPEND", "preemptive");
+#elif ACE_PLATFORM_OSX
+    // Adjust GC threads suspending mode on Macos
+    set_env("MONO_THREADS_SUSPEND", "preemptive");
+#endif
 
     if(mono::init(find_mono(ctx), true))
     {

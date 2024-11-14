@@ -7,9 +7,9 @@
 #include <engine/events.h>
 
 #include <engine/scripting/ecs/systems/script_system.h>
+#include <monopp/mono_type.h>
 #include <monopp/mono_field_invoker.h>
 #include <monopp/mono_property_invoker.h>
-#include <monopp/mono_type.h>
 
 namespace ace
 {
@@ -315,7 +315,11 @@ LOAD(script_component)
 
     for(const auto& comp : comps)
     {
-        obj.add_script_component(comp);
+        if(comp.scoped)
+        {
+
+            obj.add_script_component(comp);
+        }
     }
 }
 LOAD_INSTANTIATE(script_component, ser20::iarchive_associative_t);

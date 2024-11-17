@@ -507,7 +507,7 @@ void from_physics(transform_component& transform, physics_component& comp)
 
 } // namespace
 
-void bullet_backend::on_create_component(entt::registry& r, const entt::entity e)
+void bullet_backend::on_create_component(entt::registry& r, entt::entity e)
 {
     entt::handle entity(r, e);
 
@@ -519,7 +519,7 @@ void bullet_backend::on_create_component(entt::registry& r, const entt::entity e
         //recreate_phyisics_body(*world, comp, true);
     }
 }
-void bullet_backend::on_destroy_component(entt::registry& r, const entt::entity e)
+void bullet_backend::on_destroy_component(entt::registry& r, entt::entity e)
 {
     auto world = r.ctx().find<bullet::world>();
     if(world)

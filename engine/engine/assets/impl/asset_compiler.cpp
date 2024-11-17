@@ -586,6 +586,12 @@ auto compile<script_library>(asset_manager& am, const fs::path& key, const fs::p
         return result;
     }
 
+#ifndef NDEBUG
+    params.debug = true;
+#else
+    params.debug = false;
+#endif
+
     std::string error;
     auto cmd = mono::create_compile_command_detailed(params);
 

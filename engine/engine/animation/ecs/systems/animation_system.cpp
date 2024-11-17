@@ -38,7 +38,7 @@ auto animation_system::deinit(rtti::context& ctx) -> bool
     return true;
 }
 
-void animation_system::on_create_component(entt::registry& r, const entt::entity e)
+void animation_system::on_create_component(entt::registry& r, entt::entity e)
 {
     auto& ctx = engine::context();
     auto& ev = ctx.get<events>();
@@ -56,7 +56,7 @@ void animation_system::on_create_component(entt::registry& r, const entt::entity
     }
 }
 
-void animation_system::on_destroy_component(entt::registry& r, const entt::entity e)
+void animation_system::on_destroy_component(entt::registry& r, entt::entity e)
 {
 }
 

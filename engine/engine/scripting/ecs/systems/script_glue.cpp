@@ -12,8 +12,8 @@
 #include <engine/scripting/ecs/components/script_component.h>
 
 #include <engine/assets/asset_manager.h>
-#include <engine/ecs/components/id_component.h>
-#include <engine/ecs/components/transform_component.h>
+#include <engine/meta/ecs/components/all_components.h>
+
 
 #include <filesystem/filesystem.h>
 #include <logging/logging.h>
@@ -160,6 +160,45 @@ auto internal_m2n_create_entity(const std::string& tag) -> uint32_t
     return static_cast<uint32_t>(e.entity());
 }
 
+auto internal_m2n_create_entity_from_prefab_uid(const hpp::uuid& uid) -> uint32_t
+{
+    auto& ctx = engine::context();
+    auto& ec = ctx.get<ecs>();
+    auto& am = ctx.get<asset_manager>();
+
+    auto pfb = am.get_asset<prefab>(uid);
+    auto e = ec.get_scene().instantiate(pfb);
+
+    return static_cast<uint32_t>(e.entity());
+}
+
+auto internal_m2n_create_entity_from_prefab_key(const std::string& key) -> uint32_t
+{
+    auto& ctx = engine::context();
+    auto& ec = ctx.get<ecs>();
+    auto& am = ctx.get<asset_manager>();
+
+    auto pfb = am.get_asset<prefab>(key);
+    auto e = ec.get_scene().instantiate(pfb);
+
+    return static_cast<uint32_t>(e.entity());
+}
+
+auto internal_m2n_clone_entity(uint32_t id) -> uint32_t
+{
+    auto e = get_entity_from_id(id);
+    if(e)
+    {
+        auto& ctx = engine::context();
+        auto& ec = ctx.get<ecs>();
+        auto cloned = ec.get_scene().clone_entity(e);
+        return static_cast<uint32_t>(cloned.entity());
+    }
+
+    entt::handle invalid;
+    return static_cast<uint32_t>(invalid.entity());
+}
+
 auto internal_m2n_destroy_entity(uint32_t id) -> bool
 {
     auto e = get_entity_from_id(id);
@@ -198,14 +237,101 @@ auto internal_m2n_find_entity_by_tag(const std::string& tag) -> uint32_t
     return static_cast<uint32_t>(invalid.entity());
 }
 
+struct native_comp_lut
+{
+    bool is_valid() const
+    {
+        return add_native != nullptr;
+    }
+    std::function<bool(const mono::mono_type& type, entt::handle e)> add_native;
+    std::function<bool(const mono::mono_type& type, entt::handle e)> has_native;
+    std::function<bool(const mono::mono_type& type, entt::handle e)> remove_native;
+
+
+    static auto get_registry() -> std::unordered_map<std::string, native_comp_lut>&
+    {
+        static std::unordered_map<std::string, native_comp_lut> lut;
+        return lut;
+    }
+
+    static auto get_action_table(const mono::mono_type& type) -> const native_comp_lut&
+    {
+        const auto& registry = get_registry();
+        auto it = registry.find(type.get_name());
+        if(it != registry.end())
+        {
+            return it->second;
+        }
+
+        static const native_comp_lut empty;
+        return empty;
+    }
+
+    template<typename T>
+    static auto register_native_component(const std::string& name)
+    {
+        native_comp_lut lut;
+        lut.add_native = [name](const mono::mono_type& type, entt::handle e)
+        {
+            if(type.get_name() == name)
+            {
+                auto& native = e.get_or_emplace<T>();
+                return true;
+            }
+
+            return false;
+        };
+
+        lut.has_native = [name](const mono::mono_type& type, entt::handle e)
+        {
+            if(type.get_name() == name)
+            {
+                return e.all_of<T>();
+            }
+
+            return false;
+        };
+
+        lut.has_native = [name](const mono::mono_type& type, entt::handle e)
+        {
+            if(type.get_name() == name)
+            {
+                return e.remove<T>() > 0;
+            }
+
+            return false;
+        };
+
+        get_registry()[name] = lut;
+    }
+};
+
+int register_componetns = []()
+{
+    native_comp_lut::register_native_component<id_component>("IdComponent");
+    native_comp_lut::register_native_component<transform_component>("TransformComponent");
+    native_comp_lut::register_native_component<model_component>("ModelComponent");
+    native_comp_lut::register_native_component<camera_component>("CameraComponent");
+    native_comp_lut::register_native_component<light_component>("LightComponent");
+    native_comp_lut::register_native_component<reflection_probe_component>("ReflectionProbeComponent");
+    native_comp_lut::register_native_component<physics_component>("PhysicsComponent");
+
+    native_comp_lut::register_native_component<animation_component>("AnimationComponent");
+    native_comp_lut::register_native_component<audio_listener_component>("AudioListenerComponent");
+    native_comp_lut::register_native_component<audio_source_component>("AudioSourceComponent");
+
+    return 0;
+}();
+
 auto internal_add_native_component(const mono::mono_type& type, entt::handle e, script_component& script_comp)
     -> mono::mono_object
 {
     bool add = false;
-    if(type.get_name() == "TransformComponent")
+
+    const auto& lut = native_comp_lut::get_action_table(type);
+    if(lut.is_valid())
     {
-        auto& native = e.get_or_emplace<transform_component>();
-        add = true;
+        add = lut.add_native(type, e);
     }
 
     if(add)
@@ -227,9 +353,11 @@ auto internal_get_native_component(const mono::mono_type& type, entt::handle e, 
 {
     bool native = false;
     bool has = false;
-    if(type.get_name() == "TransformComponent")
+
+    const auto& lut = native_comp_lut::get_action_table(type);
+    if(lut.is_valid())
     {
-        has = e.all_of<transform_component>();
+        has = lut.has_native(type, e);
         native = true;
     }
 
@@ -254,9 +382,15 @@ auto internal_get_native_component(const mono::mono_type& type, entt::handle e, 
 auto internal_remove_native_component(const mono::mono_object& obj, entt::handle e, script_component& script_comp)
     -> bool
 {
-    if(obj.get_type().get_name() == "TransformComponent")
+    bool removed = false;
+    const auto& lut = native_comp_lut::get_action_table(obj.get_type());
+    if(lut.is_valid())
     {
-        e.remove<transform_component>();
+        removed = lut.remove_native(obj.get_type(), e);
+    }
+
+    if(removed)
+    {
         return script_comp.remove_native_component(obj);
     }
 
@@ -595,6 +729,35 @@ auto internal_m2n_slerp(const math::vec3& a, const math::vec3& b, float t) -> ma
     return math::slerp(a, b, t);
 }
 
+
+auto internal_m2n_get_asset_by_uuid(const hpp::uuid& uid, const mono::mono_type& type) -> hpp::uuid
+{
+    auto& ctx = engine::context();
+    auto& am = ctx.get<asset_manager>();
+
+    if(type.get_name() == "Prefab")
+    {
+        auto asset = am.get_asset<prefab>(uid);
+        return asset.uid();
+    }
+
+    return {};
+}
+
+auto internal_m2n_get_asset_by_key(const std::string& key, const mono::mono_type& type) -> hpp::uuid
+{
+    auto& ctx = engine::context();
+    auto& am = ctx.get<asset_manager>();
+
+    if(type.get_name() == "Prefab")
+    {
+        auto asset = am.get_asset<prefab>(key);
+        return asset.uid();
+    }
+
+    return {};
+}
+
 } // namespace
 
 auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
@@ -615,9 +778,13 @@ auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
         reg.add_internal_call("internal_m2n_create_scene", internal_call(internal_m2n_create_scene));
         reg.add_internal_call("internal_m2n_destroy_scene", internal_call(internal_m2n_destroy_scene));
         reg.add_internal_call("internal_m2n_create_entity", internal_call(internal_m2n_create_entity));
+        reg.add_internal_call("internal_m2n_create_entity_from_prefab_uid", internal_call(internal_m2n_create_entity_from_prefab_uid));
+        reg.add_internal_call("internal_m2n_create_entity_from_prefab_key", internal_call(internal_m2n_create_entity_from_prefab_key));
         reg.add_internal_call("internal_m2n_destroy_entity", internal_call(internal_m2n_destroy_entity));
         reg.add_internal_call("internal_m2n_is_entity_valid", internal_call(internal_m2n_is_entity_valid));
         reg.add_internal_call("internal_m2n_find_entity_by_tag", internal_call(internal_m2n_find_entity_by_tag));
+
+
     }
 
     {
@@ -667,6 +834,13 @@ auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
         reg.add_internal_call("internal_m2n_slerp", internal_call(internal_m2n_slerp));
     }
 
+
+    {
+        auto reg = mono::internal_call_registry("Ace.Core.Assets");
+        reg.add_internal_call("internal_m2n_get_asset_by_uuid", internal_call(internal_m2n_get_asset_by_uuid));
+        reg.add_internal_call("internal_m2n_get_asset_by_key", internal_call(internal_m2n_get_asset_by_key));
+
+    }
     // mono::managed_interface::init(assembly);
 
     return true;

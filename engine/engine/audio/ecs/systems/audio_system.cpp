@@ -15,12 +15,12 @@ namespace ace
 namespace
 {
 
-void on_create_component(entt::registry& r, const entt::entity e)
+void on_create_component(entt::registry& r, entt::entity e)
 {
     auto& comp = r.get<audio_source_component>(e);
     comp.on_play_begin();
 }
-void on_destroy_component(entt::registry& r, const entt::entity e)
+void on_destroy_component(entt::registry& r, entt::entity e)
 {
     auto& comp = r.get<audio_source_component>(e);
     comp.on_play_end();

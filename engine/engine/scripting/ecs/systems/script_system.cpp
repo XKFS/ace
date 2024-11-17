@@ -291,13 +291,13 @@ void script_system::unload_app_domain()
     mono::mono_domain::set_current_domain(domain_.get());
 }
 
-void script_system::on_create_component(entt::registry& r, const entt::entity e)
+void script_system::on_create_component(entt::registry& r, entt::entity e)
 {
     // auto& comp = r.get<script_component>(e);
     // comp.create();
     // comp.start();
 }
-void script_system::on_destroy_component(entt::registry& r, const entt::entity e)
+void script_system::on_destroy_component(entt::registry& r, entt::entity e)
 {
     auto& comp = r.get<script_component>(e);
     comp.destroy();
@@ -319,17 +319,20 @@ void script_system::on_play_begin(rtti::context& ctx)
             for(const auto& type : app_cache_.scriptable_system_types)
             {
                 auto obj = type.new_instance();
-                scriptable_systems_.emplace_back(obj);
+                auto scoped_obj = std::make_shared<mono::mono_scoped_object>(obj);
+                scriptable_systems_.emplace_back(scoped_obj);
             }
 
-            for(const auto& obj : scriptable_systems_)
+            for(const auto& scoped_obj : scriptable_systems_)
             {
+                const auto& obj = scoped_obj->object;
                 auto method = mono::make_method_invoker<void()>(obj, "internal_n2m_on_create");
                 method(obj);
             }
 
-            for(const auto& obj : scriptable_systems_)
+            for(const auto& scoped_obj : scriptable_systems_)
             {
+                const auto& obj = scoped_obj->object;
                 auto method = mono::make_method_invoker<void()>(obj, "internal_n2m_on_start");
                 method(obj);
             }
@@ -394,8 +397,9 @@ void script_system::on_play_end(rtti::context& ctx)
                 comp.destroy();
             });
 
-        for(const auto& obj : scriptable_systems_)
+        for(const auto& scoped_obj : scriptable_systems_)
         {
+            const auto& obj = scoped_obj->object;
             auto method = mono::make_method_invoker<void()>(obj, "internal_n2m_on_destroy");
             method(obj);
         }

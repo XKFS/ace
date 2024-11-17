@@ -8,7 +8,7 @@
 namespace ace
 {
 
-void script_component::on_create_component(entt::registry& r, const entt::entity e)
+void script_component::on_create_component(entt::registry& r, entt::entity e)
 {
     entt::handle entity(r, e);
 
@@ -16,7 +16,7 @@ void script_component::on_create_component(entt::registry& r, const entt::entity
     component.set_owner(entity);
 }
 
-void script_component::on_destroy_component(entt::registry& r, const entt::entity e)
+void script_component::on_destroy_component(entt::registry& r, entt::entity e)
 {
 }
 

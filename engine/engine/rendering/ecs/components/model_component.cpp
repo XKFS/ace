@@ -307,7 +307,7 @@ auto model_component::is_skinned() const -> bool
     return false;
 }
 
-void model_component::on_create_component(entt::registry& r, const entt::entity e)
+void model_component::on_create_component(entt::registry& r, entt::entity e)
 {
     entt::handle entity(r, e);
 
@@ -317,7 +317,7 @@ void model_component::on_create_component(entt::registry& r, const entt::entity 
     component.set_armature_entities({});
 }
 
-void model_component::on_destroy_component(entt::registry& r, const entt::entity e)
+void model_component::on_destroy_component(entt::registry& r, entt::entity e)
 {
     entt::handle entity(r, e);
 }

@@ -55,7 +55,7 @@ public:
      */
     static auto generate_id(const fs::path& p) -> hpp::uuid
     {
-        return generate_uuid(p.generic_string());
+        return generate_uuid();//p.generic_string());
     }
 
     /**

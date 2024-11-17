@@ -246,15 +246,28 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable
     //   b:
     //
     //   t:
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector3 Slerp(Vector3 a, Vector3 b, float t)
     {
-        return internal_m2n_slerp(ref a, ref b, t);
+        // get cosine of angle between vectors (-1 -> 1)
+		float CosAlpha = Vector3.Dot(a, b);
+		// get angle (0 -> pi)
+		float Alpha = Mathf.Acos(CosAlpha);
+		// get sine of angle between vectors (0 -> 1)
+		float SinAlpha = Mathf.Sin(Alpha);
+		// this breaks down when SinAlpha = 0, i.e. Alpha = 0 or pi
+		float t1 = Mathf.Sin((1.0f - t) * Alpha) / SinAlpha;
+		float t2 = Mathf.Sin(t * Alpha) / SinAlpha;
+
+		// interpolate src vectors
+		return a * t1 + b * t2;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector3 SlerpClamped(Vector3 a, Vector3 b, float t)
     {
         t = Mathf.Clamp01(t);
-        return internal_m2n_slerp(ref a, ref b, t);
+        return Slerp(a, b, t);
     }
 
 
@@ -861,10 +874,6 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable
 
         return string.Format(CultureInfo.InvariantCulture.NumberFormat, "({0}, {1}, {2})", x.ToString(format, formatProvider), y.ToString(format, formatProvider), z.ToString(format, formatProvider));
     }
-
-    
-    [MethodImpl(MethodImplOptions.InternalCall)]
-    private static extern Vector3 internal_m2n_slerp(ref Vector3 a, ref Vector3 b, float t);
 
 }
 

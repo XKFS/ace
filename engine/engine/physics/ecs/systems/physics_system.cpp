@@ -11,12 +11,12 @@
 namespace ace
 {
 
-void physics_system::on_create_component(entt::registry& r, const entt::entity e)
+void physics_system::on_create_component(entt::registry& r, entt::entity e)
 {
     physics_component::on_create_component(r, e);
     backend_type::on_create_component(r, e);
 }
-void physics_system::on_destroy_component(entt::registry& r, const entt::entity e)
+void physics_system::on_destroy_component(entt::registry& r, entt::entity e)
 {
     physics_component::on_destroy_component(r, e);
     backend_type::on_destroy_component(r, e);

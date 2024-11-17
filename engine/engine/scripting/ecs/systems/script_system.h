@@ -41,14 +41,14 @@ struct script_system
      * @param r The registry containing the component.
      * @param e The entity associated with the component.
      */
-    static void on_create_component(entt::registry& r, const entt::entity e);
+    static void on_create_component(entt::registry& r, entt::entity e);
 
     /**
      * @brief Called when a physics component is destroyed.
      * @param r The registry containing the component.
      * @param e The entity associated with the component.
      */
-    static void on_destroy_component(entt::registry& r, const entt::entity e);
+    static void on_destroy_component(entt::registry& r, entt::entity e);
 
 private:
     /**
@@ -122,7 +122,7 @@ private:
     } app_cache_;
 
 
-    std::vector<mono::mono_object> scriptable_systems_;
+    std::vector<script_component::scoped_object_ptr> scriptable_systems_;
 
     enum class call_progress
     {

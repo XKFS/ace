@@ -6,7 +6,7 @@
 namespace ace
 {
 
-void physics_component::on_create_component(entt::registry& r, const entt::entity e)
+void physics_component::on_create_component(entt::registry& r, entt::entity e)
 {
     entt::handle entity(r, e);
 
@@ -16,7 +16,7 @@ void physics_component::on_create_component(entt::registry& r, const entt::entit
     component.dirty_properties_.set();
 }
 
-void physics_component::on_destroy_component(entt::registry& r, const entt::entity e)
+void physics_component::on_destroy_component(entt::registry& r, entt::entity e)
 {
 }
 

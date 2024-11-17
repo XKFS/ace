@@ -120,8 +120,38 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable
     //[FreeFunction("QuaternionScripting::Slerp", IsThreadSafe = true)]
     public static Quaternion Slerp(Quaternion a, Quaternion b, float t)
     {
-        Slerp_Injected(ref a, ref b, t, out var ret);
-        return ret;
+        // Slerp_Injected(ref a, ref b, t, out var ret);
+        // return ret;
+
+        Quaternion z = b;
+
+		float cosTheta = Quaternion.Dot(a, b);
+
+		// If cosTheta < 0, the interpolation will take the long way around the sphere.
+		// To fix this, one quat must be negated.
+		if(cosTheta < 0.0f)
+		{
+			z = -b;
+			cosTheta = -cosTheta;
+		}
+
+		// Perform a linear interpolation when cosTheta is close to 1 to avoid side effect of sin(angle) becoming a zero denominator
+		if(cosTheta > 1.0f - Mathf.kEpsilon)
+		{
+            // Linear interpolation
+            Quaternion result;
+            result.x = Mathf.LerpUnclamped(a.x, z.x, t);
+            result.y = Mathf.LerpUnclamped(a.y, z.y, t);
+            result.z = Mathf.LerpUnclamped(a.z, z.z, t);
+            result.w = Mathf.LerpUnclamped(a.w, z.w, t);
+            return result;
+		}
+		else
+		{
+			// Essential Mathematics, page 467
+			float angle = Mathf.Acos(cosTheta);
+			return (Mathf.Sin((1.0f - t) * angle) * a + Mathf.Sin(t * angle) * z) / Mathf.Sin(angle);
+		}
     }
 
     //
@@ -138,7 +168,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable
     //[FreeFunction("QuaternionScripting::SlerpUnclamped", IsThreadSafe = true)]
     public static Quaternion SlerpUnclamped(Quaternion a, Quaternion b, float t)
     {
-        SlerpUnclamped_Injected(ref a, ref b, t, out var ret);
+        Slerp_Injected(ref a, ref b, t, out var ret);
         return ret;
     }
 
@@ -295,6 +325,30 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Quaternion operator /(Quaternion lhs, float rhs)
+    {
+        return new Quaternion(lhs.w / rhs, lhs.y / rhs, lhs.z / rhs, lhs.w / rhs);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Quaternion operator *(Quaternion lhs, float rhs)
+    {
+        return new Quaternion(lhs.w * rhs, lhs.y * rhs, lhs.z * rhs, lhs.w * rhs);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Quaternion operator *(float lhs, Quaternion rhs)
+    {
+        return new Quaternion(lhs * rhs.w, lhs * rhs.y, lhs * rhs.z, lhs * rhs.w);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Quaternion operator +(Quaternion lhs, Quaternion rhs)
+    {
+        return new Quaternion(lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z, lhs.w + rhs.w);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Quaternion operator *(Quaternion lhs, Quaternion rhs)
     {
         return new Quaternion(lhs.w * rhs.x + lhs.x * rhs.w + lhs.y * rhs.z - lhs.z * rhs.y, lhs.w * rhs.y + lhs.y * rhs.w + lhs.z * rhs.x - lhs.x * rhs.z, lhs.w * rhs.z + lhs.z * rhs.w + lhs.x * rhs.y - lhs.y * rhs.x, lhs.w * rhs.w - lhs.x * rhs.x - lhs.y * rhs.y - lhs.z * rhs.z);
@@ -320,6 +374,12 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable
         result.z = (num8 - num11) * point.x + (num9 + num10) * point.y + (1f - (num4 + num5)) * point.z;
         return result;
     }
+
+    public static Quaternion operator -(Quaternion a)
+    {
+        return new Quaternion(-a.x, -a.y, -a.z, -a.w);
+    }
+
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsEqualUsingDot(float dot)
@@ -623,9 +683,6 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable
 
     [MethodImpl(MethodImplOptions.InternalCall)]
     private static extern void Slerp_Injected(ref Quaternion a, ref Quaternion b, float t, out Quaternion ret);
-
-    [MethodImpl(MethodImplOptions.InternalCall)]
-    private static extern void SlerpUnclamped_Injected(ref Quaternion a, ref Quaternion b, float t, out Quaternion ret);
 
     [MethodImpl(MethodImplOptions.InternalCall)]
     private static extern void Lerp_Injected(ref Quaternion a, ref Quaternion b, float t, out Quaternion ret);

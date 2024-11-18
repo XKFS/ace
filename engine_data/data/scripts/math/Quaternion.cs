@@ -83,10 +83,14 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable
     //[FreeFunction("FromToQuaternionSafe", IsThreadSafe = true)]
     public static Quaternion FromToRotation(Vector3 fromDirection, Vector3 toDirection)
     {
-        FromToRotation_Injected(ref fromDirection, ref toDirection, out var ret);
-        return ret;
+        return internal_m2n_from_to_rotation(fromDirection, toDirection);
     }
 
+    public static Quaternion Conjugate(Quaternion q)
+    {
+        Quaternion result = new Quaternion(-q.x, -q.y, -q.z, q.w);
+        return result;
+    }
     //
     // Summary:
     //     Returns the Inverse of rotation.
@@ -94,10 +98,9 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable
     // Parameters:
     //   rotation:
     //[FreeFunction(IsThreadSafe = true)]
-    public static Quaternion Inverse(Quaternion rotation)
+    public static Quaternion Inverse(Quaternion q)
     {
-        Inverse_Injected(ref rotation, out var ret);
-        return ret;
+        return Conjugate(q) / Dot(q, q);
     }
 
     //
@@ -120,12 +123,28 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable
     //[FreeFunction("QuaternionScripting::Slerp", IsThreadSafe = true)]
     public static Quaternion Slerp(Quaternion a, Quaternion b, float t)
     {
-        // Slerp_Injected(ref a, ref b, t, out var ret);
-        // return ret;
+        t = Mathf.Clamp01(t);
+        return SlerpUnclamped(a, b, t);
+		
+    }
 
+    //
+    // Summary:
+    //     Spherically interpolates between a and b by t. The parameter t is not clamped.
+    //
+    //
+    // Parameters:
+    //   a:
+    //
+    //   b:
+    //
+    //   t:
+    //[FreeFunction("QuaternionScripting::SlerpUnclamped", IsThreadSafe = true)]
+    public static Quaternion SlerpUnclamped(Quaternion a, Quaternion b, float t)
+    {
         Quaternion z = b;
 
-		float cosTheta = Quaternion.Dot(a, b);
+        float cosTheta = Quaternion.Dot(a, b);
 
 		// If cosTheta < 0, the interpolation will take the long way around the sphere.
 		// To fix this, one quat must be negated.
@@ -156,24 +175,6 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable
 
     //
     // Summary:
-    //     Spherically interpolates between a and b by t. The parameter t is not clamped.
-    //
-    //
-    // Parameters:
-    //   a:
-    //
-    //   b:
-    //
-    //   t:
-    //[FreeFunction("QuaternionScripting::SlerpUnclamped", IsThreadSafe = true)]
-    public static Quaternion SlerpUnclamped(Quaternion a, Quaternion b, float t)
-    {
-        Slerp_Injected(ref a, ref b, t, out var ret);
-        return ret;
-    }
-
-    //
-    // Summary:
     //     Interpolates between a and b by t and normalizes the result afterwards. The parameter
     //     t is clamped to the range [0, 1].
     //
@@ -191,9 +192,9 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable
     //     A quaternion interpolated between quaternions a and b.
     //[FreeFunction("QuaternionScripting::Lerp", IsThreadSafe = true)]
     public static Quaternion Lerp(Quaternion a, Quaternion b, float t)
-    {
-        Lerp_Injected(ref a, ref b, t, out var ret);
-        return ret;
+    {        
+        t = Mathf.Clamp01(t);
+        return LerpUnclamped(a, b, t);
     }
 
     //
@@ -210,28 +211,19 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable
     //[FreeFunction("QuaternionScripting::LerpUnclamped", IsThreadSafe = true)]
     public static Quaternion LerpUnclamped(Quaternion a, Quaternion b, float t)
     {
-        LerpUnclamped_Injected(ref a, ref b, t, out var ret);
-        return ret;
+        return a * (1.0f - t) + (b * t);
     }
 
     //[FreeFunction("EulerToQuaternion", IsThreadSafe = true)]
     private static Quaternion Internal_FromEulerRad(Vector3 euler)
     {
-        Internal_FromEulerRad_Injected(ref euler, out var ret);
-        return ret;
+        return internal_m2n_from_euler_rad(euler);
     }
 
     //[FreeFunction("QuaternionScripting::ToEuler", IsThreadSafe = true)]
     private static Vector3 Internal_ToEulerRad(Quaternion rotation)
     {
-        Internal_ToEulerRad_Injected(ref rotation, out var ret);
-        return ret;
-    }
-
-    //[FreeFunction("QuaternionScripting::ToAxisAngle", IsThreadSafe = true)]
-    private static void Internal_ToAxisAngleRad(Quaternion q, out Vector3 axis, out float angle)
-    {
-        Internal_ToAxisAngleRad_Injected(ref q, out axis, out angle);
+        return internal_m2n_to_euler_rad(rotation);
     }
 
     //
@@ -245,8 +237,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable
     //[FreeFunction("QuaternionScripting::AngleAxis", IsThreadSafe = true)]
     public static Quaternion AngleAxis(float angle, Vector3 axis)
     {
-        AngleAxis_Injected(angle, ref axis, out var ret);
-        return ret;
+        return internal_m2n_angle_axis(angle, axis);
     }
 
     //
@@ -262,8 +253,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable
     //[FreeFunction("QuaternionScripting::LookRotation", IsThreadSafe = true)]
     public static Quaternion LookRotation(Vector3 forward, Vector3 upwards)
     {
-        LookRotation_Injected(ref forward, ref upwards, out var ret);
-        return ret;
+        return internal_m2n_look_rotation(forward, upwards);
     }
 
     //
@@ -526,12 +516,6 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable
         return Internal_FromEulerRad(euler * (MathF.PI / 180f));
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void ToAngleAxis(out float angle, out Vector3 axis)
-    {
-        Internal_ToAxisAngleRad(this, out axis, out angle);
-        angle *= 57.29578f;
-    }
 
     //
     // Summary:
@@ -676,34 +660,19 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable
     }
 
     [MethodImpl(MethodImplOptions.InternalCall)]
-    private static extern void FromToRotation_Injected(ref Vector3 fromDirection, ref Vector3 toDirection, out Quaternion ret);
+    private static extern Quaternion internal_m2n_from_to_rotation(Vector3 fromDirection, Vector3 toDirection);
 
     [MethodImpl(MethodImplOptions.InternalCall)]
-    private static extern void Inverse_Injected(ref Quaternion rotation, out Quaternion ret);
+    private static extern Quaternion internal_m2n_from_euler_rad(Vector3 euler);
 
     [MethodImpl(MethodImplOptions.InternalCall)]
-    private static extern void Slerp_Injected(ref Quaternion a, ref Quaternion b, float t, out Quaternion ret);
+    private static extern Vector3 internal_m2n_to_euler_rad(Quaternion rotation);
 
     [MethodImpl(MethodImplOptions.InternalCall)]
-    private static extern void Lerp_Injected(ref Quaternion a, ref Quaternion b, float t, out Quaternion ret);
+    private static extern Quaternion internal_m2n_angle_axis(float angle, Vector3 axis);
 
     [MethodImpl(MethodImplOptions.InternalCall)]
-    private static extern void LerpUnclamped_Injected(ref Quaternion a, ref Quaternion b, float t, out Quaternion ret);
-
-    [MethodImpl(MethodImplOptions.InternalCall)]
-    private static extern void Internal_FromEulerRad_Injected(ref Vector3 euler, out Quaternion ret);
-
-    [MethodImpl(MethodImplOptions.InternalCall)]
-    private static extern void Internal_ToEulerRad_Injected(ref Quaternion rotation, out Vector3 ret);
-
-    [MethodImpl(MethodImplOptions.InternalCall)]
-    private static extern void Internal_ToAxisAngleRad_Injected(ref Quaternion q, out Vector3 axis, out float angle);
-
-    [MethodImpl(MethodImplOptions.InternalCall)]
-    private static extern void AngleAxis_Injected(float angle, ref Vector3 axis, out Quaternion ret);
-
-    [MethodImpl(MethodImplOptions.InternalCall)]
-    private static extern void LookRotation_Injected(ref Vector3 forward, ref Vector3 upwards, out Quaternion ret);
+    private static extern Quaternion internal_m2n_look_rotation(Vector3 forward, Vector3 upwards);
 
 }
 

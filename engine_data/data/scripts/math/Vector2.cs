@@ -15,7 +15,6 @@ public struct Vector2 : IEquatable<Vector2>, IFormattable
     // Summary:
     //     Y component of the vector.
     public float y;
-    
 
     private static readonly Vector2 zeroVector = new Vector2(0f, 0f);
 

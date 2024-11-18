@@ -216,8 +216,6 @@ public class TransformComponent : Component
     [MethodImpl(MethodImplOptions.InternalCall)]
     private static extern void internal_m2n_set_skew_local(uint eid, Vector3 value);
 
-    [MethodImpl(MethodImplOptions.InternalCall)]
-    public static extern int[] internal_m2n_test(int[] ints);
 }
 
 }

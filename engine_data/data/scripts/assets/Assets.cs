@@ -32,6 +32,7 @@ public class Assets
 
     [MethodImpl(MethodImplOptions.InternalCall)]
     private static extern Guid internal_m2n_get_asset_by_key(string key, Type obj);
+
 }
 
 

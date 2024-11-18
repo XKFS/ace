@@ -21,6 +21,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable
     //     Z component of the vector.
     public float z;
 
+
     private static readonly Vector3 zeroVector = new Vector3(0f, 0f, 0f);
 
     private static readonly Vector3 oneVector = new Vector3(1f, 1f, 1f);
@@ -270,7 +271,6 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable
         return Slerp(a, b, t);
     }
 
-
     //
     // Summary:
     //     Linearly interpolates between two points.
@@ -415,6 +415,7 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable
         this.x = x;
         this.y = y;
         this.z = z;
+        //this._ = 0.0f;
     }
 
     //
@@ -430,7 +431,9 @@ public struct Vector3 : IEquatable<Vector3>, IFormattable
     {
         this.x = x;
         this.y = y;
-        z = 0f;
+        this.z = 0f;
+        //this._ = 0.0f;
+
     }
 
     //

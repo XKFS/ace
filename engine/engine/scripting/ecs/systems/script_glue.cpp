@@ -87,25 +87,13 @@ struct quaternion
 template<>
 inline auto converter::convert(const math::quat& q) -> quaternion
 {
-    quaternion result;
-    result.x = q.x;
-    result.y = q.y;
-    result.z = q.z;
-    result.w = q.w;
-
-    return result;
+    return {q.x, q.y, q.z, q.w};
 }
 
 template<>
 inline auto converter::convert(const quaternion& q) -> math::quat
 {
-    math::quat result;
-    result.x = q.x;
-    result.y = q.y;
-    result.z = q.z;
-    result.w = q.w;
-
-    return result;
+    return math::quat::wxyz(q.w, q.x, q.y, q.z);
 }
 } // namespace managed_interface
 
@@ -239,7 +227,7 @@ auto internal_m2n_find_entity_by_tag(const std::string& tag) -> uint32_t
 
 struct native_comp_lut
 {
-    bool is_valid() const
+    auto is_valid() const -> bool
     {
         return add_native != nullptr;
     }
@@ -719,14 +707,35 @@ void internal_m2n_set_skew_local(uint32_t id, const math::vec3& value)
     transform_comp.set_skew_local(value);
 }
 
-std::vector<int> internal_m2n_test(const std::vector<int>& vec)
+
+//------------------------------
+auto internal_m2n_from_euler_rad(const math::vec3& euler) -> math::quat
 {
-    return vec;
+    return math::quat(euler);
 }
 
-auto internal_m2n_slerp(const math::vec3& a, const math::vec3& b, float t) -> math::vec3
+auto internal_m2n_to_euler_rad(const math::quat& euler) -> math::vec3
 {
-    return math::slerp(a, b, t);
+    return math::eulerAngles(euler);
+}
+
+
+auto internal_m2n_angle_axis(float angle, const math::vec3& axis) -> math::quat
+{
+    return math::quat(angle, axis);
+}
+
+auto internal_m2n_look_rotation(const math::vec3& a, const math::vec3& b) -> math::quat
+{
+    return math::quat(a, b);
+}
+
+
+auto internal_m2n_from_to_rotation(const math::vec3& from, const math::vec3& to) -> math::quat
+{
+    float angle = math::acos(math::clamp(math::dot(math::normalize(from), math::normalize(to)), -1.0f, 1.0f));
+    math::vec3 axis = math::normalize(math::cross(from, to));
+    return internal_m2n_angle_axis(angle, axis);
 }
 
 
@@ -756,6 +765,17 @@ auto internal_m2n_get_asset_by_key(const std::string& key, const mono::mono_type
     }
 
     return {};
+}
+
+auto m2n_test_uuid(const hpp::uuid& uid) -> hpp::uuid
+{
+    APPLOG_INFO("{}:: From C# {}", __func__, hpp::to_string(uid));
+
+    auto newuid = generate_uuid();
+    APPLOG_INFO("{}:: New C++ {}", __func__, hpp::to_string(newuid));
+
+
+    return newuid;
 }
 
 } // namespace
@@ -822,23 +842,33 @@ auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
         reg.add_internal_call("internal_m2n_set_scale_local", internal_call(internal_m2n_set_scale_local));
 
         reg.add_internal_call("internal_m2n_get_skew_global", internal_call(internal_m2n_get_skew_global));
-        reg.add_internal_call("internal_m2n_setl_skew_globa", internal_call(internal_m2n_setl_skew_globa));
+        reg.add_internal_call("internal_m2n_set_skew_globa", internal_call(internal_m2n_setl_skew_globa));
         reg.add_internal_call("internal_m2n_get_skew_local", internal_call(internal_m2n_get_skew_local));
         reg.add_internal_call("internal_m2n_set_skew_local", internal_call(internal_m2n_set_skew_local));
-        reg.add_internal_call("internal_m2n_test", internal_call(internal_m2n_test));
-
     }
 
     {
-        auto reg = mono::internal_call_registry("Vector3");
-        reg.add_internal_call("internal_m2n_slerp", internal_call(internal_m2n_slerp));
-    }
+        auto reg = mono::internal_call_registry("Ace.Core.Quaternion");
+        reg.add_internal_call("internal_m2n_from_euler_rad", internal_call(internal_m2n_from_euler_rad));
+        reg.add_internal_call("internal_m2n_to_euler_rad", internal_call(internal_m2n_to_euler_rad));
+        reg.add_internal_call("internal_m2n_from_to_rotation", internal_call(internal_m2n_from_to_rotation));
+        reg.add_internal_call("internal_m2n_angle_axis", internal_call(internal_m2n_angle_axis));
+        reg.add_internal_call("internal_m2n_look_rotation", internal_call(internal_m2n_look_rotation));
 
+
+
+    }
 
     {
         auto reg = mono::internal_call_registry("Ace.Core.Assets");
         reg.add_internal_call("internal_m2n_get_asset_by_uuid", internal_call(internal_m2n_get_asset_by_uuid));
         reg.add_internal_call("internal_m2n_get_asset_by_key", internal_call(internal_m2n_get_asset_by_key));
+
+    }
+
+    {
+        auto reg = mono::internal_call_registry("Ace.Core.Tests");
+        reg.add_internal_call("m2n_test_uuid", internal_call(m2n_test_uuid));
 
     }
     // mono::managed_interface::init(assembly);

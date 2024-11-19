@@ -11,7 +11,7 @@ public class TransformComponent : Component
     //
     // Summary:
     //     The world space position of the Transform.
-    public Vector3 positionGlobal
+    public Vector3 position
     {
         get
         {
@@ -26,7 +26,7 @@ public class TransformComponent : Component
     //
     // Summary:
     //     Position of the transform relative to the parent transform.
-    public Vector3 positionLocal
+    public Vector3 localPosition
     {
         get
         {
@@ -39,7 +39,7 @@ public class TransformComponent : Component
     }
 
 
-    public Vector3 rotationEulerGlobal
+    public Vector3 eulerAngles
     {
         get
         {
@@ -51,10 +51,7 @@ public class TransformComponent : Component
         }
     }
 
-    //
-    // Summary:
-    //     Position of the transform relative to the parent transform.
-    public Vector3 rotationEulerLocal
+    public Vector3 localEulerAngles
     {
         get
         {
@@ -67,7 +64,7 @@ public class TransformComponent : Component
     }
 
 
-    public Quaternion rotationGlobal
+    public Quaternion rotation
     {
         get
         {
@@ -82,7 +79,7 @@ public class TransformComponent : Component
     //
     // Summary:
     //     Position of the transform relative to the parent transform.
-    public Quaternion rotationLocal
+    public Quaternion localRotation
     {
         get
         {
@@ -94,7 +91,7 @@ public class TransformComponent : Component
         }
     }
 
-    public Vector3 scaleGlobal
+    public Vector3 scale
     {
         get
         {
@@ -109,7 +106,7 @@ public class TransformComponent : Component
     //
     // Summary:
     //     Position of the transform relative to the parent transform.
-    public Vector3 scaleLocal
+    public Vector3 localScale
     {
         get
         {
@@ -121,7 +118,7 @@ public class TransformComponent : Component
         }
     }
 
-    public Vector3 skewGlobal
+    public Vector3 skew
     {
         get
         {
@@ -136,7 +133,7 @@ public class TransformComponent : Component
     //
     // Summary:
     //     Position of the transform relative to the parent transform.
-    public Vector3 skewLocal
+    public Vector3 localSkew
     {
         get
         {
@@ -148,7 +145,7 @@ public class TransformComponent : Component
         }
     }
 
-    public void MoveByGlobal(Vector3 amount)
+    public void MoveBy(Vector3 amount)
     {
         internal_m2n_move_by_global(owner, amount);
     }
@@ -158,7 +155,7 @@ public class TransformComponent : Component
         internal_m2n_move_by_local(owner, amount);
     }
     
-    public void ScaleByGlobal(Vector3 amount)
+    public void ScaleBy(Vector3 amount)
     {
         internal_m2n_scale_by_global(owner, amount);
     }
@@ -168,7 +165,7 @@ public class TransformComponent : Component
         internal_m2n_scale_by_local(owner, amount);
     }
 
-    public void RotateByGlobal(Quaternion amount)
+    public void RotateBy(Quaternion amount)
     {
         internal_m2n_rotate_by_global(owner, amount);
     }
@@ -178,7 +175,7 @@ public class TransformComponent : Component
         internal_m2n_rotate_by_local(owner, amount);
     }
 
-    public void RotateByEulerGlobal(Vector3 amount)
+    public void RotateByEuler(Vector3 amount)
     {
         internal_m2n_rotate_by_euler_global(owner, amount);
     }
@@ -188,7 +185,7 @@ public class TransformComponent : Component
         internal_m2n_rotate_by_euler_local(owner, amount);
     }
 
-    public void RotateAxisGlobal(float degrees, Vector3 axis)
+    public void RotateAxis(float degrees, Vector3 axis)
     {
         internal_m2n_rotate_axis_global(owner, degrees, axis);
     }
@@ -209,19 +206,43 @@ public class TransformComponent : Component
     
     public void LookAt(Entity target, Vector3 up)
     {
-        var transform = target.GetComponent<TransformComponent>();
-        LookAt(transform.positionGlobal, up);
+        LookAt(target.transform.position, up);
     }
 
-    public void RotateAroundGlobal(Vector3 point, Vector3 axis, float angle)
+    public void LookAt(TransformComponent target)
     {
-        Vector3 vector = positionGlobal;
+        LookAt(target.position, Vector3.up);
+    }
+
+    public void LookAt(TransformComponent target, Vector3 up)
+    {
+        LookAt(target.position, up);
+    }
+
+    public void RotateAround(Vector3 point, Vector3 axis, float angle)
+    {
+        Vector3 vector = position;
         Quaternion quaternion = Quaternion.AngleAxis(angle, axis);
         Vector3 vector2 = vector - point;
         vector2 = quaternion * vector2;
         vector = point + vector2;
-        positionGlobal = vector;
-        RotateAxisGlobal(angle, axis);
+        position = vector;
+        RotateAxis(angle, axis);
+    }
+
+    public void RotateAround(Entity target, Vector3 axis, float angle)
+    {
+        RotateAround(target.transform.position, axis, angle);
+    }
+
+    public void RotateAround(TransformComponent target, Vector3 axis, float angle)
+    {
+        RotateAround(target.position, axis, angle);
+    }
+
+    public void MoveTowards(Entity target, float maxDistanceDelta)
+    {
+        position = Vector3.MoveTowards(position, target.transform.position, maxDistanceDelta);
     }
 
     [MethodImpl(MethodImplOptions.InternalCall)]

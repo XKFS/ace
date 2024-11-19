@@ -7,6 +7,15 @@ namespace Core
 {
 public abstract class Component : NativeObject
 {
+    public Entity owner { get; internal set; }
+
+    public TransformComponent transform
+    {
+        get
+        {
+            return owner.GetComponent<TransformComponent>();
+        }
+    }
     public override bool IsValid()
     {
         if(!owner.IsValid())
@@ -15,7 +24,6 @@ public abstract class Component : NativeObject
         }
         return owner.HasComponent(GetType());
     }
-    public Entity owner { get; internal set; }
     private void internal_n2m_set_entity(uint id)
     {
         owner = new Entity(id);

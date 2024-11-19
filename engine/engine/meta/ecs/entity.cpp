@@ -41,15 +41,26 @@ struct entity_data
 };
 
 thread_local entity_loader* current_loader{};
-
-void set_loader(entity_loader& loader)
+thread_local int loader_count = 0;
+void push_loader(entt::registry& registry)
 {
-    current_loader = &loader;
+    loader_count++;
+    if(current_loader)
+    {
+        return;
+    }
+    current_loader = new entity_loader();
+    current_loader->reg = &registry;
 }
 
-void reset_loader()
+void pop_loader()
 {
-    current_loader = {};
+    loader_count--;
+    if(loader_count <= 0)
+    {
+        delete current_loader;
+        current_loader = {};
+    }
 }
 
 auto get_loader() -> entity_loader&
@@ -252,14 +263,11 @@ auto load_from_archive_start(Archive& ar,
                              entt::registry& registry,
                              const std::function<void(entt::handle)>& on_create = {}) -> entt::handle
 {
-    entity_loader loader;
-    loader.reg = &registry;
-
-    set_loader(loader);
+    push_loader(registry);
 
     auto obj = load_from_archive_impl(ar, registry, on_create);
 
-    reset_loader();
+    pop_loader();
 
     return obj;
 }
@@ -295,11 +303,16 @@ void load_from_archive(Archive& ar, entt::registry& reg)
     size_t count = 0;
     try_load(ar, ser20::make_nvp("entities_count", count));
 
+    push_loader(reg);
+
     for(size_t i = 0; i < count; ++i)
     {
         entt::handle e(reg, reg.create());
         load_from_archive(ar, e);
     }
+
+    pop_loader();
+
 }
 
 } // namespace

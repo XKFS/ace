@@ -53,7 +53,7 @@ void editing_manager::on_play_after_end(rtti::context& ctx)
 
     auto& scripting = ctx.get<script_system>();
     scripting.unload_app_domain();
-    scripting.load_app_domain(ctx, true);
+    scripting.load_app_domain(ctx, false);
     load_checkpoint(ctx);
 }
 
@@ -67,7 +67,7 @@ void editing_manager::on_script_recompile(rtti::context& ctx, const std::string&
     save_checkpoint(ctx);
     auto& scripting = ctx.get<script_system>();
     scripting.unload_app_domain();
-    scripting.load_app_domain(ctx, true);
+    scripting.load_app_domain(ctx, false);
     load_checkpoint(ctx);
 }
 

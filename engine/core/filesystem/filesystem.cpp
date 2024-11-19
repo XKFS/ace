@@ -7,6 +7,8 @@ namespace fs
 namespace detail
 {
 
+namespace
+{
 bool is_parent_path(const path& parent, const path& child)
 {
     return child.parent_path() == parent;
@@ -115,6 +117,7 @@ auto read_stream_into_container(std::basic_istream<CharT, Traits>& in, Container
     }
 
     return in.good() || in.eof();
+}
 }
 
 } // namespace detail

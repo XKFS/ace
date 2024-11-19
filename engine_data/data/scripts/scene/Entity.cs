@@ -10,6 +10,14 @@ namespace Core
 public struct Entity : IEquatable<Entity>
 {
 	public readonly uint Id;
+
+	public TransformComponent transform
+    {
+        get
+        {
+            return GetComponent<TransformComponent>();
+        }
+    }
 	
 	public override bool Equals(object obj)
     {

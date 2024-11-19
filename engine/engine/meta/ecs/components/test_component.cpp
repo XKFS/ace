@@ -1,6 +1,6 @@
 #include "test_component.hpp"
 #include <engine/meta/assets/asset_handle.hpp>
-
+#include <engine/meta/ecs/entity.hpp>
 #include <serialization/associative_archive.h>
 #include <serialization/binary_archive.h>
 
@@ -9,11 +9,10 @@ namespace ace
 REFLECT(test_component)
 {
     rttr::registration::class_<named_anim>("named_anim")(rttr::metadata("category", "BASIC"),
-                                                                 rttr::metadata("pretty_name", "Named Anim"))
+                                                         rttr::metadata("pretty_name", "Named Anim"))
         .constructor<>()()
         .property("name", &named_anim::name)
         .property("clip", &named_anim::clip);
-
 
     rttr::registration::class_<test_component>("test_component")(rttr::metadata("category", "BASIC"),
                                                                  rttr::metadata("pretty_name", "Test"))
@@ -43,7 +42,6 @@ REFLECT(test_component)
         .property("sequential", &test_component::sequential)
         .property("associative", &test_component::associative)
         .property("associative_mock", &test_component::associative_mock);
-
 }
 
 SAVE(test_component)

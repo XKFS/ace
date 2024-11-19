@@ -417,10 +417,10 @@ void draw_entity(graph_context& ctx, entt::handle entity)
     auto pos = ImGui::GetCursorScreenPos() + ImVec2(ImGui::GetTextLineHeightWithSpacing(), 0.0f);
     ImGui::AlignTextToFramePadding();
 
-    bool has_source = entity.all_of<prefab_component>();
     bool is_bone = entity.all_of<bone_component>();
     bool is_submesh = entity.all_of<submesh_component>();
 
+    bool has_source = entity.all_of<prefab_component>();
     auto icon = has_source ? ICON_MDI_CUBE " " : ICON_MDI_CUBE_OUTLINE " ";
     if(is_bone)
     {
@@ -437,6 +437,12 @@ void draw_entity(graph_context& ctx, entt::handle entity)
     ImGui::PushStyleColor(ImGuiCol_Text, col);
     bool opened = ImGui::TreeNodeEx(label.c_str(), flags);
     ImGui::PopStyleColor();
+
+
+    if(ctx.em.is_focused(entity))
+    {
+        ImGui::SetItemFocusFrame(ImGui::GetColorU32(ImVec4(1.0f, 1.0f, 0.0f, 1.0f)));
+    }
 
     if(ImGui::IsItemReleased(ImGuiMouseButton_Left))
     {

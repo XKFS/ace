@@ -130,9 +130,6 @@ public class TransformComponent : Component
         }
     }
 
-    //
-    // Summary:
-    //     Position of the transform relative to the parent transform.
     public Vector3 localSkew
     {
         get
@@ -142,6 +139,80 @@ public class TransformComponent : Component
         set
         {
             internal_m2n_set_skew_local(owner, value);
+        }
+    }
+
+    
+    public Vector3 right
+    {
+        get
+        {
+            return rotation * Vector3.right;
+        }
+        set
+        {
+            rotation = Quaternion.FromToRotation(Vector3.right, value);
+        }
+    }
+
+    public Vector3 localRight
+    {
+        get
+        {
+            return localRotation * Vector3.right;
+        }
+        set
+        {
+            localRotation = Quaternion.FromToRotation(Vector3.right, value);
+        }
+    }
+
+    public Vector3 up
+    {
+        get
+        {
+            return rotation * Vector3.up;
+        }
+        set
+        {
+            rotation = Quaternion.FromToRotation(Vector3.up, value);
+        }
+    }
+
+    public Vector3 localUp
+    {
+        get
+        {
+            return localRotation * Vector3.up;
+        }
+        set
+        {
+            localRotation = Quaternion.FromToRotation(Vector3.up, value);
+        }
+    }
+
+
+    public Vector3 forward
+    {
+        get
+        {
+            return rotation * Vector3.forward;
+        }
+        set
+        {
+            rotation = Quaternion.FromToRotation(Vector3.forward, value);
+        }
+    }
+
+    public Vector3 localForward
+    {
+        get
+        {
+            return localRotation * Vector3.forward;
+        }
+        set
+        {
+            localRotation = Quaternion.FromToRotation(Vector3.forward, value);
         }
     }
 

@@ -42,6 +42,7 @@ struct entity_data
 
 thread_local entity_loader* current_loader{};
 thread_local int loader_count = 0;
+thread_local int saving_single = 0;
 void push_loader(entt::registry& registry)
 {
     loader_count++;
@@ -317,6 +318,11 @@ void load_from_archive(Archive& ar, entt::registry& reg)
 
 } // namespace
 
+auto is_saving_single() -> bool
+{
+    return saving_single > 0;
+}
+
 void save_to_stream(std::ostream& stream, entt::const_handle obj)
 {
     if(stream.good())
@@ -324,7 +330,11 @@ void save_to_stream(std::ostream& stream, entt::const_handle obj)
         // APPLOG_INFO_PERF(std::chrono::microseconds);
 
         auto ar = ser20::create_oarchive_associative(stream);
+
+        saving_single++;
         save_to_archive(ar, obj);
+        saving_single--;
+
     }
 }
 
@@ -341,7 +351,9 @@ void save_to_stream_bin(std::ostream& stream, entt::const_handle obj)
     {
         ser20::oarchive_binary_t ar(stream);
 
+        saving_single++;
         save_to_archive(ar, obj);
+        saving_single--;
     }
 }
 

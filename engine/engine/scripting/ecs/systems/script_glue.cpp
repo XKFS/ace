@@ -853,6 +853,42 @@ void internal_m2n_set_skew_local(entt::entity id, const math::vec3& value)
 }
 
 //------------------------------
+void internal_m2n_apply_impulse(entt::entity id, const math::vec3& value)
+{
+    auto e = get_entity_from_id(id);
+    if(!e)
+    {
+        return;
+    }
+
+    auto comp = e.try_get<physics_component>();
+
+    if(!comp)
+    {
+        return;
+    }
+
+    comp->apply_impulse(value);
+}
+
+void internal_m2n_apply_torque_impulse(entt::entity id, const math::vec3& value)
+{
+    auto e = get_entity_from_id(id);
+    if(!e)
+    {
+        return;
+    }
+    auto comp = e.try_get<physics_component>();
+
+    if(!comp)
+    {
+        return;
+    }
+
+    comp->apply_torque_impulse(value);
+}
+
+//------------------------------
 auto internal_m2n_from_euler_rad(const math::vec3& euler) -> math::quat
 {
     return math::quat(euler);
@@ -1009,6 +1045,18 @@ auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
     }
 
     {
+        auto reg = mono::internal_call_registry("Ace.Core.PhysicsComponent");
+        reg.add_internal_call("internal_m2n_apply_impulse", internal_call(internal_m2n_apply_impulse));
+        reg.add_internal_call("internal_m2n_apply_torque_impulse", internal_call(internal_m2n_apply_torque_impulse));
+    }
+
+    {
+        auto reg = mono::internal_call_registry("Ace.Core.Assets");
+        reg.add_internal_call("internal_m2n_get_asset_by_uuid", internal_call(internal_m2n_get_asset_by_uuid));
+        reg.add_internal_call("internal_m2n_get_asset_by_key", internal_call(internal_m2n_get_asset_by_key));
+    }
+
+    {
         auto reg = mono::internal_call_registry("Quaternion");
         reg.add_internal_call("internal_m2n_from_euler_rad", internal_call(internal_m2n_from_euler_rad));
         reg.add_internal_call("internal_m2n_to_euler_rad", internal_call(internal_m2n_to_euler_rad));
@@ -1017,11 +1065,6 @@ auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
         reg.add_internal_call("internal_m2n_look_rotation", internal_call(internal_m2n_look_rotation));
     }
 
-    {
-        auto reg = mono::internal_call_registry("Ace.Core.Assets");
-        reg.add_internal_call("internal_m2n_get_asset_by_uuid", internal_call(internal_m2n_get_asset_by_uuid));
-        reg.add_internal_call("internal_m2n_get_asset_by_key", internal_call(internal_m2n_get_asset_by_key));
-    }
 
     {
         auto reg = mono::internal_call_registry("Ace.Core.Tests");

@@ -213,6 +213,7 @@ public:
      * @param point The point to look at.
      */
     void look_at(const math::vec3& point) noexcept;
+    void look_at(const math::vec3& point, const math::vec3& up) noexcept;
 
     //---------------------------------------------
     /// SCALE

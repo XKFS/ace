@@ -226,6 +226,7 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable
         return internal_m2n_to_euler_rad(rotation);
     }
 
+
     //
     // Summary:
     //     Creates a rotation which rotates angle degrees around axis.
@@ -237,7 +238,8 @@ public struct Quaternion : IEquatable<Quaternion>, IFormattable
     //[FreeFunction("QuaternionScripting::AngleAxis", IsThreadSafe = true)]
     public static Quaternion AngleAxis(float angle, Vector3 axis)
     {
-        return internal_m2n_angle_axis(angle, axis);
+        float rad = angle * (MathF.PI / 180f);
+        return internal_m2n_angle_axis(rad, axis);
     }
 
     //

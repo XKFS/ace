@@ -127,7 +127,21 @@ void list_component(ImGuiTextFilter& filter, const std::string& name, const insp
         ImGui::CloseCurrentPopup();
     }
 }
+auto get_entity_tag(entt::handle entity) -> const std::string&
+{
+    auto& tag = entity.get_or_emplace<tag_component>();
+    return tag.tag;
+}
+
 } // namespace
+
+auto inspector_entity::inspect_as_property(rtti::context& ctx, entt::handle& data) -> inspect_result
+{
+    auto name = get_entity_tag(data);
+    ImGui::Button(name.c_str());
+    return {};
+}
+
 
 auto inspector_entity::inspect(rtti::context& ctx,
                                rttr::variant& var,
@@ -139,6 +153,11 @@ auto inspector_entity::inspect(rtti::context& ctx,
     if(!data)
     {
         return result;
+    }
+
+    if(info.is_property)
+    {
+        return inspect_as_property(ctx, data);
     }
 
     hpp::for_each_tuple_type<ace::all_inspectable_components>(

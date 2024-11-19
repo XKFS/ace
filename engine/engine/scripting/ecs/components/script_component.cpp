@@ -63,8 +63,8 @@ void script_component::destroy(const mono::mono_object& obj)
 
 void script_component::set_entity(const mono::mono_object& obj, entt::handle e)
 {
-    auto method = mono::make_method_invoker<void(uint32_t)>(obj, "internal_n2m_set_entity");
-    method(obj, static_cast<uint32_t>(e.entity()));
+    auto method = mono::make_method_invoker<void(entt::entity)>(obj, "internal_n2m_set_entity");
+    method(obj, e.entity());
 }
 
 void script_component::process_pending_deletions()

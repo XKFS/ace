@@ -38,7 +38,7 @@ auto reimport(const asset_handle<T>& asset)
 }
 
 template<typename T>
-bool process_drag_drop_target(asset_manager& am, asset_handle<T>& entry)
+auto process_drag_drop_target(asset_manager& am, asset_handle<T>& entry) -> bool
 {
     for(const auto& type : ex::get_suported_formats<T>())
     {

@@ -1,11 +1,12 @@
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Ace
 {
 namespace Core
 {
-
+[StructLayout(LayoutKind.Sequential)]
 public struct Entity : IEquatable<Entity>
 {
 	public readonly uint Id;
@@ -44,7 +45,7 @@ public struct Entity : IEquatable<Entity>
 			throw new SystemException("Entity is Invalid.");
 		}
 
-		return internal_m2n_add_component(Id, typeof(T)) as T; 
+		return internal_m2n_add_component(this, typeof(T)) as T; 
 	}
 
 	public bool HasComponent<T>() where T : Component
@@ -53,7 +54,7 @@ public struct Entity : IEquatable<Entity>
 		{
 			throw new SystemException("Entity is Invalid.");
 		}
-		return internal_m2n_has_component(Id, typeof(T)); 
+		return internal_m2n_has_component(this, typeof(T)); 
 	}
 
 	public bool HasComponent(Type type) 
@@ -62,7 +63,7 @@ public struct Entity : IEquatable<Entity>
 		{
 			throw new SystemException("Entity is Invalid.");
 		}
-		return internal_m2n_has_component(Id, type); 
+		return internal_m2n_has_component(this, type); 
 	}
 
 	public T GetComponent<T>() where T : Component, new()
@@ -71,7 +72,7 @@ public struct Entity : IEquatable<Entity>
 		{
 			throw new SystemException("Entity is Invalid.");
 		}
-		return internal_m2n_get_component(Id, typeof(T)) as T; 
+		return internal_m2n_get_component(this, typeof(T)) as T; 
 	}
 
 	public bool RemoveComponent(Component component)
@@ -80,7 +81,7 @@ public struct Entity : IEquatable<Entity>
 		{
 			throw new SystemException("Entity is Invalid.");
 		}
-		return internal_m2n_remove_component(Id, component);
+		return internal_m2n_remove_component(this, component);
 	}
 
 	internal Entity(uint id)
@@ -89,16 +90,16 @@ public struct Entity : IEquatable<Entity>
 	}
 	
 	[MethodImpl(MethodImplOptions.InternalCall)] 
-	private static extern Component internal_m2n_add_component(uint id, Type obj);
+	private static extern Component internal_m2n_add_component(Entity id, Type obj);
 	
 	[MethodImpl(MethodImplOptions.InternalCall)] 
-	private static extern Component internal_m2n_get_component(uint id, Type obj);
+	private static extern Component internal_m2n_get_component(Entity id, Type obj);
 
 	[MethodImpl(MethodImplOptions.InternalCall)] 
-	private static extern bool internal_m2n_has_component(uint id, Type obj);
+	private static extern bool internal_m2n_has_component(Entity id, Type obj);
 
 	[MethodImpl(MethodImplOptions.InternalCall)] 
-	private static extern bool internal_m2n_remove_component(uint id, Component obj);
+	private static extern bool internal_m2n_remove_component(Entity id, Component obj);
 
 
 

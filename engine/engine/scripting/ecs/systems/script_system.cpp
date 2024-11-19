@@ -449,10 +449,18 @@ void script_system::on_frame_update(rtti::context& ctx, delta_t dt)
                 comp.process_pending_deletions();
             });
 
+        struct update_data
+        {
+            float delta_time{};
+        };
+
         if(ev.is_playing && !ev.is_paused)
         {
-            auto method_thunk = mono::make_method_invoker<void()>(cache_.update_manager_type, "internal_n2m_update");
-            method_thunk();
+            update_data data;
+            data.delta_time = dt.count();
+
+            auto method_thunk = mono::make_method_invoker<void(update_data)>(cache_.update_manager_type, "internal_n2m_update");
+            method_thunk(data);
         }
     }
     catch(const mono::mono_exception& e)

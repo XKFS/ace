@@ -14,7 +14,6 @@
 #include <engine/assets/asset_manager.h>
 #include <engine/meta/ecs/components/all_components.h>
 
-
 #include <filesystem/filesystem.h>
 #include <logging/logging.h>
 
@@ -109,15 +108,15 @@ namespace ace
 namespace
 {
 
-auto get_entity_from_id(uint32_t id) -> entt::handle
+auto get_entity_from_id(entt::entity id) -> entt::handle
 {
-    if(id == 0)
+    if(id == entt::entity(0))
     {
         return {};
     }
     auto& ctx = engine::context();
     auto& ec = ctx.get<ecs>();
-    return ec.get_scene().create_entity(entt::entity(id));
+    return ec.get_scene().create_entity(id);
 }
 
 void internal_m2n_load_scene(const std::string& key)
@@ -139,16 +138,16 @@ void internal_m2n_destroy_scene(const mono::mono_object& this_ptr)
     mono::ignore(this_ptr);
 }
 
-auto internal_m2n_create_entity(const std::string& tag) -> uint32_t
+auto internal_m2n_create_entity(const std::string& tag) -> entt::entity
 {
     auto& ctx = engine::context();
     auto& ec = ctx.get<ecs>();
     auto e = ec.get_scene().create_entity(tag);
 
-    return static_cast<uint32_t>(e.entity());
+    return e.entity();
 }
 
-auto internal_m2n_create_entity_from_prefab_uid(const hpp::uuid& uid) -> uint32_t
+auto internal_m2n_create_entity_from_prefab_uid(const hpp::uuid& uid) -> entt::entity
 {
     auto& ctx = engine::context();
     auto& ec = ctx.get<ecs>();
@@ -157,10 +156,10 @@ auto internal_m2n_create_entity_from_prefab_uid(const hpp::uuid& uid) -> uint32_
     auto pfb = am.get_asset<prefab>(uid);
     auto e = ec.get_scene().instantiate(pfb);
 
-    return static_cast<uint32_t>(e.entity());
+    return e.entity();
 }
 
-auto internal_m2n_create_entity_from_prefab_key(const std::string& key) -> uint32_t
+auto internal_m2n_create_entity_from_prefab_key(const std::string& key) -> entt::entity
 {
     auto& ctx = engine::context();
     auto& ec = ctx.get<ecs>();
@@ -169,10 +168,10 @@ auto internal_m2n_create_entity_from_prefab_key(const std::string& key) -> uint3
     auto pfb = am.get_asset<prefab>(key);
     auto e = ec.get_scene().instantiate(pfb);
 
-    return static_cast<uint32_t>(e.entity());
+    return e.entity();
 }
 
-auto internal_m2n_clone_entity(uint32_t id) -> uint32_t
+auto internal_m2n_clone_entity(entt::entity id) -> entt::entity
 {
     auto e = get_entity_from_id(id);
     if(e)
@@ -180,14 +179,14 @@ auto internal_m2n_clone_entity(uint32_t id) -> uint32_t
         auto& ctx = engine::context();
         auto& ec = ctx.get<ecs>();
         auto cloned = ec.get_scene().clone_entity(e);
-        return static_cast<uint32_t>(cloned.entity());
+        return cloned.entity();
     }
 
     entt::handle invalid;
-    return static_cast<uint32_t>(invalid.entity());
+    return invalid.entity();
 }
 
-auto internal_m2n_destroy_entity(uint32_t id) -> bool
+auto internal_m2n_destroy_entity(entt::entity id) -> bool
 {
     auto e = get_entity_from_id(id);
     if(e)
@@ -198,7 +197,7 @@ auto internal_m2n_destroy_entity(uint32_t id) -> bool
     return false;
 }
 
-auto internal_m2n_is_entity_valid(uint32_t id) -> bool
+auto internal_m2n_is_entity_valid(entt::entity id) -> bool
 {
     auto e = get_entity_from_id(id);
     return e.valid();
@@ -234,7 +233,6 @@ struct native_comp_lut
     std::function<bool(const mono::mono_type& type, entt::handle e)> add_native;
     std::function<bool(const mono::mono_type& type, entt::handle e)> has_native;
     std::function<bool(const mono::mono_type& type, entt::handle e)> remove_native;
-
 
     static auto get_registry() -> std::unordered_map<std::string, native_comp_lut>&
     {
@@ -280,7 +278,7 @@ struct native_comp_lut
             return false;
         };
 
-        lut.has_native = [name](const mono::mono_type& type, entt::handle e)
+        lut.remove_native = [name](const mono::mono_type& type, entt::handle e)
         {
             if(type.get_name() == name)
             {
@@ -385,7 +383,7 @@ auto internal_remove_native_component(const mono::mono_object& obj, entt::handle
     return false;
 }
 
-auto internal_m2n_add_component(uint32_t id, const mono::mono_type& type) -> mono::mono_object
+auto internal_m2n_add_component(entt::entity id, const mono::mono_type& type) -> mono::mono_object
 {
     auto e = get_entity_from_id(id);
     auto& script_comp = e.get_or_emplace<script_component>();
@@ -399,7 +397,7 @@ auto internal_m2n_add_component(uint32_t id, const mono::mono_type& type) -> mon
     return static_cast<mono::mono_object&>(component.scoped->object);
 }
 
-auto internal_m2n_get_component(uint32_t id, const mono::mono_type& type) -> mono::mono_object
+auto internal_m2n_get_component(entt::entity id, const mono::mono_type& type) -> mono::mono_object
 {
     auto e = get_entity_from_id(id);
     auto& script_comp = e.get_or_emplace<script_component>();
@@ -419,14 +417,14 @@ auto internal_m2n_get_component(uint32_t id, const mono::mono_type& type) -> mon
     return {};
 }
 
-auto internal_m2n_has_component(uint32_t id, const mono::mono_type& type) -> bool
+auto internal_m2n_has_component(entt::entity id, const mono::mono_type& type) -> bool
 {
     auto comp = internal_m2n_get_component(id, type);
 
     return comp.valid();
 }
 
-auto internal_m2n_remove_component(uint32_t id, const mono::mono_object& comp) -> bool
+auto internal_m2n_remove_component(entt::entity id, const mono::mono_object& comp) -> bool
 {
     auto e = get_entity_from_id(id);
     if(!e)
@@ -442,6 +440,20 @@ auto internal_m2n_remove_component(uint32_t id, const mono::mono_object& comp) -
 
     return script_comp.remove_script_component(comp);
 }
+
+//-------------------------------------------------------------------------
+/*
+
+  _      ____   _____
+ | |    / __ \ / ____|
+ | |   | |  | | |  __
+ | |   | |  | | | |_ |
+ | |___| |__| | |__| |
+ |______\____/ \_____|
+
+
+*/
+//-------------------------------------------------------------------------
 
 void internal_m2n_log_trace(const std::string& message, const std::string& func, const std::string& file, int line)
 {
@@ -463,8 +475,20 @@ void internal_m2n_log_error(const std::string& message, const std::string& func,
     APPLOG_ERROR_LOC(file.c_str(), line, func.c_str(), message);
 }
 
-//--------------------------------------------
-auto internal_m2n_get_position_global(uint32_t id) -> math::vec3
+//-------------------------------------------------------------------------
+/*
+
+  _______ _____            _   _  _____ ______ ____  _____  __  __
+ |__   __|  __ \     /\   | \ | |/ ____|  ____/ __ \|  __ \|  \/  |
+    | |  | |__) |   /  \  |  \| | (___ | |__ | |  | | |__) | \  / |
+    | |  |  _  /   / /\ \ | . ` |\___ \|  __|| |  | |  _  /| |\/| |
+    | |  | | \ \  / ____ \| |\  |____) | |   | |__| | | \ \| |  | |
+    |_|  |_|  \_\/_/    \_\_| \_|_____/|_|    \____/|_|  \_\_|  |_|
+
+
+*/
+//-------------------------------------------------------------------------
+auto internal_m2n_get_position_global(entt::entity id) -> math::vec3
 {
     auto e = get_entity_from_id(id);
     if(!e)
@@ -476,7 +500,7 @@ auto internal_m2n_get_position_global(uint32_t id) -> math::vec3
     return transform_comp.get_position_global();
 }
 
-void internal_m2n_set_position_global(uint32_t id, const math::vec3& value)
+void internal_m2n_set_position_global(entt::entity id, const math::vec3& value)
 {
     auto e = get_entity_from_id(id);
     if(!e)
@@ -488,7 +512,19 @@ void internal_m2n_set_position_global(uint32_t id, const math::vec3& value)
     transform_comp.set_position_global(value);
 }
 
-auto internal_m2n_get_position_local(uint32_t id) -> math::vec3
+void internal_m2n_move_by_global(entt::entity id, const math::vec3& value)
+{
+    auto e = get_entity_from_id(id);
+    if(!e)
+    {
+        return;
+    }
+
+    auto& transform_comp = e.get<transform_component>();
+    transform_comp.move_by_global(value);
+}
+
+auto internal_m2n_get_position_local(entt::entity id) -> math::vec3
 {
     auto e = get_entity_from_id(id);
     if(!e)
@@ -500,7 +536,7 @@ auto internal_m2n_get_position_local(uint32_t id) -> math::vec3
     return transform_comp.get_position_local();
 }
 
-void internal_m2n_set_position_local(uint32_t id, const math::vec3& value)
+void internal_m2n_set_position_local(entt::entity id, const math::vec3& value)
 {
     auto e = get_entity_from_id(id);
     if(!e)
@@ -512,8 +548,20 @@ void internal_m2n_set_position_local(uint32_t id, const math::vec3& value)
     transform_comp.set_position_local(value);
 }
 
+void internal_m2n_move_by_local(entt::entity id, const math::vec3& value)
+{
+    auto e = get_entity_from_id(id);
+    if(!e)
+    {
+        return;
+    }
+
+    auto& transform_comp = e.get<transform_component>();
+    transform_comp.move_by_local(value);
+}
+
 //--------------------------------------------------
-auto internal_m2n_get_rotation_euler_global(uint32_t id) -> math::vec3
+auto internal_m2n_get_rotation_euler_global(entt::entity id) -> math::vec3
 {
     auto e = get_entity_from_id(id);
     if(!e)
@@ -525,7 +573,43 @@ auto internal_m2n_get_rotation_euler_global(uint32_t id) -> math::vec3
     return transform_comp.get_rotation_euler_global();
 }
 
-void internal_m2n_set_rotation_euler_global(uint32_t id, const math::vec3& value)
+void internal_m2n_rotate_by_euler_global(entt::entity id, const math::vec3& amount)
+{
+    auto e = get_entity_from_id(id);
+    if(!e)
+    {
+        return;
+    }
+
+    auto& transform_comp = e.get<transform_component>();
+    transform_comp.rotate_by_euler_global(amount);
+}
+
+void internal_m2n_rotate_axis_global(entt::entity id, float degrees, const math::vec3& axis)
+{
+    auto e = get_entity_from_id(id);
+    if(!e)
+    {
+        return;
+    }
+
+    auto& transform_comp = e.get<transform_component>();
+    transform_comp.rotate_axis_global(degrees, axis);
+}
+
+void internal_m2n_look_at(entt::entity id, const math::vec3& point, const math::vec3& up)
+{
+    auto e = get_entity_from_id(id);
+    if(!e)
+    {
+        return;
+    }
+
+    auto& transform_comp = e.get<transform_component>();
+    transform_comp.look_at(point, up);
+}
+
+void internal_m2n_set_rotation_euler_global(entt::entity id, const math::vec3& value)
 {
     auto e = get_entity_from_id(id);
     if(!e)
@@ -537,7 +621,7 @@ void internal_m2n_set_rotation_euler_global(uint32_t id, const math::vec3& value
     transform_comp.set_rotation_euler_global(value);
 }
 
-auto internal_m2n_get_rotation_euler_local(uint32_t id) -> math::vec3
+auto internal_m2n_get_rotation_euler_local(entt::entity id) -> math::vec3
 {
     auto e = get_entity_from_id(id);
     if(!e)
@@ -549,7 +633,7 @@ auto internal_m2n_get_rotation_euler_local(uint32_t id) -> math::vec3
     return transform_comp.get_rotation_euler_local();
 }
 
-void internal_m2n_set_rotation_euler_local(uint32_t id, const math::vec3& value)
+void internal_m2n_set_rotation_euler_local(entt::entity id, const math::vec3& value)
 {
     auto e = get_entity_from_id(id);
     if(!e)
@@ -561,7 +645,19 @@ void internal_m2n_set_rotation_euler_local(uint32_t id, const math::vec3& value)
     transform_comp.set_rotation_euler_local(value);
 }
 
-auto internal_m2n_get_rotation_global(uint32_t id) -> math::quat
+void internal_m2n_rotate_by_euler_local(entt::entity id, const math::vec3& amount)
+{
+    auto e = get_entity_from_id(id);
+    if(!e)
+    {
+        return;
+    }
+
+    auto& transform_comp = e.get<transform_component>();
+    transform_comp.rotate_by_euler_local(amount);
+}
+
+auto internal_m2n_get_rotation_global(entt::entity id) -> math::quat
 {
     auto e = get_entity_from_id(id);
     if(!e)
@@ -573,7 +669,7 @@ auto internal_m2n_get_rotation_global(uint32_t id) -> math::quat
     return transform_comp.get_rotation_global();
 }
 
-void internal_m2n_set_rotation_global(uint32_t id, const math::vec3& value)
+void internal_m2n_set_rotation_global(entt::entity id, const math::quat& value)
 {
     auto e = get_entity_from_id(id);
     if(!e)
@@ -585,7 +681,19 @@ void internal_m2n_set_rotation_global(uint32_t id, const math::vec3& value)
     transform_comp.set_rotation_global(value);
 }
 
-auto internal_m2n_get_rotation_local(uint32_t id) -> math::quat
+void internal_m2n_rotate_by_global(entt::entity id, const math::quat& amount)
+{
+    auto e = get_entity_from_id(id);
+    if(!e)
+    {
+        return;
+    }
+
+    auto& transform_comp = e.get<transform_component>();
+    transform_comp.rotate_by_global(amount);
+}
+
+auto internal_m2n_get_rotation_local(entt::entity id) -> math::quat
 {
     auto e = get_entity_from_id(id);
     if(!e)
@@ -597,7 +705,7 @@ auto internal_m2n_get_rotation_local(uint32_t id) -> math::quat
     return transform_comp.get_rotation_local();
 }
 
-void internal_m2n_set_rotation_local(uint32_t id, const math::quat& value)
+void internal_m2n_set_rotation_local(entt::entity id, const math::quat& value)
 {
     auto e = get_entity_from_id(id);
     if(!e)
@@ -609,8 +717,20 @@ void internal_m2n_set_rotation_local(uint32_t id, const math::quat& value)
     transform_comp.set_rotation_local(value);
 }
 
+void internal_m2n_rotate_by_local(entt::entity id, const math::quat& amount)
+{
+    auto e = get_entity_from_id(id);
+    if(!e)
+    {
+        return;
+    }
+
+    auto& transform_comp = e.get<transform_component>();
+    transform_comp.rotate_by_local(amount);
+}
+
 //--------------------------------------------------
-auto internal_m2n_get_scale_global(uint32_t id) -> math::vec3
+auto internal_m2n_get_scale_global(entt::entity id) -> math::vec3
 {
     auto e = get_entity_from_id(id);
     if(!e)
@@ -622,7 +742,7 @@ auto internal_m2n_get_scale_global(uint32_t id) -> math::vec3
     return transform_comp.get_scale_global();
 }
 
-void internal_m2n_set_scale_global(uint32_t id, const math::vec3& value)
+void internal_m2n_set_scale_global(entt::entity id, const math::vec3& value)
 {
     auto e = get_entity_from_id(id);
     if(!e)
@@ -634,7 +754,20 @@ void internal_m2n_set_scale_global(uint32_t id, const math::vec3& value)
     transform_comp.set_scale_global(value);
 }
 
-auto internal_m2n_get_scale_local(uint32_t id) -> math::vec3
+void internal_m2n_scale_by_global(entt::entity id, const math::vec3& amount)
+{
+    auto e = get_entity_from_id(id);
+    if(!e)
+    {
+        return;
+    }
+
+    auto& transform_comp = e.get<transform_component>();
+    transform_comp.scale_by_global(amount);
+}
+
+
+auto internal_m2n_get_scale_local(entt::entity id) -> math::vec3
 {
     auto e = get_entity_from_id(id);
     if(!e)
@@ -646,7 +779,7 @@ auto internal_m2n_get_scale_local(uint32_t id) -> math::vec3
     return transform_comp.get_scale_local();
 }
 
-void internal_m2n_set_scale_local(uint32_t id, const math::vec3& value)
+void internal_m2n_set_scale_local(entt::entity id, const math::vec3& value)
 {
     auto e = get_entity_from_id(id);
     if(!e)
@@ -658,8 +791,20 @@ void internal_m2n_set_scale_local(uint32_t id, const math::vec3& value)
     transform_comp.set_scale_local(value);
 }
 
+void internal_m2n_scale_by_local(entt::entity id, const math::vec3& amount)
+{
+    auto e = get_entity_from_id(id);
+    if(!e)
+    {
+        return;
+    }
+
+    auto& transform_comp = e.get<transform_component>();
+    transform_comp.scale_by_local(amount);
+}
+
 //--------------------------------------------------
-auto internal_m2n_get_skew_global(uint32_t id) -> math::vec3
+auto internal_m2n_get_skew_global(entt::entity id) -> math::vec3
 {
     auto e = get_entity_from_id(id);
     if(!e)
@@ -671,7 +816,7 @@ auto internal_m2n_get_skew_global(uint32_t id) -> math::vec3
     return transform_comp.get_skew_global();
 }
 
-void internal_m2n_setl_skew_globa(uint32_t id, const math::vec3& value)
+void internal_m2n_setl_skew_globa(entt::entity id, const math::vec3& value)
 {
     auto e = get_entity_from_id(id);
     if(!e)
@@ -683,7 +828,7 @@ void internal_m2n_setl_skew_globa(uint32_t id, const math::vec3& value)
     transform_comp.set_skew_global(value);
 }
 
-auto internal_m2n_get_skew_local(uint32_t id) -> math::vec3
+auto internal_m2n_get_skew_local(entt::entity id) -> math::vec3
 {
     auto e = get_entity_from_id(id);
     if(!e)
@@ -695,7 +840,7 @@ auto internal_m2n_get_skew_local(uint32_t id) -> math::vec3
     return transform_comp.get_skew_local();
 }
 
-void internal_m2n_set_skew_local(uint32_t id, const math::vec3& value)
+void internal_m2n_set_skew_local(entt::entity id, const math::vec3& value)
 {
     auto e = get_entity_from_id(id);
     if(!e)
@@ -706,7 +851,6 @@ void internal_m2n_set_skew_local(uint32_t id, const math::vec3& value)
     auto& transform_comp = e.get<transform_component>();
     transform_comp.set_skew_local(value);
 }
-
 
 //------------------------------
 auto internal_m2n_from_euler_rad(const math::vec3& euler) -> math::quat
@@ -719,25 +863,21 @@ auto internal_m2n_to_euler_rad(const math::quat& euler) -> math::vec3
     return math::eulerAngles(euler);
 }
 
-
 auto internal_m2n_angle_axis(float angle, const math::vec3& axis) -> math::quat
 {
-    return math::quat(angle, axis);
+    return math::angleAxis(angle, axis);
 }
 
 auto internal_m2n_look_rotation(const math::vec3& a, const math::vec3& b) -> math::quat
 {
     return math::quat(a, b);
 }
-
-
 auto internal_m2n_from_to_rotation(const math::vec3& from, const math::vec3& to) -> math::quat
 {
     float angle = math::acos(math::clamp(math::dot(math::normalize(from), math::normalize(to)), -1.0f, 1.0f));
     math::vec3 axis = math::normalize(math::cross(from, to));
     return internal_m2n_angle_axis(angle, axis);
 }
-
 
 auto internal_m2n_get_asset_by_uuid(const hpp::uuid& uid, const mono::mono_type& type) -> hpp::uuid
 {
@@ -774,7 +914,6 @@ auto m2n_test_uuid(const hpp::uuid& uid) -> hpp::uuid
     auto newuid = generate_uuid();
     APPLOG_INFO("{}:: New C++ {}", __func__, hpp::to_string(newuid));
 
-
     return newuid;
 }
 
@@ -798,13 +937,13 @@ auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
         reg.add_internal_call("internal_m2n_create_scene", internal_call(internal_m2n_create_scene));
         reg.add_internal_call("internal_m2n_destroy_scene", internal_call(internal_m2n_destroy_scene));
         reg.add_internal_call("internal_m2n_create_entity", internal_call(internal_m2n_create_entity));
-        reg.add_internal_call("internal_m2n_create_entity_from_prefab_uid", internal_call(internal_m2n_create_entity_from_prefab_uid));
-        reg.add_internal_call("internal_m2n_create_entity_from_prefab_key", internal_call(internal_m2n_create_entity_from_prefab_key));
+        reg.add_internal_call("internal_m2n_create_entity_from_prefab_uid",
+                              internal_call(internal_m2n_create_entity_from_prefab_uid));
+        reg.add_internal_call("internal_m2n_create_entity_from_prefab_key",
+                              internal_call(internal_m2n_create_entity_from_prefab_key));
         reg.add_internal_call("internal_m2n_destroy_entity", internal_call(internal_m2n_destroy_entity));
         reg.add_internal_call("internal_m2n_is_entity_valid", internal_call(internal_m2n_is_entity_valid));
         reg.add_internal_call("internal_m2n_find_entity_by_tag", internal_call(internal_m2n_find_entity_by_tag));
-
-
     }
 
     {
@@ -819,28 +958,50 @@ auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
         auto reg = mono::internal_call_registry("Ace.Core.TransformComponent");
         reg.add_internal_call("internal_m2n_get_position_global", internal_call(internal_m2n_get_position_global));
         reg.add_internal_call("internal_m2n_set_position_global", internal_call(internal_m2n_set_position_global));
+        reg.add_internal_call("internal_m2n_move_by_global", internal_call(internal_m2n_move_by_global));
+
         reg.add_internal_call("internal_m2n_get_position_local", internal_call(internal_m2n_get_position_local));
         reg.add_internal_call("internal_m2n_set_position_local", internal_call(internal_m2n_set_position_local));
+        reg.add_internal_call("internal_m2n_move_by_local", internal_call(internal_m2n_move_by_local));
 
+        // Euler
         reg.add_internal_call("internal_m2n_get_rotation_euler_global",
                               internal_call(internal_m2n_get_rotation_euler_global));
         reg.add_internal_call("internal_m2n_set_rotation_euler_global",
                               internal_call(internal_m2n_set_rotation_euler_global));
+        reg.add_internal_call("internal_m2n_rotate_by_euler_global",
+                              internal_call(internal_m2n_rotate_by_euler_global));
+
         reg.add_internal_call("internal_m2n_get_rotation_euler_local",
                               internal_call(internal_m2n_get_rotation_euler_local));
         reg.add_internal_call("internal_m2n_set_rotation_euler_local",
                               internal_call(internal_m2n_set_rotation_euler_local));
+        reg.add_internal_call("internal_m2n_rotate_by_euler_local", internal_call(internal_m2n_rotate_by_euler_local));
 
+        // Quat
         reg.add_internal_call("internal_m2n_get_rotation_global", internal_call(internal_m2n_get_rotation_global));
         reg.add_internal_call("internal_m2n_set_rotation_global", internal_call(internal_m2n_set_rotation_global));
+        reg.add_internal_call("internal_m2n_rotate_by_global", internal_call(internal_m2n_rotate_by_global));
+
         reg.add_internal_call("internal_m2n_get_rotation_local", internal_call(internal_m2n_get_rotation_local));
         reg.add_internal_call("internal_m2n_set_rotation_local", internal_call(internal_m2n_set_rotation_local));
+        reg.add_internal_call("internal_m2n_rotate_by_local", internal_call(internal_m2n_rotate_by_local));
 
+        // Other
+        reg.add_internal_call("internal_m2n_rotate_axis_global", internal_call(internal_m2n_rotate_axis_global));
+        reg.add_internal_call("internal_m2n_look_at", internal_call(internal_m2n_look_at));
+
+
+        // Scale
         reg.add_internal_call("internal_m2n_get_scale_global", internal_call(internal_m2n_get_scale_global));
         reg.add_internal_call("internal_m2n_set_scale_global", internal_call(internal_m2n_set_scale_global));
+        reg.add_internal_call("internal_m2n_scale_by_global", internal_call(internal_m2n_scale_by_local));
+
         reg.add_internal_call("internal_m2n_get_scale_local", internal_call(internal_m2n_get_scale_local));
         reg.add_internal_call("internal_m2n_set_scale_local", internal_call(internal_m2n_set_scale_local));
+        reg.add_internal_call("internal_m2n_scale_by_local", internal_call(internal_m2n_scale_by_local));
 
+        //Skew
         reg.add_internal_call("internal_m2n_get_skew_global", internal_call(internal_m2n_get_skew_global));
         reg.add_internal_call("internal_m2n_set_skew_globa", internal_call(internal_m2n_setl_skew_globa));
         reg.add_internal_call("internal_m2n_get_skew_local", internal_call(internal_m2n_get_skew_local));
@@ -848,28 +1009,23 @@ auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
     }
 
     {
-        auto reg = mono::internal_call_registry("Ace.Core.Quaternion");
+        auto reg = mono::internal_call_registry("Quaternion");
         reg.add_internal_call("internal_m2n_from_euler_rad", internal_call(internal_m2n_from_euler_rad));
         reg.add_internal_call("internal_m2n_to_euler_rad", internal_call(internal_m2n_to_euler_rad));
         reg.add_internal_call("internal_m2n_from_to_rotation", internal_call(internal_m2n_from_to_rotation));
         reg.add_internal_call("internal_m2n_angle_axis", internal_call(internal_m2n_angle_axis));
         reg.add_internal_call("internal_m2n_look_rotation", internal_call(internal_m2n_look_rotation));
-
-
-
     }
 
     {
         auto reg = mono::internal_call_registry("Ace.Core.Assets");
         reg.add_internal_call("internal_m2n_get_asset_by_uuid", internal_call(internal_m2n_get_asset_by_uuid));
         reg.add_internal_call("internal_m2n_get_asset_by_key", internal_call(internal_m2n_get_asset_by_key));
-
     }
 
     {
         auto reg = mono::internal_call_registry("Ace.Core.Tests");
         reg.add_internal_call("m2n_test_uuid", internal_call(m2n_test_uuid));
-
     }
     // mono::managed_interface::init(assembly);
 

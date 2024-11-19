@@ -25,40 +25,40 @@ public class Scene
 
 	public static Entity Instantiate(Prefab prefab)
 	{
-		unsafe { return new Entity(internal_m2n_create_entity_from_prefab_uid(prefab.uid)); }
+		return internal_m2n_create_entity_from_prefab_uid(prefab.uid);;
 	}
 
 	public static Entity Instantiate(string key)
 	{
-		unsafe { return new Entity(internal_m2n_create_entity_from_prefab_key(key)); }
+		return internal_m2n_create_entity_from_prefab_key(key);
 	}
 
 	public static Entity CloneEntity(Entity e)
 	{
-		unsafe { return new Entity(internal_m2n_clone_entity(e.Id)); }
+		return internal_m2n_clone_entity(e);
 	}
 	
 	public static Entity CreateEntity(string tag = "Unnamed")
 	{
-		unsafe { return new Entity(internal_m2n_create_entity(tag)); }
+		return internal_m2n_create_entity(tag);
 	}
 
 	public static void DestroyEntity(Entity entity)
 	{
 		unsafe
 		{
-			internal_m2n_destroy_entity(entity.Id);
+			internal_m2n_destroy_entity(entity);
 		}
 	}
 
 	public static bool IsEntityValid(Entity entity)
 	{
-		return internal_m2n_is_entity_valid(entity.Id);
+		return internal_m2n_is_entity_valid(entity);
 	}
 	
 	public static Entity FindEntityByTag(string tag = "Unnamed")
 	{
-		unsafe { return new Entity(internal_m2n_find_entity_by_tag(tag)); }
+		return internal_m2n_find_entity_by_tag(tag);
 	}
 
 	[MethodImpl(MethodImplOptions.InternalCall)] 
@@ -71,25 +71,25 @@ public class Scene
 	private extern void internal_m2n_destroy_scene();
 
 	[MethodImpl(MethodImplOptions.InternalCall)] 
-	private static extern uint internal_m2n_create_entity_from_prefab_uid(Guid uid);
+	private static extern Entity internal_m2n_create_entity_from_prefab_uid(Guid uid);
 	
 	[MethodImpl(MethodImplOptions.InternalCall)] 
-	private static extern uint internal_m2n_create_entity_from_prefab_key(string key);
+	private static extern Entity internal_m2n_create_entity_from_prefab_key(string key);
 
 	[MethodImpl(MethodImplOptions.InternalCall)] 
-	private static extern uint internal_m2n_create_entity(string tag);
+	private static extern Entity internal_m2n_create_entity(string tag);
 
 	[MethodImpl(MethodImplOptions.InternalCall)] 
-	private static extern uint internal_m2n_clone_entity(uint id);
+	private static extern Entity internal_m2n_clone_entity(Entity id);
 	
 	[MethodImpl(MethodImplOptions.InternalCall)] 
-	private static extern bool internal_m2n_destroy_entity(uint id);
+	private static extern bool internal_m2n_destroy_entity(Entity id);
 
 	[MethodImpl(MethodImplOptions.InternalCall)] 
-	private static extern bool internal_m2n_is_entity_valid(uint id);
+	private static extern bool internal_m2n_is_entity_valid(Entity id);
 
 	[MethodImpl(MethodImplOptions.InternalCall)] 
-	private static extern uint internal_m2n_find_entity_by_tag(string tag);
+	private static extern Entity internal_m2n_find_entity_by_tag(string tag);
 	
 }
 

@@ -283,12 +283,18 @@ void transform_component::rotate_axis_global(float degrees, const math::vec3& ax
 
 void transform_component::look_at(const math::vec3& point) noexcept
 {
+    look_at(point, math::vec3{0.0f, 1.0f, 0.0f});
+}
+
+void transform_component::look_at(const math::vec3& point, const math::vec3& up) noexcept
+{
     auto eye = get_position_global();
-    math::transform m = math::lookAt(eye, point, math::vec3{0.0f, 1.0f, 0.0f});
+    math::transform m = math::lookAt(eye, point, up);
     m = math::inverse(m);
 
     set_rotation_global(m.get_rotation());
 }
+
 
 //---------------------------------------------
 /// SCALE

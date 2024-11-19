@@ -119,6 +119,50 @@ auto inspect_mono_field(rtti::context& ctx, mono::mono_object& obj, mono::mono_f
     return result;
 }
 
+template<>
+auto inspect_mono_field<entt::handle>(rtti::context& ctx, mono::mono_object& obj, mono::mono_field& field, const var_info& info)
+    -> inspect_result
+{
+    inspect_result result;
+
+    var_info field_info;
+    field_info.is_property = true;
+    field_info.read_only = info.read_only || field.is_readonly();
+
+    auto mutable_field = mono::make_field_invoker<entt::entity>(field);
+    auto val = mutable_field.get_value(obj);
+
+    auto& ec = ctx.get<ecs>();
+    auto& scene = ec.get_scene();
+    auto e = scene.create_entity(val);
+
+    auto attribs = field.get_attributes();
+    auto tooltip_attrib = find_attribute("TooltipAttribute", attribs);
+
+    std::string tooltip;
+    if(tooltip_attrib.valid())
+    {
+        auto invoker = mono::make_field_invoker<std::string>(tooltip_attrib.get_type(), "tooltip");
+        tooltip = invoker.get_value(tooltip_attrib);
+    }
+
+
+    rttr::variant var = e;
+
+    {
+        property_layout layout(field.get_name(), tooltip);
+        result |= inspect_var(ctx, var, field_info);
+    }
+
+    if(result.changed)
+    {
+        auto v = var.get_value<entt::handle>();
+        mutable_field.set_value(obj, v.entity());
+    }
+
+    return result;
+}
+
 template<typename T>
 auto inspect_mono_property(rtti::context& ctx, mono::mono_object& obj, mono::mono_property& prop, const var_info& info)
     -> inspect_result
@@ -180,7 +224,8 @@ auto inspector_mono_object::inspect(rtti::context& ctx,
                                                                   {"Single", &inspect_mono_field<float>},
                                                                   {"Double", &inspect_mono_field<double>},
                                                                   {"Char", &inspect_mono_field<char16_t>},
-                                                                  {"String", &inspect_mono_field<std::string>}};
+                                                                  {"String", &inspect_mono_field<std::string>},
+                                                                  {"Entity", &inspect_mono_field<entt::handle>}};
 
 
         auto it = reg.find(type_name);

@@ -1,4 +1,5 @@
-#include "script_component.h" #include <monopp/mono_property.h>
+#include "script_component.h"
+#include <monopp/mono_property.h>
 #include <monopp/mono_property_invoker.h>
 
 #include <engine/engine.h>

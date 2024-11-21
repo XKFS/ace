@@ -405,6 +405,7 @@ void recreate_phyisics_body(bullet::world& world, physics_component& comp, bool 
         {
             update_rigidbody_shape(body, comp);
             update_rigidbody_mass_and_inertia(body, comp);
+            world.dynamics_world->updateSingleAabb(body.internal.get());
         }
         if(is_kind_dirty)
         {
@@ -423,7 +424,7 @@ void recreate_phyisics_body(bullet::world& world, physics_component& comp, bool 
     comp.set_dirty(system_id, false);
 }
 
-void sync_transforms(physics_component& comp, const math::transform& transform)
+void sync_transforms(bullet::world& world, physics_component& comp, const math::transform& transform)
 {
     auto owner = comp.get_owner();
     auto& body = owner.get<bullet::rigidbody>();
@@ -451,6 +452,7 @@ void sync_transforms(physics_component& comp, const math::transform& transform)
         {
             bt_scale = bullet::to_bullet(s);
             body.internal_shape->setLocalScaling(bt_scale);
+            world.dynamics_world->updateSingleAabb(body.internal.get());
         }
     }
 
@@ -489,7 +491,7 @@ void to_physics(bullet::world& world, transform_component& transform, physics_co
 
     if(transform_dirty || rigidbody_dirty)
     {
-        sync_transforms(comp, transform.get_transform_global());
+        sync_transforms(world, comp, transform.get_transform_global());
     }
 }
 

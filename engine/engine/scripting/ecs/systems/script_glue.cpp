@@ -891,7 +891,7 @@ void internal_m2n_apply_torque_impulse(entt::entity id, const math::vec3& value)
 //------------------------------
 auto internal_m2n_from_euler_rad(const math::vec3& euler) -> math::quat
 {
-    return math::quat(euler);
+    return {euler};
 }
 
 auto internal_m2n_to_euler_rad(const math::quat& euler) -> math::vec3
@@ -906,7 +906,7 @@ auto internal_m2n_angle_axis(float angle, const math::vec3& axis) -> math::quat
 
 auto internal_m2n_look_rotation(const math::vec3& a, const math::vec3& b) -> math::quat
 {
-    return math::quat(a, b);
+    return {a, b};
 }
 auto internal_m2n_from_to_rotation(const math::vec3& from, const math::vec3& to) -> math::quat
 {

@@ -37,14 +37,14 @@ void gizmos_renderer::on_frame_render(rtti::context& ctx, entt::handle camera_en
     if(!camera_entity)
         return;
 
-    const auto& ec = ctx.get<ecs>();
+    const auto& ec = ctx.get_cached<ecs>();
 
     const auto& scene = ec.get_scene();
-    auto& em = ctx.get<editing_manager>();
+    auto& em = ctx.get_cached<editing_manager>();
 
     auto& selected = em.selection_data.object;
 
-    auto& am = ctx.get<asset_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
     auto& camera_comp = camera_entity.get<camera_component>();
     const auto& rview = camera_comp.get_render_view();
     const auto& camera = camera_comp.get_camera();
@@ -78,7 +78,7 @@ gizmos_renderer::~gizmos_renderer()
 
 bool gizmos_renderer::init(rtti::context& ctx)
 {
-    auto& am = ctx.get<asset_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
 
     {
         auto vs = am.get_asset<gfx::shader>("editor:/data/shaders/vs_wf_wireframe.sc");

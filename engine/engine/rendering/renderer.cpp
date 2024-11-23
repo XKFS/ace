@@ -34,7 +34,7 @@ renderer::renderer(rtti::context& ctx, cmd_line::parser& parser)
             APPLOG_ERROR_LOC(filePath, line, "renderer", msg);
         });
 
-    auto& ev = ctx.get<events>();
+    auto& ev = ctx.get_cached<events>();
     ev.on_os_event.connect(sentinel_, this, &renderer::on_os_event);
     ev.on_frame_begin.connect(sentinel_, this, &renderer::frame_begin);
     ev.on_frame_end.connect(sentinel_, this, &renderer::frame_end);

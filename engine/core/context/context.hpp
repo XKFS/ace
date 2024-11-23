@@ -46,6 +46,20 @@ struct context
     }
 
     template<typename T>
+    auto get_cached() -> T&
+    {
+        static T& cached = get<T>();
+        return cached;
+    }
+
+    template<typename T>
+    auto get_cached() const -> const T&
+    {
+        static const T& cached = get<T>();
+        return cached;
+    }
+
+    template<typename T>
     auto get_or_empalce() -> T&
     {
         const auto id = hpp::type_id<T>();

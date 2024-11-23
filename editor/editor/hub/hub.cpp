@@ -98,8 +98,8 @@ void draw_item(const std::vector<project_item>& v, std::function<void(ImVec2)> c
 
 hub::hub(rtti::context& ctx)
 {
-    auto& ui_ev = ctx.get<ui_events>();
-    auto& ev = ctx.get<events>();
+    auto& ui_ev = ctx.get_cached<ui_events>();
+    auto& ev = ctx.get_cached<events>();
 
     ev.on_frame_update.connect(sentinel_, this, &hub::on_frame_update);
     ev.on_frame_render.connect(sentinel_, this, &hub::on_frame_render);
@@ -127,7 +127,7 @@ auto hub::deinit(rtti::context& ctx) -> bool
 
 void hub::on_frame_update(rtti::context& ctx, delta_t dt)
 {
-    auto& pm = ctx.get<project_manager>();
+    auto& pm = ctx.get_cached<project_manager>();
 
     if(!pm.has_open_project())
     {
@@ -138,7 +138,7 @@ void hub::on_frame_update(rtti::context& ctx, delta_t dt)
 
 void hub::on_frame_render(rtti::context& ctx, delta_t dt)
 {
-    auto& pm = ctx.get<project_manager>();
+    auto& pm = ctx.get_cached<project_manager>();
 
     if(!pm.has_open_project())
     {
@@ -149,7 +149,7 @@ void hub::on_frame_render(rtti::context& ctx, delta_t dt)
 
 void hub::on_frame_ui_render(rtti::context& ctx, delta_t dt)
 {
-    auto& pm = ctx.get<project_manager>();
+    auto& pm = ctx.get_cached<project_manager>();
 
     if(!pm.has_open_project())
     {
@@ -168,7 +168,7 @@ void hub::on_opened_project_render(rtti::context& ctx)
 
 void hub::on_start_page_render(rtti::context& ctx)
 {
-    auto& pm = ctx.get<project_manager>();
+    auto& pm = ctx.get_cached<project_manager>();
 
     auto on_create_project = [&](const std::string& p)
     {

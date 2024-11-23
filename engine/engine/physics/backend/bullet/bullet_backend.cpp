@@ -571,7 +571,7 @@ void bullet_backend::clear_kinematic_velocities(physics_component& comp)
 
 void bullet_backend::on_play_begin(rtti::context& ctx)
 {
-    auto& ec = ctx.get<ecs>();
+    auto& ec = ctx.get_cached<ecs>();
     auto& scn = ec.get_scene();
     auto& registry = *scn.registry;
 
@@ -586,7 +586,7 @@ void bullet_backend::on_play_begin(rtti::context& ctx)
 
 void bullet_backend::on_play_end(rtti::context& ctx)
 {
-    auto& ec = ctx.get<ecs>();
+    auto& ec = ctx.get_cached<ecs>();
     auto& registry = *ec.get_scene().registry;
 
     auto& world = registry.ctx().get<bullet::world>();
@@ -616,7 +616,7 @@ void bullet_backend::on_skip_next_frame(rtti::context& ctx)
 
 void bullet_backend::on_frame_update(rtti::context& ctx, delta_t dt)
 {
-    auto& ec = ctx.get<ecs>();
+    auto& ec = ctx.get_cached<ecs>();
     auto& registry = *ec.get_scene().registry;
     auto& world = registry.ctx().get<bullet::world>();
 
@@ -640,7 +640,7 @@ void bullet_backend::on_frame_update(rtti::context& ctx, delta_t dt)
 
 void bullet_backend::draw_system_gizmos(rtti::context& ctx, const camera& cam, gfx::dd_raii& dd)
 {
-    auto& ec = ctx.get<ecs>();
+    auto& ec = ctx.get_cached<ecs>();
     auto& registry = *ec.get_scene().registry;
     auto world = registry.ctx().find<bullet::world>();
     if(world)

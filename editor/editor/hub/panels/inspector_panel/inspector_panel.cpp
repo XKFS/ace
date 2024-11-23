@@ -29,7 +29,7 @@ void inspector_panel::on_frame_ui_render(rtti::context& ctx, const char* name)
     {
         // ImGui::WindowTimeBlock block(ImGui::GetFont(ImGui::Font::Mono));
 
-        auto& em = ctx.get<editing_manager>();
+        auto& em = ctx.get_cached<editing_manager>();
         auto& selected = em.selection_data.object;
 
         if(ImGui::BeginMenuBar())

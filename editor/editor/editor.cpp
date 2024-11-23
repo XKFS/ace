@@ -65,7 +65,7 @@ auto editor::init(const cmd_line::parser& parser) -> bool
         return false;
     }
 
-    if(!ctx.get<asset_watcher>().init(ctx))
+    if(!ctx.get_cached<asset_watcher>().init(ctx))
     {
         return false;
     }
@@ -75,32 +75,32 @@ auto editor::init(const cmd_line::parser& parser) -> bool
         return false;
     }
 
-    if(!ctx.get<project_manager>().init(ctx))
+    if(!ctx.get_cached<project_manager>().init(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<imgui_interface>().init(ctx))
+    if(!ctx.get_cached<imgui_interface>().init(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<hub>().init(ctx))
+    if(!ctx.get_cached<hub>().init(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<editing_manager>().init(ctx))
+    if(!ctx.get_cached<editing_manager>().init(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<picking_manager>().init(ctx))
+    if(!ctx.get_cached<picking_manager>().init(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<thumbnail_manager>().init(ctx))
+    if(!ctx.get_cached<thumbnail_manager>().init(ctx))
     {
         return false;
     }
@@ -114,7 +114,7 @@ auto editor::init_window(rtti::context& ctx) -> bool
     uint32_t flags = os::window::resizable | os::window::maximized;
     auto primary_display = os::display::get_primary_display_index();
 
-    auto& rend = ctx.get<renderer>();
+    auto& rend = ctx.get_cached<renderer>();
     rend.create_window_for_display(primary_display, title, flags);
     return true;
 }
@@ -123,37 +123,37 @@ auto editor::deinit() -> bool
 {
     auto& ctx = engine::context();
 
-    if(!ctx.get<asset_watcher>().deinit(ctx))
+    if(!ctx.get_cached<asset_watcher>().deinit(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<thumbnail_manager>().deinit(ctx))
+    if(!ctx.get_cached<thumbnail_manager>().deinit(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<picking_manager>().deinit(ctx))
+    if(!ctx.get_cached<picking_manager>().deinit(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<editing_manager>().deinit(ctx))
+    if(!ctx.get_cached<editing_manager>().deinit(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<hub>().deinit(ctx))
+    if(!ctx.get_cached<hub>().deinit(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<imgui_interface>().deinit(ctx))
+    if(!ctx.get_cached<imgui_interface>().deinit(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<project_manager>().deinit(ctx))
+    if(!ctx.get_cached<project_manager>().deinit(ctx))
     {
         return false;
     }

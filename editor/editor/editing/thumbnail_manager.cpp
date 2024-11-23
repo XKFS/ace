@@ -41,7 +41,7 @@ auto make_thumbnail(thumbnail_manager::generator& gen, const asset_handle<T>& as
 
         delta_t dt(0.016667f);
 
-        auto& rpath = ctx.get<rendering_system>();
+        auto& rpath = ctx.get_cached<rendering_system>();
         rpath.prepare_scene(scn, dt);
         auto new_fbo = rpath.render_scene(scn, dt);
         thumbnail.set(new_fbo);
@@ -212,10 +212,10 @@ auto thumbnail_manager::init(rtti::context& ctx) -> bool
 {
     APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
 
-    auto& ev = ctx.get<events>();
+    auto& ev = ctx.get_cached<events>();
     ev.on_frame_update.connect(sentinel_, this, &thumbnail_manager::on_frame_update);
 
-    auto& am = ctx.get<asset_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
     thumbnails_.transparent = am.get_asset<gfx::texture>("engine:/data/textures/transparent.png");
 
     thumbnails_.file = am.get_asset<gfx::texture>("editor:/data/icons/file.png");

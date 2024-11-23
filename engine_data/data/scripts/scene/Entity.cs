@@ -15,7 +15,7 @@ public struct Entity : IEquatable<Entity>
     {
         get
         {
-            return GetComponent<TransformComponent>();
+            return internal_m2n_get_transform_component(this, typeof(TransformComponent)) as TransformComponent;
         }
     }
 	
@@ -48,47 +48,26 @@ public struct Entity : IEquatable<Entity>
 
 	public T AddComponent<T>() where T : Component, new()
 	{
-		if(!Scene.IsEntityValid(this))
-		{
-			throw new SystemException("Entity is Invalid.");
-		}
-
 		return internal_m2n_add_component(this, typeof(T)) as T; 
 	}
 
 	public bool HasComponent<T>() where T : Component
 	{
-		if(!Scene.IsEntityValid(this))
-		{
-			throw new SystemException("Entity is Invalid.");
-		}
 		return internal_m2n_has_component(this, typeof(T)); 
 	}
 
 	public bool HasComponent(Type type) 
 	{
-		if(!Scene.IsEntityValid(this))
-		{
-			throw new SystemException("Entity is Invalid.");
-		}
 		return internal_m2n_has_component(this, type); 
 	}
 
 	public T GetComponent<T>() where T : Component, new()
 	{
-		if(!Scene.IsEntityValid(this))
-		{
-			throw new SystemException("Entity is Invalid.");
-		}
 		return internal_m2n_get_component(this, typeof(T)) as T; 
 	}
 
 	public bool RemoveComponent(Component component)
 	{
-		if(!Scene.IsEntityValid(this))
-		{
-			throw new SystemException("Entity is Invalid.");
-		}
 		return internal_m2n_remove_component(this, component);
 	}
 
@@ -108,6 +87,9 @@ public struct Entity : IEquatable<Entity>
 
 	[MethodImpl(MethodImplOptions.InternalCall)] 
 	private static extern bool internal_m2n_remove_component(Entity id, Component obj);
+
+	[MethodImpl(MethodImplOptions.InternalCall)] 
+	private static extern Component internal_m2n_get_transform_component(Entity id, Type obj);
 
 
 

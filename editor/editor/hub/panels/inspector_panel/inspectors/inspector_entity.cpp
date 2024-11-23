@@ -205,7 +205,7 @@ auto inspector_entity::inspect_as_property(rtti::context& ctx, entt::handle& dat
     ImGui::SameLine();
     if(ImGui::Button(fmt::format("{} {}", ICON_MDI_CUBE, name).c_str(), ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetFrameHeight())))
     {
-        auto& em = ctx.get<editing_manager>();
+        auto& em = ctx.get_cached<editing_manager>();
 
         em.focus(data);
     }
@@ -362,7 +362,7 @@ auto inspector_entity::inspect(rtti::context& ctx,
             ImGui::Separator();
             ImGui::BeginChild("COMPONENT_MENU_CONTEXT", ImVec2(ImGui::GetContentRegionAvail().x, size.x));
 
-            const auto& scr = ctx.get<script_system>();
+            const auto& scr = ctx.get_cached<script_system>();
             for(const auto& type : scr.get_all_scriptable_components())
             {
                 const auto& name = type.get_fullname();

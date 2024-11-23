@@ -108,7 +108,7 @@ void header_panel::draw_menubar_child(rtti::context& ctx)
 
 void header_panel::draw_play_toolbar(rtti::context& ctx, float headerSize)
 {
-    auto& ev = ctx.get<events>();
+    auto& ev = ctx.get_cached<events>();
 
     float width = ImGui::GetContentRegionAvail().x;
 
@@ -173,7 +173,7 @@ void header_panel::draw_play_toolbar(rtti::context& ctx, float headerSize)
                            ImGui::SameLine();
                            if(ImGui::Button(ICON_MDI_PAUSE))
                            {
-                               auto& ev = ctx.get<events>();
+                               auto& ev = ctx.get_cached<events>();
 
                                bool was_playing = ev.is_playing;
                                ev.toggle_pause(ctx);
@@ -182,13 +182,13 @@ void header_panel::draw_play_toolbar(rtti::context& ctx, float headerSize)
                            ImGui::PushItemFlag(ImGuiItemFlags_ButtonRepeat, true);
                            if(ImGui::Button(ICON_MDI_SKIP_NEXT))
                            {
-                               auto& ev = ctx.get<events>();
+                               auto& ev = ctx.get_cached<events>();
                                ev.skip_next_frame(ctx);
                            }
                            ImGui::PopItemFlag();
                            ImGui::SameLine();
 
-                           auto& sim = ctx.get<simulation>();
+                           auto& sim = ctx.get_cached<simulation>();
 
                            auto time_scale = sim.get_time_scale();
                            ImGui::SetNextItemWidth(100);
@@ -198,7 +198,7 @@ void header_panel::draw_play_toolbar(rtti::context& ctx, float headerSize)
                            }
                            ImGui::SetItemTooltipCurrentViewport("%s", "Time scale.");
                            ImGui::SameLine();
-                           auto& rend = ctx.get<renderer>();
+                           auto& rend = ctx.get_cached<renderer>();
                            auto vsync = rend.get_vsync();
                            if(ImGui::Checkbox("Vsync", &vsync))
                            {

@@ -78,7 +78,7 @@ struct mono_saver<Archive, entt::entity>
             auto val = mutable_field.get_value(obj);
 
             auto& ctx = engine::context();
-            auto& ec = ctx.get<ecs>();
+            auto& ec = ctx.get_cached<ecs>();
             auto& scene = ec.get_scene();
             e = scene.create_entity(val);
         }
@@ -100,7 +100,7 @@ struct mono_saver<Archive, entt::entity>
             auto val = mutable_prop.get_value(obj);
 
             auto& ctx = engine::context();
-            auto& ec = ctx.get<ecs>();
+            auto& ec = ctx.get_cached<ecs>();
             auto& scene = ec.get_scene();
             e = scene.create_entity(val);
         }
@@ -301,7 +301,7 @@ SAVE_INSTANTIATE(script_component::script_object, ser20::oarchive_binary_t);
 LOAD(script_component::script_object)
 {
     auto& ctx = engine::context();
-    auto& sys = ctx.get<script_system>();
+    auto& sys = ctx.get_cached<script_system>();
     const auto& all_scriptable_components = sys.get_all_scriptable_components();
 
     std::string type;
@@ -433,7 +433,7 @@ SAVE_INSTANTIATE(script_component, ser20::oarchive_binary_t);
 LOAD(script_component)
 {
     auto& ctx = engine::context();
-    auto& sys = ctx.get<script_system>();
+    auto& sys = ctx.get_cached<script_system>();
     const auto& all_scriptable_components = sys.get_all_scriptable_components();
 
     script_component::script_components_t comps;

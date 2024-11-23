@@ -33,11 +33,11 @@ auto rendering_system::deinit(rtti::context& ctx) -> bool
 void rendering_system::prepare_scene(scene& scn, delta_t dt)
 {
     auto& ctx = engine::context();
-    ctx.get<transform_system>().on_frame_update(scn, dt);
-    ctx.get<camera_system>().on_frame_update(scn, dt);
-    ctx.get<model_system>().on_frame_update(scn, dt);
-    ctx.get<animation_system>().on_frame_update(scn, dt);
-    ctx.get<reflection_probe_system>().on_frame_update(scn, dt);
+    ctx.get_cached<transform_system>().on_frame_update(scn, dt);
+    ctx.get_cached<camera_system>().on_frame_update(scn, dt);
+    ctx.get_cached<model_system>().on_frame_update(scn, dt);
+    ctx.get_cached<animation_system>().on_frame_update(scn, dt);
+    ctx.get_cached<reflection_probe_system>().on_frame_update(scn, dt);
 }
 
 auto rendering_system::render_scene(camera_component& camera_comp, scene& scn, delta_t dt) -> gfx::frame_buffer::ptr

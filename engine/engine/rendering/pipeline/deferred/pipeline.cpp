@@ -1063,7 +1063,7 @@ deferred::~deferred()
 
 auto deferred::init(rtti::context& ctx) -> bool
 {
-    auto& am = ctx.get<asset_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
 
     auto loadProgram = [&](const std::string& vs, const std::string& fs)
     {

@@ -18,8 +18,8 @@ void game_panel::deinit(rtti::context& ctx)
 
 void game_panel::on_frame_update(rtti::context& ctx, delta_t dt)
 {
-    auto& path = ctx.get<rendering_system>();
-    auto& ec = ctx.get<ecs>();
+    auto& path = ctx.get_cached<rendering_system>();
+    auto& ec = ctx.get_cached<ecs>();
     auto& scene = ec.get_scene();
 
     path.prepare_scene(scene, dt);
@@ -31,8 +31,8 @@ void game_panel::on_frame_render(rtti::context& ctx, delta_t dt)
     {
         return;
     }
-    auto& path = ctx.get<rendering_system>();
-    auto& ec = ctx.get<ecs>();
+    auto& path = ctx.get_cached<rendering_system>();
+    auto& ec = ctx.get_cached<ecs>();
     auto& scene = ec.get_scene();
 
     path.render_scene(scene, dt);
@@ -58,7 +58,7 @@ void game_panel::draw_ui(rtti::context& ctx)
 {
     draw_menubar(ctx);
 
-    auto& ec = ctx.get<ecs>();
+    auto& ec = ctx.get_cached<ecs>();
     auto size = ImGui::GetContentRegionAvail();
 
     if(size.x > 0 && size.y > 0)

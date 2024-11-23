@@ -150,7 +150,7 @@ auto script_system::init(rtti::context& ctx) -> bool
 {
     APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
 
-    auto& ev = ctx.get<events>();
+    auto& ev = ctx.get_cached<events>();
     ev.on_frame_update.connect(sentinel_, this, &script_system::on_frame_update);
     ev.on_play_begin.connect(sentinel_, -1000, this, &script_system::on_play_begin);
     ev.on_play_end.connect(sentinel_, 1000, this, &script_system::on_play_end);
@@ -253,7 +253,7 @@ auto script_system::load_app_domain(rtti::context& ctx, bool recompile) -> bool
 
     if(!is_deploy_mode)
     {
-        auto& am = ctx.get<asset_manager>();
+        auto& am = ctx.get_cached<asset_manager>();
         auto assets = am.get_assets<script>("app");
         // assets include the empty asset
         if(assets.size() <= 1)
@@ -338,7 +338,7 @@ void script_system::on_play_begin(rtti::context& ctx)
             }
         }
 
-        auto& ec = ctx.get<ecs>();
+        auto& ec = ctx.get_cached<ecs>();
         auto& scn = ec.get_scene();
         auto& registry = *scn.registry;
 
@@ -346,7 +346,7 @@ void script_system::on_play_begin(rtti::context& ctx)
         registry.on_destroy<script_component>().connect<&on_destroy_component>();
 
         {
-            auto& ec = ctx.get<ecs>();
+            auto& ec = ctx.get_cached<ecs>();
             auto& scn = ec.get_scene();
             auto& registry = *scn.registry;
 
@@ -385,7 +385,7 @@ void script_system::on_play_end(rtti::context& ctx)
 {
     APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
 
-    auto& ec = ctx.get<ecs>();
+    auto& ec = ctx.get_cached<ecs>();
     auto& scn = ec.get_scene();
     auto& registry = *scn.registry;
 
@@ -426,7 +426,7 @@ void script_system::on_skip_next_frame(rtti::context& ctx)
 }
 void script_system::on_frame_update(rtti::context& ctx, delta_t dt)
 {
-    auto& ev = ctx.get<events>();
+    auto& ev = ctx.get_cached<events>();
     if(!ev.is_playing)
     {
         check_for_recompile(ctx, dt);
@@ -439,7 +439,7 @@ void script_system::on_frame_update(rtti::context& ctx, delta_t dt)
             return;
         }
 
-        auto& ec = ctx.get<ecs>();
+        auto& ec = ctx.get_cached<ecs>();
         auto& scn = ec.get_scene();
         auto& registry = *scn.registry;
 
@@ -508,7 +508,7 @@ void script_system::check_for_recompile(rtti::context& ctx, delta_t dt)
                     .then(itc::this_thread::get_id(),
                           [this, &ctx, protocol](auto f)
                           {
-                              auto& ev = ctx.get<events>();
+                              auto& ev = ctx.get_cached<events>();
 
                               if(ev.is_playing)
                               {
@@ -528,8 +528,8 @@ void script_system::check_for_recompile(rtti::context& ctx, delta_t dt)
 
 auto script_system::create_compilation_job(rtti::context& ctx, const std::string& protocol) -> itc::job_future<bool>
 {
-    auto& thr = ctx.get<threader>();
-    auto& am = ctx.get<asset_manager>();
+    auto& thr = ctx.get_cached<threader>();
+    auto& am = ctx.get_cached<asset_manager>();
     return thr.pool->schedule(
         [&am, protocol]()
         {

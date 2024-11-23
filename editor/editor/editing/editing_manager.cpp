@@ -10,7 +10,7 @@ namespace ace
 
 auto editing_manager::init(rtti::context& ctx) -> bool
 {
-    auto& ev = ctx.get<events>();
+    auto& ev = ctx.get_cached<events>();
 
     ev.on_play_before_begin.connect(sentinel_, 1000, this, &editing_manager::on_play_before_begin);
     ev.on_play_after_end.connect(sentinel_, -1000, this, &editing_manager::on_play_after_end);
@@ -38,7 +38,7 @@ void editing_manager::on_play_before_begin(rtti::context& ctx)
     unfocus();
 
     save_checkpoint(ctx);
-    auto& scripting = ctx.get<script_system>();
+    auto& scripting = ctx.get_cached<script_system>();
     scripting.unload_app_domain();
     scripting.load_app_domain(ctx, false);
     load_checkpoint(ctx);
@@ -51,7 +51,7 @@ void editing_manager::on_play_after_end(rtti::context& ctx)
     unselect();
     unfocus();
 
-    auto& scripting = ctx.get<script_system>();
+    auto& scripting = ctx.get_cached<script_system>();
     scripting.unload_app_domain();
     scripting.load_app_domain(ctx, false);
     load_checkpoint(ctx);
@@ -65,7 +65,7 @@ void editing_manager::on_script_recompile(rtti::context& ctx, const std::string&
     }
 
     save_checkpoint(ctx);
-    auto& scripting = ctx.get<script_system>();
+    auto& scripting = ctx.get_cached<script_system>();
     scripting.unload_app_domain();
     scripting.load_app_domain(ctx, false);
     load_checkpoint(ctx);
@@ -73,7 +73,7 @@ void editing_manager::on_script_recompile(rtti::context& ctx, const std::string&
 
 void editing_manager::save_checkpoint(rtti::context& ctx)
 {
-    auto& ec = ctx.get<ecs>();
+    auto& ec = ctx.get_cached<ecs>();
     auto& scn = ec.get_scene();
 
     scene_cache_ = {};
@@ -84,7 +84,7 @@ void editing_manager::save_checkpoint(rtti::context& ctx)
 
 void editing_manager::load_checkpoint(rtti::context& ctx)
 {
-    auto& ec = ctx.get<ecs>();
+    auto& ec = ctx.get_cached<ecs>();
     auto& scn = ec.get_scene();
 
     // clear scene

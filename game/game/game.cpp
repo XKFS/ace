@@ -73,18 +73,18 @@ auto game::init(const cmd_line::parser& parser) -> bool
         return false;
     }
 
-    if(!ctx.get<runner>().init(ctx))
+    if(!ctx.get_cached<runner>().init(ctx))
     {
         return false;
     }
 
-    auto& scr = ctx.get<script_system>();
+    auto& scr = ctx.get_cached<script_system>();
     if(!scr.load_app_domain(ctx, true))
     {
         return false;
     }
 
-    auto& ev = ctx.get<events>();
+    auto& ev = ctx.get_cached<events>();
     ev.set_play_mode(ctx, true);
 
     return true;
@@ -105,7 +105,7 @@ auto game::init_settings(rtti::context& ctx) -> bool
 
 auto game::init_assets(rtti::context& ctx) -> bool
 {
-    auto& am = ctx.get<asset_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
 
     if(!am.load_database("engine:/"))
     {
@@ -124,7 +124,7 @@ auto game::init_assets(rtti::context& ctx) -> bool
 
 auto game::init_window(rtti::context& ctx) -> bool
 {
-    auto& s = ctx.get<settings>();
+    auto& s = ctx.get_cached<settings>();
 
     auto title = fmt::format("Ace Game <{}>", gfx::get_renderer_name(gfx::get_renderer_type()));
 
@@ -140,7 +140,7 @@ auto game::init_window(rtti::context& ctx) -> bool
     uint32_t flags = os::window::resizable | os::window::maximized;
     auto primary_display = os::display::get_primary_display_index();
 
-    auto& rend = ctx.get<renderer>();
+    auto& rend = ctx.get_cached<renderer>();
     rend.create_window_for_display(primary_display, title, flags);
     return true;
 }
@@ -150,11 +150,10 @@ auto game::deinit() -> bool
 {
     auto& ctx = engine::context();
 
-    if(!ctx.get<runner>().deinit(ctx))
+    if(!ctx.get_cached<runner>().deinit(ctx))
     {
         return false;
     }
-
 
     return engine::deinit();
 }

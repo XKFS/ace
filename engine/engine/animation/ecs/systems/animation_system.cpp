@@ -20,7 +20,7 @@ namespace ace
 auto animation_system::init(rtti::context& ctx) -> bool
 {
     APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
-    auto& ev = ctx.get<events>();
+    auto& ev = ctx.get_cached<events>();
 
     ev.on_play_begin.connect(sentinel_, 10, this, &animation_system::on_play_begin);
     ev.on_play_end.connect(sentinel_, -10, this, &animation_system::on_play_end);
@@ -41,7 +41,7 @@ auto animation_system::deinit(rtti::context& ctx) -> bool
 void animation_system::on_create_component(entt::registry& r, entt::entity e)
 {
     auto& ctx = engine::context();
-    auto& ev = ctx.get<events>();
+    auto& ev = ctx.get_cached<events>();
     if(ev.is_playing)
     {
         entt::handle entity(r, e);
@@ -64,7 +64,7 @@ void animation_system::on_play_begin(rtti::context& ctx)
 {
     APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
 
-    auto& ec = ctx.get<ecs>();
+    auto& ec = ctx.get_cached<ecs>();
     auto& scn = ec.get_scene();
 
     scn.registry->view<animation_component>().each(
@@ -82,7 +82,7 @@ void animation_system::on_play_end(rtti::context& ctx)
 {
     APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
 
-    auto& ec = ctx.get<ecs>();
+    auto& ec = ctx.get_cached<ecs>();
     auto& scn = ec.get_scene();
 
     scn.registry->view<animation_component>().each(
@@ -95,7 +95,7 @@ void animation_system::on_play_end(rtti::context& ctx)
 
 void animation_system::on_pause(rtti::context& ctx)
 {
-    auto& ec = ctx.get<ecs>();
+    auto& ec = ctx.get_cached<ecs>();
     auto& scn = ec.get_scene();
 
     scn.registry->view<animation_component>().each(
@@ -108,7 +108,7 @@ void animation_system::on_pause(rtti::context& ctx)
 
 void animation_system::on_resume(rtti::context& ctx)
 {
-    auto& ec = ctx.get<ecs>();
+    auto& ec = ctx.get_cached<ecs>();
     auto& scn = ec.get_scene();
 
     scn.registry->view<animation_component>().each(
@@ -121,7 +121,7 @@ void animation_system::on_resume(rtti::context& ctx)
 
 void animation_system::on_skip_next_frame(rtti::context& ctx)
 {
-    auto& ec = ctx.get<ecs>();
+    auto& ec = ctx.get_cached<ecs>();
     auto& scn = ec.get_scene();
 
     delta_t step(1.0f / 60.0f);
@@ -133,7 +133,7 @@ void animation_system::on_update(scene& scn, delta_t dt, bool force)
     APP_SCOPE_PERF("Animation System");
 
     auto& ctx = engine::context();
-    auto& th = ctx.get<threader>();
+    auto& th = ctx.get_cached<threader>();
     // Create a view for entities with transform_component and submesh_component
     auto view = scn.registry->view<model_component, animation_component>();
 

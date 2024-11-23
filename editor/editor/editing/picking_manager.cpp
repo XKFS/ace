@@ -23,8 +23,8 @@ void picking_manager::on_frame_render(rtti::context& ctx, delta_t dt)
 
 void picking_manager::on_frame_pick(rtti::context& ctx, delta_t dt)
 {
-    auto& ec = ctx.get<ecs>();
-    auto& em = ctx.get<editing_manager>();
+    auto& ec = ctx.get_cached<ecs>();
+    auto& em = ctx.get_cached<editing_manager>();
 
     const auto render_frame = gfx::get_render_frame();
 
@@ -207,10 +207,10 @@ picking_manager::~picking_manager()
 
 auto picking_manager::init(rtti::context& ctx) -> bool
 {
-    auto& ev = ctx.get<events>();
+    auto& ev = ctx.get_cached<events>();
     ev.on_frame_render.connect(sentinel_, 850, this, &picking_manager::on_frame_render);
 
-    auto& am = ctx.get<asset_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
 
     // Set up ID buffer, which has a color target and depth buffer
     auto picking_rt =

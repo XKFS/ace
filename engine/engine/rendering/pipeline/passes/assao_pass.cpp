@@ -38,7 +38,7 @@ static const int32_t cMaxBlurPassCount = 6;
 
 auto assao_pass::init(rtti::context& ctx) -> bool
 {
-    auto& am = ctx.get<asset_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
 
     auto loadProgram = [&](const std::string& cs)
     {

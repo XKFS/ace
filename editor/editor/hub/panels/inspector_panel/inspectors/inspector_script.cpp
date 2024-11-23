@@ -66,7 +66,7 @@ auto inspect_mono_field(rtti::context& ctx, mono::mono_object& obj, mono::mono_f
                 float min_value = invoker.get_value(min_attrib);
                 return min_value;
             }
-            else if(range_attrib.valid())
+            if(range_attrib.valid())
             {
                 auto invoker = mono::make_field_invoker<float>(range_attrib.get_type(), "min");
                 float min_value = invoker.get_value(range_attrib);
@@ -82,7 +82,7 @@ auto inspect_mono_field(rtti::context& ctx, mono::mono_object& obj, mono::mono_f
                 float max_value = invoker.get_value(max_attrib);
                 return max_value;
             }
-            else if(range_attrib.valid())
+            if(range_attrib.valid())
             {
                 auto invoker = mono::make_field_invoker<float>(range_attrib.get_type(), "max");
                 float max_value = invoker.get_value(range_attrib);
@@ -132,7 +132,7 @@ auto inspect_mono_field<entt::handle>(rtti::context& ctx, mono::mono_object& obj
     auto mutable_field = mono::make_field_invoker<entt::entity>(field);
     auto val = mutable_field.get_value(obj);
 
-    auto& ec = ctx.get<ecs>();
+    auto& ec = ctx.get_cached<ecs>();
     auto& scene = ec.get_scene();
     auto e = scene.create_entity(val);
 

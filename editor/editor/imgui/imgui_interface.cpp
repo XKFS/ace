@@ -9,7 +9,7 @@ namespace ace
 
 imgui_interface::imgui_interface(rtti::context& ctx)
 {
-    auto& ev = ctx.get<events>();
+    auto& ev = ctx.get_cached<events>();
 
     ev.on_os_event.connect(sentinel_, 1000, this, &imgui_interface::on_os_event);
     ev.on_frame_render.connect(sentinel_, -100000, this, &imgui_interface::on_frame_ui_render);
@@ -27,7 +27,7 @@ auto imgui_interface::init(rtti::context& ctx) -> bool
 {
     APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
 
-    const auto& rend = ctx.get<renderer>();
+    const auto& rend = ctx.get_cached<renderer>();
     const auto& main_window = rend.get_main_window();
     imguiCreate(main_window.get(), 16.0f);
 
@@ -49,9 +49,9 @@ void imgui_interface::on_os_event(rtti::context& ctx, const os::event& e)
 
 void imgui_interface::on_frame_ui_render(rtti::context& ctx, delta_t dt)
 {
-    const auto& ev = ctx.get<ui_events>();
+    const auto& ev = ctx.get_cached<ui_events>();
 
-    const auto& rend = ctx.get<renderer>();
+    const auto& rend = ctx.get_cached<renderer>();
     const auto& main_window = rend.get_main_window();
     const auto& main_surface = main_window->get_surface();
 

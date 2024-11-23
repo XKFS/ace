@@ -9,11 +9,18 @@ public abstract class Component : NativeObject
 {
     public Entity owner { get; internal set; }
 
+    private bool cacheDirty = true;
+    private TransformComponent cachedTransform = null;
     public TransformComponent transform
     {
         get
         {
-            return owner.GetComponent<TransformComponent>();
+            if(cacheDirty)
+            {
+                cacheDirty = false;
+                cachedTransform = owner.transform;
+            }
+            return cachedTransform;
         }
     }
     public override bool IsValid()
@@ -27,6 +34,7 @@ public abstract class Component : NativeObject
     private void internal_n2m_set_entity(uint id)
     {
         owner = new Entity(id);
+        cacheDirty = true;
     }
 }
 

@@ -64,7 +64,7 @@ auto deploy_panel::get_progress() const -> float
 
 void deploy_panel::draw_ui(rtti::context& ctx)
 {
-    auto& pm = ctx.get<project_manager>();
+    auto& pm = ctx.get_cached<project_manager>();
     auto& settings = pm.get_settings();
     auto& deploy_settings = pm.get_deploy_settings();
 

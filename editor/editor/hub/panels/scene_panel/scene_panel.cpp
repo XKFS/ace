@@ -297,7 +297,7 @@ void manipulation_gizmos(entt::handle editor_camera, editing_manager& em)
 
             // if(sel.all_of<model_component>())
             // {
-            //     const auto& model_comp = sel.get<model_component>();
+            //     const auto& model_comp = sel.get_cached<model_component>();
             //     const auto& model = model_comp.get_model();
             //     if(!model.is_valid())
             //         return;
@@ -341,8 +341,8 @@ static void process_drag_drop_target(rtti::context& ctx, const camera_component&
 
                 std::string key = fs::convert_to_protocol(fs::path(absolute_path)).generic_string();
 
-                auto& es = ctx.get<editing_manager>();
-                auto& ec = ctx.get<ecs>();
+                auto& es = ctx.get_cached<editing_manager>();
+                auto& ec = ctx.get_cached<ecs>();
 
                 auto object = defaults::create_mesh_entity_at(ctx,
                                                               ec.get_scene(),
@@ -365,8 +365,8 @@ static void process_drag_drop_target(rtti::context& ctx, const camera_component&
 
                 std::string key = fs::convert_to_protocol(fs::path(absolute_path)).generic_string();
 
-                auto& es = ctx.get<editing_manager>();
-                auto& ec = ctx.get<ecs>();
+                auto& es = ctx.get_cached<editing_manager>();
+                auto& ec = ctx.get_cached<ecs>();
 
                 auto object = defaults::create_prefab_at(ctx,
                                                          ec.get_scene(),
@@ -386,7 +386,7 @@ static void process_drag_drop_target(rtti::context& ctx, const camera_component&
 
 void scene_panel::draw_menubar(rtti::context& ctx)
 {
-    auto& em = ctx.get<editing_manager>();
+    auto& em = ctx.get_cached<editing_manager>();
 
     if(ImGui::BeginMenuBar())
     {
@@ -561,14 +561,14 @@ void scene_panel::deinit(rtti::context& ctx)
 
 void scene_panel::on_frame_update(rtti::context& ctx, delta_t dt)
 {
-    auto& path = ctx.get<rendering_system>();
+    auto& path = ctx.get_cached<rendering_system>();
     path.prepare_scene(panel_scene_, dt);
 }
 
 void scene_panel::draw_scene(rtti::context& ctx, delta_t dt)
 {
-    auto& scene = ctx.get<ecs>().get_scene();
-    auto& path = ctx.get<rendering_system>();
+    auto& scene = ctx.get_cached<ecs>().get_scene();
+    auto& path = ctx.get_cached<rendering_system>();
     auto& camera_comp = get_camera().get<camera_component>();
 
     path.render_scene(camera_comp, scene, dt);
@@ -621,7 +621,7 @@ auto scene_panel::is_focused() const -> bool
 
 void scene_panel::draw_ui(rtti::context& ctx)
 {
-    auto& em = ctx.get<editing_manager>();
+    auto& em = ctx.get_cached<editing_manager>();
 
     auto& editor_camera = panel_camera_;
 
@@ -662,7 +662,7 @@ void scene_panel::draw_ui(rtti::context& ctx)
             if(!is_over_active_gizmo)
             {
                 ImGui::SetWindowFocus();
-                auto& pick_manager = ctx.get<picking_manager>();
+                auto& pick_manager = ctx.get_cached<picking_manager>();
                 auto pos = ImGui::GetMousePos();
                 pick_manager.request_pick({pos.x, pos.y}, camera);
             }

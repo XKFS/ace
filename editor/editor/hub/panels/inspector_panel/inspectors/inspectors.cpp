@@ -28,7 +28,7 @@ inspector_registry::inspector_registry()
 
 auto get_inspector(rtti::context& ctx, const rttr::type& type) -> std::shared_ptr<inspector>
 {
-    auto& registry = ctx.get<inspector_registry>();
+    auto& registry = ctx.get_cached<inspector_registry>();
     return registry.type_map[type];
 }
 

@@ -704,7 +704,7 @@ auto get_dependencies(const fs::path& file) -> std::vector<std::string>
 
 auto save_scene_impl(rtti::context& ctx, const fs::path& path) -> bool
 {
-    auto& ec = ctx.get<ecs>();
+    auto& ec = ctx.get_cached<ecs>();
     save_to_file(path.string(), ec.get_scene());
 
     return true;
@@ -719,7 +719,7 @@ auto save_scene_as_impl(rtti::context& ctx, fs::path& path) -> bool
                                 "Save scene as",
                                 fs::resolve_protocol("app:/data/").string()))
     {
-        auto& em = ctx.get<editing_manager>();
+        auto& em = ctx.get_cached<editing_manager>();
 
         path = picked;
 
@@ -738,10 +738,10 @@ auto save_scene_as_impl(rtti::context& ctx, fs::path& path) -> bool
 
 auto editor_actions::new_scene(rtti::context& ctx) -> bool
 {
-    auto& em = ctx.get<editing_manager>();
+    auto& em = ctx.get_cached<editing_manager>();
     em.close_project();
 
-    auto& ec = ctx.get<ecs>();
+    auto& ec = ctx.get_cached<ecs>();
     ec.unload_scene();
 
     defaults::create_default_3d_scene(ctx, ec.get_scene());
@@ -759,13 +759,13 @@ auto editor_actions::open_scene(rtti::context& ctx) -> bool
         auto path = fs::convert_to_protocol(picked);
         if(ex::is_format<scene_prefab>(path.extension().generic_string()))
         {
-            auto& em = ctx.get<editing_manager>();
+            auto& em = ctx.get_cached<editing_manager>();
             em.close_project();
 
-            auto& am = ctx.get<asset_manager>();
+            auto& am = ctx.get_cached<asset_manager>();
             auto asset = am.get_asset<scene_prefab>(path.string());
 
-            auto& ec = ctx.get<ecs>();
+            auto& ec = ctx.get_cached<ecs>();
             ec.unload_scene();
 
             auto& scene = ec.get_scene();
@@ -776,7 +776,7 @@ auto editor_actions::open_scene(rtti::context& ctx) -> bool
 }
 auto editor_actions::save_scene(rtti::context& ctx) -> bool
 {
-    auto& ec = ctx.get<ecs>();
+    auto& ec = ctx.get_cached<ecs>();
     auto& scene = ec.get_scene();
 
     if(!scene.source)
@@ -786,7 +786,7 @@ auto editor_actions::save_scene(rtti::context& ctx) -> bool
         {
             auto path = fs::convert_to_protocol(picked);
 
-            auto& am = ctx.get<asset_manager>();
+            auto& am = ctx.get_cached<asset_manager>();
             scene.source = am.get_asset<scene_prefab>(path.string());
             return true;
         }
@@ -806,7 +806,7 @@ auto editor_actions::save_scene_as(rtti::context& ctx) -> bool
 }
 auto editor_actions::close_project(rtti::context& ctx) -> bool
 {
-    auto& pm = ctx.get<project_manager>();
+    auto& pm = ctx.get_cached<project_manager>();
     pm.close_project(ctx);
     return true;
 }
@@ -820,14 +820,14 @@ void editor_actions::run_project(const deploy_settings& params)
 auto editor_actions::deploy_project(rtti::context& ctx, const deploy_settings& params)
     -> std::map<std::string, itc::shared_future<void>>
 {
-    auto& th = ctx.get<threader>();
+    auto& th = ctx.get_cached<threader>();
 
     std::map<std::string, itc::shared_future<void>> jobs;
     std::vector<itc::shared_future<void>> jobs_seq;
 
     fs::error_code ec;
 
-    auto& am = ctx.get<asset_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
     // am.get_database("engine:/")
 
     if(params.deploy_dependencies)

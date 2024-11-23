@@ -271,9 +271,9 @@ void inspector_asset_handle_texture::draw_image(const asset_handle<gfx::texture>
 auto inspector_asset_handle_texture::inspect_as_property(rtti::context& ctx, asset_handle<gfx::texture>& data)
     -> inspect_result
 {
-    auto& am = ctx.get<asset_manager>();
-    auto& tm = ctx.get<thumbnail_manager>();
-    auto& em = ctx.get<editing_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
+    auto& tm = ctx.get_cached<thumbnail_manager>();
+    auto& em = ctx.get_cached<editing_manager>();
 
     inspect_result result{};
     result |= pick_asset(filter, em, tm, am, data, "Texture");
@@ -293,7 +293,7 @@ auto inspector_asset_handle_texture::inspect(rtti::context& ctx,
         return inspect_as_property(ctx, data);
     }
 
-    auto& am = ctx.get<ace::asset_manager>();
+    auto& am = ctx.get_cached<ace::asset_manager>();
     inspect_result result{};
 
     auto available = ImGui::GetContentRegionAvail();
@@ -334,9 +334,9 @@ auto inspector_asset_handle_texture::inspect(rtti::context& ctx,
 auto inspector_asset_handle_material::inspect_as_property(rtti::context& ctx, asset_handle<material>& data)
     -> inspect_result
 {
-    auto& am = ctx.get<asset_manager>();
-    auto& tm = ctx.get<thumbnail_manager>();
-    auto& em = ctx.get<editing_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
+    auto& tm = ctx.get_cached<thumbnail_manager>();
+    auto& em = ctx.get_cached<editing_manager>();
 
     inspect_result result{};
 
@@ -367,7 +367,7 @@ auto inspector_asset_handle_material::inspect(rtti::context& ctx,
 
         if(result.changed)
         {
-            auto& tm = ctx.get<thumbnail_manager>();
+            auto& tm = ctx.get_cached<thumbnail_manager>();
             tm.regenerate_thumbnail(data.uid());
         }
     }
@@ -381,9 +381,9 @@ auto inspector_asset_handle_material::inspect(rtti::context& ctx,
 
 auto inspector_asset_handle_mesh::inspect_as_property(rtti::context& ctx, asset_handle<mesh>& data) -> inspect_result
 {
-    auto& am = ctx.get<asset_manager>();
-    auto& tm = ctx.get<thumbnail_manager>();
-    auto& em = ctx.get<editing_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
+    auto& tm = ctx.get_cached<thumbnail_manager>();
+    auto& em = ctx.get_cached<editing_manager>();
 
     inspect_result result{};
 
@@ -403,7 +403,7 @@ auto inspector_asset_handle_mesh::inspect(rtti::context& ctx,
         return inspect_as_property(ctx, data);
     }
 
-    auto& am = ctx.get<asset_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
     inspect_result result{};
 
     if(ImGui::BeginTabBar("asset_handle_mesh",
@@ -442,9 +442,9 @@ auto inspector_asset_handle_mesh::inspect(rtti::context& ctx,
 auto inspector_asset_handle_animation::inspect_as_property(rtti::context& ctx, asset_handle<animation_clip>& data)
     -> inspect_result
 {
-    auto& am = ctx.get<asset_manager>();
-    auto& tm = ctx.get<thumbnail_manager>();
-    auto& em = ctx.get<editing_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
+    auto& tm = ctx.get_cached<thumbnail_manager>();
+    auto& em = ctx.get_cached<editing_manager>();
 
     inspect_result result{};
     result |= pick_asset(filter, em, tm, am, data, "Animation Clip");
@@ -464,7 +464,7 @@ auto inspector_asset_handle_animation::inspect(rtti::context& ctx,
         return inspect_as_property(ctx, data);
     }
 
-    auto& am = ctx.get<asset_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
     inspect_result result{};
 
     if(ImGui::BeginTabBar("asset_handle_animation",
@@ -497,9 +497,9 @@ auto inspector_asset_handle_animation::inspect(rtti::context& ctx,
 auto inspector_asset_handle_prefab::inspect_as_property(rtti::context& ctx, asset_handle<prefab>& data)
     -> inspect_result
 {
-    auto& am = ctx.get<asset_manager>();
-    auto& tm = ctx.get<thumbnail_manager>();
-    auto& em = ctx.get<editing_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
+    auto& tm = ctx.get_cached<thumbnail_manager>();
+    auto& em = ctx.get_cached<editing_manager>();
 
     inspect_result result{};
     result |= pick_asset(filter, em, tm, am, data, "Prefab");
@@ -519,7 +519,7 @@ auto inspector_asset_handle_prefab::inspect(rtti::context& ctx,
         return inspect_as_property(ctx, data);
     }
 
-    auto& am = ctx.get<asset_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
     inspect_result result{};
 
     if(ImGui::BeginTabBar("asset_handle_prefab",
@@ -552,9 +552,9 @@ auto inspector_asset_handle_prefab::inspect(rtti::context& ctx,
 auto inspector_asset_handle_scene_prefab::inspect_as_property(rtti::context& ctx, asset_handle<scene_prefab>& data)
     -> inspect_result
 {
-    auto& am = ctx.get<asset_manager>();
-    auto& tm = ctx.get<thumbnail_manager>();
-    auto& em = ctx.get<editing_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
+    auto& tm = ctx.get_cached<thumbnail_manager>();
+    auto& em = ctx.get_cached<editing_manager>();
 
     inspect_result result{};
 
@@ -575,7 +575,7 @@ auto inspector_asset_handle_scene_prefab::inspect(rtti::context& ctx,
         return inspect_as_property(ctx, data);
     }
 
-    auto& am = ctx.get<asset_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
     inspect_result result{};
 
     if(ImGui::BeginTabBar("asset_handle_scene_prefab",
@@ -609,9 +609,9 @@ auto inspector_asset_handle_physics_material::inspect_as_property(rtti::context&
                                                                   asset_handle<physics_material>& data)
     -> inspect_result
 {
-    auto& am = ctx.get<asset_manager>();
-    auto& tm = ctx.get<thumbnail_manager>();
-    auto& em = ctx.get<editing_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
+    auto& tm = ctx.get_cached<thumbnail_manager>();
+    auto& em = ctx.get_cached<editing_manager>();
 
     inspect_result result{};
     result |= pick_asset(filter, em, tm, am, data, "Physics Material");
@@ -651,9 +651,9 @@ auto inspector_asset_handle_physics_material::inspect(rtti::context& ctx,
 auto inspector_asset_handle_audio_clip::inspect_as_property(rtti::context& ctx, asset_handle<audio_clip>& data)
     -> inspect_result
 {
-    auto& am = ctx.get<asset_manager>();
-    auto& tm = ctx.get<thumbnail_manager>();
-    auto& em = ctx.get<editing_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
+    auto& tm = ctx.get_cached<thumbnail_manager>();
+    auto& em = ctx.get_cached<editing_manager>();
 
     inspect_result result{};
     result |= pick_asset(filter, em, tm, am, data, "Audio Clip");
@@ -673,7 +673,7 @@ auto inspector_asset_handle_audio_clip::inspect(rtti::context& ctx,
         return inspect_as_property(ctx, data);
     }
 
-    auto& am = ctx.get<asset_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
     inspect_result result{};
 
     {

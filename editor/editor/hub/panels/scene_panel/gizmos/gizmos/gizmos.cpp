@@ -27,7 +27,7 @@ gizmo_registry::gizmo_registry()
 
 auto get_gizmo(rtti::context& ctx, rttr::type type) -> std::shared_ptr<gizmo>
 {
-    auto& registry = ctx.get<gizmo_registry>();
+    auto& registry = ctx.get_cached<gizmo_registry>();
     return registry.type_map[type];
 }
 

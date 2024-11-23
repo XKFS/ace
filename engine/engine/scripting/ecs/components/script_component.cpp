@@ -70,7 +70,7 @@ void script_component::set_entity(const mono::mono_object& obj, entt::handle e)
 void script_component::process_pending_deletions()
 {
     auto& ctx = engine::context();
-    auto& ev = ctx.get<events>();
+    auto& ev = ctx.get_cached<events>();
 
     size_t erased = std::erase_if(script_components_,
                                   [&](const auto& rhs)
@@ -140,8 +140,8 @@ auto script_component::add_script_component(const mono::mono_object& obj) -> scr
 auto script_component::add_script_component(const script_object& script_obj) -> script_object
 {
     auto& ctx = engine::context();
-    auto& sys = ctx.get<script_system>();
-    auto& ev = ctx.get<events>();
+    auto& sys = ctx.get_cached<script_system>();
+    auto& ev = ctx.get_cached<events>();
 
     script_components_.emplace_back(script_obj);
     script_components_to_create_.emplace_back(script_obj);

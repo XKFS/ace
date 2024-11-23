@@ -83,22 +83,22 @@ auto engine::init_core(const cmd_line::parser& parser) -> bool
 
     //    APPLOG_INFO(parser.usage());
 
-    if(!ctx.get<threader>().init(ctx))
+    if(!ctx.get_cached<threader>().init(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<renderer>().init(ctx, parser))
+    if(!ctx.get_cached<renderer>().init(ctx, parser))
     {
         return false;
     }
 
-    if(!ctx.get<audio_system>().init(ctx))
+    if(!ctx.get_cached<audio_system>().init(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<asset_manager>().init(ctx))
+    if(!ctx.get_cached<asset_manager>().init(ctx))
     {
         return false;
     }
@@ -110,47 +110,47 @@ auto engine::init_systems(const cmd_line::parser& parser) -> bool
 {
     auto& ctx = engine::context();
 
-    if(!ctx.get<ecs>().init(ctx))
+    if(!ctx.get_cached<ecs>().init(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<rendering_system>().init(ctx))
+    if(!ctx.get_cached<rendering_system>().init(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<transform_system>().init(ctx))
+    if(!ctx.get_cached<transform_system>().init(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<camera_system>().init(ctx))
+    if(!ctx.get_cached<camera_system>().init(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<reflection_probe_system>().init(ctx))
+    if(!ctx.get_cached<reflection_probe_system>().init(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<model_system>().init(ctx))
+    if(!ctx.get_cached<model_system>().init(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<animation_system>().init(ctx))
+    if(!ctx.get_cached<animation_system>().init(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<physics_system>().init(ctx))
+    if(!ctx.get_cached<physics_system>().init(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<script_system>().init(ctx))
+    if(!ctx.get_cached<script_system>().init(ctx))
     {
         return false;
     }
@@ -172,67 +172,67 @@ auto engine::deinit() -> bool
         return false;
     }
 
-    if(!ctx.get<script_system>().deinit(ctx))
+    if(!ctx.get_cached<script_system>().deinit(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<physics_system>().deinit(ctx))
+    if(!ctx.get_cached<physics_system>().deinit(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<animation_system>().deinit(ctx))
+    if(!ctx.get_cached<animation_system>().deinit(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<model_system>().deinit(ctx))
+    if(!ctx.get_cached<model_system>().deinit(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<reflection_probe_system>().deinit(ctx))
+    if(!ctx.get_cached<reflection_probe_system>().deinit(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<camera_system>().deinit(ctx))
+    if(!ctx.get_cached<camera_system>().deinit(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<transform_system>().deinit(ctx))
+    if(!ctx.get_cached<transform_system>().deinit(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<rendering_system>().deinit(ctx))
+    if(!ctx.get_cached<rendering_system>().deinit(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<ecs>().deinit(ctx))
+    if(!ctx.get_cached<ecs>().deinit(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<asset_manager>().deinit(ctx))
+    if(!ctx.get_cached<asset_manager>().deinit(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<audio_system>().deinit(ctx))
+    if(!ctx.get_cached<audio_system>().deinit(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<renderer>().deinit(ctx))
+    if(!ctx.get_cached<renderer>().deinit(ctx))
     {
         return false;
     }
 
-    if(!ctx.get<threader>().deinit(ctx))
+    if(!ctx.get_cached<threader>().deinit(ctx))
     {
         return false;
     }
@@ -277,10 +277,10 @@ auto engine::process() -> bool
 {
     auto& ctx = engine::context();
 
-    auto& sim = ctx.get<simulation>();
-    auto& ev = ctx.get<events>();
-    auto& rend = ctx.get<renderer>();
-    auto& thr = ctx.get<threader>();
+    auto& sim = ctx.get_cached<simulation>();
+    auto& ev = ctx.get_cached<events>();
+    auto& rend = ctx.get_cached<renderer>();
+    auto& thr = ctx.get_cached<threader>();
 
     thr.process();
 

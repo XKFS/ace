@@ -30,7 +30,7 @@ inline void LOAD_FUNCTION_NAME(Archive& ar, asset_handle<T>& obj)
     else
     {
         auto& ctx = ace::engine::context();
-        auto& am = ctx.get<ace::asset_manager>();
+        auto& am = ctx.get_cached<ace::asset_manager>();
         obj = am.get_asset<T>(uid);
     }
 }

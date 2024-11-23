@@ -24,7 +24,7 @@ namespace
 
 struct graph_context
 {
-    graph_context(rtti::context& context) : ctx(context), em(context.get<editing_manager>()), ec(context.get<ecs>())
+    graph_context(rtti::context& context) : ctx(context), em(context.get_cached<editing_manager>()), ec(context.get_cached<ecs>())
 
     {
     }

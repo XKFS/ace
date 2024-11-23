@@ -89,7 +89,7 @@ auto defaults::deinit(rtti::context& ctx) -> bool
 
 auto defaults::init_assets(rtti::context& ctx) -> bool
 {
-    auto& manager = ctx.get<asset_manager>();
+    auto& manager = ctx.get_cached<asset_manager>();
     {
         const auto id = "engine:/embedded/cube";
         auto instance = std::make_shared<mesh>();
@@ -187,7 +187,7 @@ auto defaults::init_assets(rtti::context& ctx) -> bool
 
 auto defaults::create_embedded_mesh_entity(rtti::context& ctx, scene& scn, const std::string& name) -> entt::handle
 {
-    auto& am = ctx.get<asset_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
     const auto id = "engine:/embedded/" + string_utils::to_lower(name);
 
     auto lod = am.get_asset<mesh>(id);
@@ -212,7 +212,7 @@ auto defaults::create_embedded_mesh_entity(rtti::context& ctx, scene& scn, const
 
 auto defaults::create_prefab_at(rtti::context& ctx, scene& scn, const std::string& key, math::vec3 pos) -> entt::handle
 {
-    auto& am = ctx.get<asset_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
     auto asset = am.get_asset<prefab>(key);
 
     auto object = scn.instantiate(asset);
@@ -241,7 +241,7 @@ auto defaults::create_prefab_at(rtti::context& ctx,
 auto defaults::create_mesh_entity_at(rtti::context& ctx, scene& scn, const std::string& key, math::vec3 pos)
     -> entt::handle
 {
-    auto& am = ctx.get<asset_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
     auto asset = am.get_asset<mesh>(key);
 
     model mdl;
@@ -285,7 +285,7 @@ auto defaults::create_mesh_entity_at(rtti::context& ctx,
 auto defaults::create_light_entity(rtti::context& ctx, scene& scn, light_type type, const std::string& name)
     -> entt::handle
 {
-    auto& am = ctx.get<asset_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
 
     auto object = scn.create_entity();
     object.get_or_emplace<tag_component>().tag = name + " Light";
@@ -307,7 +307,7 @@ auto defaults::create_light_entity(rtti::context& ctx, scene& scn, light_type ty
 auto defaults::create_reflection_probe_entity(rtti::context& ctx, scene& scn, probe_type type, const std::string& name)
     -> entt::handle
 {
-    auto& am = ctx.get<asset_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
 
     auto object = scn.create_entity();
     object.get_or_emplace<tag_component>().tag = name + " Probe";

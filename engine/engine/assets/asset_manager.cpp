@@ -16,7 +16,7 @@
 
 namespace ace
 {
-asset_manager::asset_manager(rtti::context& ctx) : pool_(*ctx.get<threader>().pool)
+asset_manager::asset_manager(rtti::context& ctx) : pool_(*ctx.get_cached<threader>().pool)
 {
 }
 

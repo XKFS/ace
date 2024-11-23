@@ -38,21 +38,21 @@ void project_manager::close_project(rtti::context& ctx)
         deploy_settings_ = {};
     }
 
-    auto& scr = ctx.get<script_system>();
+    auto& scr = ctx.get_cached<script_system>();
     scr.unload_app_domain();
 
-    auto& em = ctx.get<editing_manager>();
+    auto& em = ctx.get_cached<editing_manager>();
     em.close_project();
 
-    auto& tm = ctx.get<thumbnail_manager>();
+    auto& tm = ctx.get_cached<thumbnail_manager>();
     tm.clear_thumbnails();
 
-    auto& ec = ctx.get<ecs>();
+    auto& ec = ctx.get_cached<ecs>();
     ec.unload_scene();
 
     set_name({});
 
-    auto& aw = ctx.get<asset_watcher>();
+    auto& aw = ctx.get_cached<asset_watcher>();
     aw.unwatch_assets(ctx, "app:/");
 
     load_config();
@@ -83,10 +83,10 @@ auto project_manager::open_project(rtti::context& ctx, const fs::path& project_p
 
     save_config();
 
-    auto& aw = ctx.get<asset_watcher>();
+    auto& aw = ctx.get_cached<asset_watcher>();
     aw.watch_assets(ctx, "app:/");
 
-    auto& scr = ctx.get<script_system>();
+    auto& scr = ctx.get_cached<script_system>();
     scr.load_app_domain(ctx, true);
 
     load_project_settings();
@@ -222,7 +222,7 @@ project_manager::project_manager(rtti::context& ctx)
 {
     load_config();
 
-    auto& ev = ctx.get<events>();
+    auto& ev = ctx.get_cached<events>();
     ev.on_script_recompile.connect(sentinel_,
                                    -1000,
                                    [this](rtti::context& ctx, const std::string& protocol)
@@ -238,7 +238,7 @@ auto project_manager::init(rtti::context& ctx) -> bool
 {
     APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
 
-    auto& aw = ctx.get<asset_watcher>();
+    auto& aw = ctx.get_cached<asset_watcher>();
     aw.watch_assets(ctx, "editor:/", true);
 
     return true;
@@ -250,7 +250,7 @@ auto project_manager::deinit(rtti::context& ctx) -> bool
 
     close_project(ctx);
 
-    auto& aw = ctx.get<asset_watcher>();
+    auto& aw = ctx.get_cached<asset_watcher>();
     aw.unwatch_assets(ctx, "editor:/");
 
     return true;

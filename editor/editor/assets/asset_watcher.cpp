@@ -144,9 +144,9 @@ auto get_meta_key(const fs::path& path) -> std::string
 template<typename T>
 auto watch_assets(rtti::context& ctx, const fs::path& dir, const fs::path& wildcard, bool reload_async) -> uint64_t
 {
-    auto& am = ctx.get<asset_manager>();
-    auto& ts = ctx.get<threader>();
-    auto& tm = ctx.get<thumbnail_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
+    auto& ts = ctx.get_cached<threader>();
+    auto& tm = ctx.get_cached<thumbnail_manager>();
 
     fs::path watch_dir = (dir / wildcard).make_preferred();
 
@@ -230,8 +230,8 @@ auto watch_assets(rtti::context& ctx, const fs::path& dir, const fs::path& wildc
 template<typename T>
 auto watch_assets_depenencies(rtti::context& ctx, const fs::path& dir, const fs::path& wildcard) -> uint64_t
 {
-    auto& am = ctx.get<asset_manager>();
-    auto& ts = ctx.get<threader>();
+    auto& am = ctx.get_cached<asset_manager>();
+    auto& ts = ctx.get_cached<threader>();
 
     fs::path watch_dir = (dir / wildcard).make_preferred();
 
@@ -285,8 +285,8 @@ static void add_to_syncer(rtti::context& ctx,
                           const fs::syncer::on_entry_removed_t& on_removed,
                           const fs::syncer::on_entry_renamed_t& on_renamed)
 {
-    auto& ts = ctx.get<threader>();
-    auto& am = ctx.get<asset_manager>();
+    auto& ts = ctx.get_cached<threader>();
+    auto& am = ctx.get_cached<asset_manager>();
 
     auto on_modified =
         [&ts, &am](const std::string& ext, const auto& ref_path, const auto& synced_paths, bool is_initial_listing)
@@ -335,8 +335,8 @@ void add_to_syncer<gfx::shader>(rtti::context& ctx,
                                 const fs::syncer::on_entry_removed_t& on_removed,
                                 const fs::syncer::on_entry_renamed_t& on_renamed)
 {
-    auto& ts = ctx.get<threader>();
-    auto& am = ctx.get<asset_manager>();
+    auto& ts = ctx.get_cached<threader>();
+    auto& am = ctx.get_cached<asset_manager>();
 
     auto on_modified =
         [&ts, &am](const std::string& ext, const auto& ref_path, const auto& synced_paths, bool is_initial_listing)
@@ -435,7 +435,7 @@ void asset_watcher::setup_meta_syncer(rtti::context& ctx,
                                       bool wait)
 {
     setup_directory(ctx, syncer);
-    auto& am = ctx.get<asset_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
 
     const auto on_file_removed = [&am](const std::string& ext, const auto& ref_path, const auto& synced_paths)
     {
@@ -498,7 +498,7 @@ void asset_watcher::setup_meta_syncer(rtti::context& ctx,
 
     if(wait)
     {
-        auto& ts = ctx.get<threader>();
+        auto& ts = ctx.get_cached<threader>();
         ts.pool->wait_all();
     }
 }
@@ -548,7 +548,7 @@ void asset_watcher::setup_cache_syncer(rtti::context& ctx,
 
     if(wait)
     {
-        auto& ts = ctx.get<threader>();
+        auto& ts = ctx.get_cached<threader>();
         ts.pool->wait_all();
     }
 
@@ -575,7 +575,7 @@ asset_watcher::~asset_watcher()
 
 void asset_watcher::on_os_event(rtti::context& ctx, const os::event& e)
 {
-    auto& rend = ctx.get<renderer>();
+    auto& rend = ctx.get_cached<renderer>();
     const auto& window = rend.get_main_window();
 
     if(e.type == os::events::window)
@@ -598,7 +598,7 @@ auto asset_watcher::init(rtti::context& ctx) -> bool
 {
     APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
 
-    auto& ev = ctx.get<events>();
+    auto& ev = ctx.get_cached<events>();
     ev.on_os_event.connect(sentinel_, 1000, this, &asset_watcher::on_os_event);
 
     watch_assets(ctx, "engine:/", true);
@@ -647,7 +647,7 @@ void asset_watcher::unwatch_assets(rtti::context& ctx, const std::string& protoc
 
     watched_protocols_.erase(protocol);
 
-    auto& am = ctx.get<asset_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
     am.unload_group(protocol);
 }
 

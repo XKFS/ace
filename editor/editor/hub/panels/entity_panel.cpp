@@ -26,8 +26,8 @@ void entity_panel::duplicate_entity(entt::handle entity)
             }
 
             auto& ctx = engine::context();
-            auto& ec = ctx.get<ecs>();
-            auto& em = ctx.get<editing_manager>();
+            auto& ec = ctx.get_cached<ecs>();
+            auto& em = ctx.get_cached<editing_manager>();
 
             auto object = ec.get_scene().clone_entity(entity);
             em.select(object);

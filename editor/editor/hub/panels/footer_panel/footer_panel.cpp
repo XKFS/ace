@@ -31,7 +31,7 @@ void draw_footer_child(rtti::context& ctx, float footerSize, const std::function
         total_jobs += itc::get_pending_task_count(id);
     }
 
-    auto& thr = ctx.get<threader>();
+    auto& thr = ctx.get_cached<threader>();
     auto pool_jobs = thr.pool->get_jobs_count();
 
     auto jobs_icon = fmt::format("{} {}", pool_jobs, ICON_MDI_BUS_ALERT);

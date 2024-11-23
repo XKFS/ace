@@ -423,7 +423,7 @@ void content_browser_panel::on_frame_ui_render(rtti::context& ctx, const char* n
 
 void content_browser_panel::draw(rtti::context& ctx)
 {
-    auto& em = ctx.get<editing_manager>();
+    auto& em = ctx.get_cached<editing_manager>();
 
     const auto root_path = fs::resolve_protocol("app:/data");
 
@@ -521,9 +521,9 @@ void content_browser_panel::draw_details(rtti::context& ctx, const fs::path& pat
 
 void content_browser_panel::draw_as_explorer(rtti::context& ctx, const fs::path& root_path)
 {
-    auto& am = ctx.get<asset_manager>();
-    auto& em = ctx.get<editing_manager>();
-    auto& tm = ctx.get<thumbnail_manager>();
+    auto& am = ctx.get_cached<asset_manager>();
+    auto& em = ctx.get_cached<editing_manager>();
+    auto& tm = ctx.get_cached<thumbnail_manager>();
 
     const float size = ImGui::GetFrameHeight() * 6.0f * scale_;
     const auto hierarchy = fs::split_until(cache_.get_path(), root_path);
@@ -666,7 +666,7 @@ void content_browser_panel::draw_as_explorer(rtti::context& ctx, const fs::path&
                         {
                             item.on_double_click = [&]()
                             {
-                                auto& ec = ctx.get<ecs>();
+                                auto& ec = ctx.get_cached<ecs>();
                                 auto& scene = ec.get_scene();
                                 scene.load_from(entry);
                             };
@@ -676,7 +676,7 @@ void content_browser_panel::draw_as_explorer(rtti::context& ctx, const fs::path&
                         {
                             item.on_double_click = [&]()
                             {
-                                auto& pm = ctx.get<project_manager>();
+                                auto& pm = ctx.get_cached<project_manager>();
                                 editor_actions::open_workspace_on_file(pm.get_name(), absolute_path);
 
 
@@ -805,7 +805,7 @@ void content_browser_panel::context_create_menu(rtti::context& ctx)
 
         if(ImGui::MenuItem("C# Script Component"))
         {
-            auto& am = ctx.get<asset_manager>();
+            auto& am = ctx.get_cached<asset_manager>();
 
             const auto available = get_new_file_simple(cache_.get_path(), "NewScriptComponent", ex::get_format<script>());
 
@@ -816,7 +816,7 @@ void content_browser_panel::context_create_menu(rtti::context& ctx)
 
         if(ImGui::MenuItem("C# Script System"))
         {
-            auto& am = ctx.get<asset_manager>();
+            auto& am = ctx.get_cached<asset_manager>();
 
             const auto available = get_new_file_simple(cache_.get_path(), "NewScriptSystem", ex::get_format<script>());
 
@@ -828,7 +828,7 @@ void content_browser_panel::context_create_menu(rtti::context& ctx)
 
         if(ImGui::MenuItem("Material"))
         {
-            auto& am = ctx.get<asset_manager>();
+            auto& am = ctx.get_cached<asset_manager>();
 
             const auto available = get_new_file(cache_.get_path(), "New Material", ex::get_format<material>());
             const auto key = fs::convert_to_protocol(available).generic_string();
@@ -839,7 +839,7 @@ void content_browser_panel::context_create_menu(rtti::context& ctx)
 
         if(ImGui::MenuItem("Physics Material"))
         {
-            auto& am = ctx.get<asset_manager>();
+            auto& am = ctx.get_cached<asset_manager>();
 
             const auto available =
                 get_new_file(cache_.get_path(), "New Physics Material", ex::get_format<physics_material>());
@@ -875,7 +875,7 @@ void content_browser_panel::import(rtti::context& ctx)
 
 void content_browser_panel::on_import(rtti::context& ctx, const std::vector<std::string>& paths)
 {
-    auto& ts = ctx.get<threader>();
+    auto& ts = ctx.get_cached<threader>();
 
     for(auto& path : paths)
     {

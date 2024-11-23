@@ -32,7 +32,7 @@ auto audio_system::init(rtti::context& ctx) -> bool
 {
     APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
 
-    auto& ev = ctx.get<events>();
+    auto& ev = ctx.get_cached<events>();
     ev.on_frame_update.connect(sentinel_, this, &audio_system::on_frame_update);
 
     ev.on_play_begin.connect(sentinel_, 10, this, &audio_system::on_play_begin);
@@ -74,7 +74,7 @@ void audio_system::on_play_begin(rtti::context& ctx)
 {
     APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
 
-    auto& ec = ctx.get<ecs>();
+    auto& ec = ctx.get_cached<ecs>();
     auto& scn = ec.get_scene();
     auto& registry = *scn.registry;
 
@@ -92,7 +92,7 @@ void audio_system::on_play_end(rtti::context& ctx)
 {
     APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
 
-    auto& ec = ctx.get<ecs>();
+    auto& ec = ctx.get_cached<ecs>();
     auto& scn = ec.get_scene();
     auto& registry = *scn.registry;
 
@@ -108,7 +108,7 @@ void audio_system::on_play_end(rtti::context& ctx)
 
 void audio_system::on_pause(rtti::context& ctx)
 {
-    auto& ec = ctx.get<ecs>();
+    auto& ec = ctx.get_cached<ecs>();
     auto& scn = ec.get_scene();
     auto& registry = *scn.registry;
 
@@ -121,7 +121,7 @@ void audio_system::on_pause(rtti::context& ctx)
 
 void audio_system::on_resume(rtti::context& ctx)
 {
-    auto& ec = ctx.get<ecs>();
+    auto& ec = ctx.get_cached<ecs>();
     auto& scn = ec.get_scene();
     auto& registry = *scn.registry;
 
@@ -138,13 +138,13 @@ void audio_system::on_skip_next_frame(rtti::context& ctx)
 
 void audio_system::on_frame_update(rtti::context& ctx, delta_t dt)
 {
-    auto& ev = ctx.get<events>();
+    auto& ev = ctx.get_cached<events>();
 
     if(ev.is_playing && !ev.is_paused)
     {
     }
 
-    auto& ec = ctx.get<ecs>();
+    auto& ec = ctx.get_cached<ecs>();
     auto& scn = ec.get_scene();
     auto& registry = *scn.registry;
 

@@ -56,7 +56,7 @@ void open_log_in_environment(const fs::path& entry)
     if(ex::is_format<script>(entry.extension().string()))
     {
         auto& ctx = engine::context();
-        auto& pm = ctx.get<project_manager>();
+        auto& pm = ctx.get_cached<project_manager>();
         editor_actions::open_workspace_on_file(pm.get_name(), entry);
     }
     else

@@ -8,16 +8,16 @@
 
 #include <engine/ecs/ecs.h>
 
+#include "events.h"
 #include <engine/animation/ecs/systems/animation_system.h>
 #include <engine/audio/ecs/systems/audio_system.h>
 #include <engine/ecs/systems/transform_system.h>
+#include <engine/input/input.h>
 #include <engine/physics/ecs/systems/physics_system.h>
 #include <engine/rendering/ecs/systems/camera_system.h>
 #include <engine/rendering/ecs/systems/model_system.h>
 #include <engine/rendering/ecs/systems/reflection_probe_system.h>
 #include <engine/rendering/ecs/systems/rendering_system.h>
-
-#include "events.h"
 #include <ospp/event.h>
 
 #include <logging/logging.h>
@@ -72,6 +72,7 @@ auto engine::create(rtti::context& ctx, cmd_line::parser& parser) -> bool
     ctx.add<model_system>();
     ctx.add<animation_system>();
     ctx.add<physics_system>();
+    ctx.add<input_system>();
     ctx.add<script_system>();
 
     return true;
@@ -150,6 +151,11 @@ auto engine::init_systems(const cmd_line::parser& parser) -> bool
         return false;
     }
 
+    if(!ctx.get_cached<input_system>().init(ctx))
+    {
+        return false;
+    }
+
     if(!ctx.get_cached<script_system>().init(ctx))
     {
         return false;
@@ -173,6 +179,11 @@ auto engine::deinit() -> bool
     }
 
     if(!ctx.get_cached<script_system>().deinit(ctx))
+    {
+        return false;
+    }
+
+    if(!ctx.get_cached<input_system>().deinit(ctx))
     {
         return false;
     }
@@ -246,6 +257,7 @@ auto engine::destroy() -> bool
 
     ctx.remove<defaults>();
     ctx.remove<script_system>();
+    ctx.remove<input_system>();
     ctx.remove<physics_system>();
     ctx.remove<animation_system>();
     ctx.remove<model_system>();
@@ -281,6 +293,7 @@ auto engine::process() -> bool
     auto& ev = ctx.get_cached<events>();
     auto& rend = ctx.get_cached<renderer>();
     auto& thr = ctx.get_cached<threader>();
+    auto& input = ctx.get_cached<input_system>();
 
     thr.process();
 
@@ -288,11 +301,15 @@ auto engine::process() -> bool
 
     auto dt = sim.get_delta_time();
 
+    input.manager.before_events_update();
+
     os::event e{};
     while(os::poll_event(e))
     {
+        input.manager.on_os_event(e);
         ev.on_os_event(ctx, e);
     }
+    input.manager.after_events_update();
 
     const auto& window = rend.get_main_window();
 

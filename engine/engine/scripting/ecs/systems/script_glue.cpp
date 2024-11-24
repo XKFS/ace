@@ -10,7 +10,7 @@
 #include <monort/monort.h>
 
 #include <engine/scripting/ecs/components/script_component.h>
-
+#include <engine//input/input.h>
 #include <engine/assets/asset_manager.h>
 #include <engine/meta/ecs/components/all_components.h>
 
@@ -1001,10 +1001,48 @@ auto m2n_test_uuid(const hpp::uuid& uid) -> hpp::uuid
     return newuid;
 }
 
+auto internal_m2n_input_get_analog_value(const std::string& name) -> float
+{
+    auto& ctx = engine::context();
+    auto& input = ctx.get_cached<input_system>();
+    return input.get_analog_value(name);
+}
+
+auto internal_m2n_input_get_digital_value(const std::string& name) -> bool
+{
+    auto& ctx = engine::context();
+    auto& input = ctx.get_cached<input_system>();
+    return input.get_digital_value(name);
+}
+
+auto internal_m2n_input_is_pressed(const std::string& name) -> bool
+{
+    auto& ctx = engine::context();
+    auto& input = ctx.get_cached<input_system>();
+    return input.is_pressed(name);
+}
+
+auto internal_m2n_input_is_released(const std::string& name) -> bool
+{
+    auto& ctx = engine::context();
+    auto& input = ctx.get_cached<input_system>();
+    return input.is_released(name);
+}
+
+auto internal_m2n_input_is_down(const std::string& name) -> bool
+{
+    auto& ctx = engine::context();
+    auto& input = ctx.get_cached<input_system>();
+    return input.is_released(name);
+}
+
+
+
 } // namespace
 
 auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
-{
+{    
+
     APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
 
     {
@@ -1117,6 +1155,16 @@ auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
     {
         auto reg = mono::internal_call_registry("Ace.Core.Tests");
         reg.add_internal_call("m2n_test_uuid", internal_call(m2n_test_uuid));
+    }
+
+    {
+        auto reg = mono::internal_call_registry("Ace.Core.Input");
+        reg.add_internal_call("internal_m2n_input_get_analog_value", internal_call(internal_m2n_input_get_analog_value));
+        reg.add_internal_call("internal_m2n_input_get_digital_value", internal_call(internal_m2n_input_get_analog_value));
+        reg.add_internal_call("internal_m2n_input_is_pressed", internal_call(internal_m2n_input_is_pressed));
+        reg.add_internal_call("internal_m2n_input_is_released", internal_call(internal_m2n_input_is_released));
+        reg.add_internal_call("internal_m2n_input_is_down", internal_call(internal_m2n_input_is_down));
+
     }
     // mono::managed_interface::init(assembly);
 

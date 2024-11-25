@@ -27,10 +27,10 @@ auto get_axis_value(const float value,
             throw std::runtime_error("Case not implemented.");
     }
 
-    const float inStart = -1.0f;
-    const float inEnd = 1.0f;
+    const float in_start = -1.0f;
+    const float in_end = 1.0f;
 
-    return (v - inStart) / (inEnd - inStart) * (max_analog_value - min_analog_value) + min_analog_value;
+    return (v - in_start) / (in_end - in_start) * (max_analog_value - min_analog_value) + min_analog_value;
 }
 } // namespace
 //  ----------------------------------------------------------------------------

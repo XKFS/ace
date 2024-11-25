@@ -13,6 +13,8 @@ class keyboard_action_map
     struct key_entry
     {
         key_code key{};
+
+        std::vector<key_code> modifiers{};
         //  Analog value used when key is down
         float analog_value{};
     };
@@ -27,5 +29,7 @@ public:
     auto is_down(const action_id_t& action, const keyboard& device) const -> bool;
 
     void map(const action_id_t& action, key_code key, float analog_value = 1.0f);
+    void map(const action_id_t& action, key_code key, const std::vector<key_code>& modifiers, float analog_value = 1.0f);
+
 };
 } // namespace input

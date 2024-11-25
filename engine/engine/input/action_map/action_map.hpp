@@ -27,6 +27,7 @@ public:
              float max_analog_value = 1.0f);
     void map(const action_id_t& action, gamepad_button button);
     void map(const action_id_t& action, key_code key, float analog_value = 1.0f);
+    void map(const action_id_t& action, key_code key, const std::vector<key_code>& modifiers, float analog_value = 1.0f);
 
     void map(const action_id_t& action,
              mouse_axis axis,

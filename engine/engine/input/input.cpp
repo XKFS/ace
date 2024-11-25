@@ -27,6 +27,9 @@ auto input_system::init(rtti::context& ctx) -> bool
     mapper.map("Submit", input::key_code::enter, 1.0f);
     mapper.map("Cancel", input::key_code::escape, 1.0f);
 
+
+    // mapper.map("Test", input::key_code::r, {input::key_code::lctrl});
+
     return true;
 }
 

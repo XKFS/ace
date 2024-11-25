@@ -102,6 +102,10 @@ void action_map::map(const action_id_t& action, key_code key, float analog_value
 {
     keyboard_action_map_.map(action, key, analog_value);
 }
+void action_map::map(const action_id_t& action, key_code key, const std::vector<key_code>& modifiers, float analog_value)
+{
+    keyboard_action_map_.map(action, key, modifiers, analog_value);
+}
 
 void action_map::map(const action_id_t& action,
                      mouse_axis axis,

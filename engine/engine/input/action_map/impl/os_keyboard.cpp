@@ -18,22 +18,22 @@ auto os_keyboard::get_name() const -> const std::string&
 //  ----------------------------------------------------------------------------
 auto os_keyboard::is_down(key_code key) const -> bool
 {
-    const key_state keyState = key_state_map_.get_state(key, key_state::up);
-    return (keyState == key_state::down || keyState == key_state::pressed);
+    const key_state state = key_state_map_.get_state(key, key_state::up);
+    return (state == key_state::down || state == key_state::pressed);
 }
 
 //  ----------------------------------------------------------------------------
 auto os_keyboard::is_pressed(key_code key) const -> bool
 {
-    const key_state keyState = key_state_map_.get_state(key, key_state::up);
-    return keyState == key_state::pressed;
+    const key_state state = key_state_map_.get_state(key, key_state::up);
+    return state == key_state::pressed;
 }
 
 //  ----------------------------------------------------------------------------
 auto os_keyboard::is_released(key_code key) const -> bool
 {
-    const key_state keyState = key_state_map_.get_state(key, key_state::up);
-    return keyState == key_state::released;
+    const key_state state = key_state_map_.get_state(key, key_state::up);
+    return state == key_state::released;
 }
 
 void os_keyboard::update()

@@ -10,7 +10,6 @@
 #include <engine/scripting/ecs/systems/script_system.h>
 #include <monopp/mono_field_invoker.h>
 #include <monopp/mono_property_invoker.h>
-#include <monopp/mono_type.h>
 
 namespace ace
 {
@@ -266,6 +265,7 @@ SAVE(script_component::script_object)
     try_save(ar, ser20::make_nvp("type", type.get_fullname()));
 
     auto fields = type.get_fields();
+    auto properties = type.get_properties();
     for(auto& field : fields)
     {
         if(field.get_visibility() == mono::visibility::vis_public)
@@ -280,7 +280,6 @@ SAVE(script_component::script_object)
         }
     }
 
-    auto properties = type.get_properties();
     for(auto& prop : properties)
     {
         if(prop.get_visibility() == mono::visibility::vis_public)
@@ -389,6 +388,8 @@ LOAD(script_component::script_object)
     };
 
     auto fields = script_type.get_fields();
+    auto properties = script_type.get_properties();
+
     for(auto& field : fields)
     {
         if(field.get_visibility() == mono::visibility::vis_public)
@@ -402,21 +403,19 @@ LOAD(script_component::script_object)
             }
         }
     }
+    for(auto& prop : properties)
+    {
+        if(prop.get_visibility() == mono::visibility::vis_public)
+        {
+            const auto& prop_type = prop.get_type();
 
-    // auto properties = script_type.get_properties();
-    // for(auto& prop : properties)
-    // {
-    //     if(prop.get_visibility() == mono::visibility::vis_public)
-    //     {
-    //         const auto& prop_type = prop.get_type();
-
-    //         auto prop_serilizer = get_property_serilizer(prop_type.get_name());
-    //         if(prop_serilizer)
-    //         {
-    //             prop_serilizer(ar, object, prop);
-    //         }
-    //     }
-    // }
+            auto prop_serilizer = get_property_serilizer(prop_type.get_name());
+            if(prop_serilizer)
+            {
+                prop_serilizer(ar, object, prop);
+            }
+        }
+    }
 }
 LOAD_INSTANTIATE(script_component::script_object, ser20::iarchive_associative_t);
 LOAD_INSTANTIATE(script_component::script_object, ser20::iarchive_binary_t);

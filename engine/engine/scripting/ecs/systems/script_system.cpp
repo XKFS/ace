@@ -1,20 +1,21 @@
 #include "script_system.h"
+#include <engine/assets/impl/asset_compiler.h>
 #include <engine/ecs/ecs.h>
 #include <engine/engine.h>
 #include <engine/events.h>
 #include <engine/meta/ecs/entity.hpp>
 #include <engine/scripting/ecs/components/script_component.h>
 #include <engine/scripting/script.h>
+
 #include <monopp/mono_exception.h>
+#include <monopp/mono_field_invoker.h>
 #include <monopp/mono_internal_call.h>
 #include <monopp/mono_method_invoker.h>
-#include <monort/monort.h>
+#include <monopp/mono_property_invoker.h>
 
 #include <core/base/platform/config.hpp>
 #include <filesystem/filesystem.h>
 #include <logging/logging.h>
-
-#include <engine/assets/impl/asset_compiler.h>
 
 namespace ace
 {
@@ -87,7 +88,8 @@ auto print_assembly_info(const mono::mono_assembly& assembly)
     APPLOG_TRACE("\n{}", ss.str());
 }
 
-void set_env(const std::string& var_name, const std::string& value) {
+void set_env(const std::string& var_name, const std::string& value)
+{
 #if ACE_PLATFORM_WINDOWS
     _putenv_s(var_name.c_str(), value.c_str());
 #else
@@ -459,7 +461,8 @@ void script_system::on_frame_update(rtti::context& ctx, delta_t dt)
             update_data data;
             data.delta_time = dt.count();
 
-            auto method_thunk = mono::make_method_invoker<void(update_data)>(cache_.update_manager_type, "internal_n2m_update");
+            auto method_thunk =
+                mono::make_method_invoker<void(update_data)>(cache_.update_manager_type, "internal_n2m_update");
             method_thunk(data);
         }
     }

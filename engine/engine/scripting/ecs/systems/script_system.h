@@ -6,11 +6,8 @@
 #include <base/basetypes.hpp>
 #include <context/context.hpp>
 #include <filesystem/filesystem.h>
-#include <monort/monort.h>
-#include <monopp/mono_method_invoker.h>
-#include <monopp/mono_field_invoker.h>
-#include <monopp/mono_property_invoker.h>
 
+#include <monort/monort.h>
 #include <monopp/mono_jit.h>
 
 namespace ace

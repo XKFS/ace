@@ -218,7 +218,8 @@ void hub::on_start_page_render(rtti::context& ctx)
                 for(const auto& prj : rencent_projects)
                 {
                     auto p = fs::path(prj.path);
-                    auto ftime = fs::last_write_time(p / "settings" / "deploy.cfg");
+                    fs::error_code ec;
+                    auto ftime = fs::last_write_time(p / "settings" / "deploy.cfg", ec);
                     auto system_time = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
                         ftime - std::filesystem::file_time_type::clock::now() + std::chrono::system_clock::now());
 

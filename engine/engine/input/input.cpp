@@ -16,7 +16,7 @@ auto input_system::init(rtti::context& ctx) -> bool
     mapper.map("Horizontal", input::key_code::a, -1.0f);
     mapper.map("Horizontal", input::key_code::d, 1.0f);
     mapper.map("Horizontal", input::key_code::left, -1.0f);
-    mapper.map("Horizontal", input::key_code::r, 1.0f);
+    mapper.map("Horizontal", input::key_code::right, 1.0f);
 
     mapper.map("Vertical", input::key_code::w, 1.0f);
     mapper.map("Vertical", input::key_code::s, -1.0f);

@@ -207,6 +207,18 @@ void project_manager::save_config()
             project prj{project_path.generic_string()};
             rp.emplace_back(std::move(prj));
         }
+
+        std::sort(std::begin(rp), std::end(rp), [](const auto& lhs, const auto& rhs)
+        {
+            fs::error_code ec;
+            auto lhs_path = fs::path(lhs.path);
+            auto lhs_time = fs::last_write_time(lhs_path / "settings" / "deploy.cfg", ec);
+
+            auto rhs_path = fs::path(rhs.path);
+            auto rhs_time = fs::last_write_time(rhs_path / "settings" / "deploy.cfg", ec);
+
+            return lhs_time > rhs_time;
+        });
     }
 
     fs::error_code err;

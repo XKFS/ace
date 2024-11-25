@@ -79,7 +79,8 @@ namespace ser20
 
 SAVE(entt::const_handle)
 {
-    try_save(ar, ser20::make_nvp("id", obj.entity()));
+    entt::handle::entity_type id = obj.valid() ? obj.entity() : entt::null;
+    try_save(ar, ser20::make_nvp("id", id));
 }
 SAVE_INSTANTIATE(entt::const_handle, ser20::oarchive_associative_t);
 SAVE_INSTANTIATE(entt::const_handle, ser20::oarchive_binary_t);
@@ -89,7 +90,8 @@ LOAD(entt::handle)
     entt::handle::entity_type id{};
     try_load(ar, ser20::make_nvp("id", id));
 
-    if(id != entt::null)
+    bool valid = id != entt::null && id != entt::handle::entity_type(0);
+    if(valid)
     {
         auto& loader = get_loader();
         auto it = loader.mapping.find(id);
@@ -103,9 +105,8 @@ LOAD(entt::handle)
         }
         else
         {
-            entt::handle h(*loader.reg, loader.reg->create());
-            loader.mapping[id] = h;
-            obj = h;
+            obj = entt::handle(*loader.reg, loader.reg->create());;
+            loader.mapping[id] = obj;
         }
     }
 }

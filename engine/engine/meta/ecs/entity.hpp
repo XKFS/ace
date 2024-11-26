@@ -76,6 +76,19 @@ void load_from(Stream& stream, T& scn)
 namespace ser20
 {
 
+
 SAVE_EXTERN(entt::const_handle);
 LOAD_EXTERN(entt::handle);
+
+template<typename T>
+struct basic_handle_link
+{
+    T handle{};
+};
+struct const_entity_handle_link : basic_handle_link<entt::const_handle> {};
+struct entity_handle_link : basic_handle_link<entt::handle> {};
+
+SAVE_EXTERN(const_entity_handle_link);
+LOAD_EXTERN(entity_handle_link);
+
 } // namespace ser20

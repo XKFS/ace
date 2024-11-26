@@ -77,6 +77,7 @@ using namespace ace;
 namespace ser20
 {
 
+
 SAVE(entt::const_handle)
 {
     entt::handle::entity_type id = obj.valid() ? obj.entity() : entt::null;
@@ -109,10 +110,38 @@ LOAD(entt::handle)
             loader.mapping[id] = obj;
         }
     }
+    else
+    {
+        obj = {};
+    }
 }
 
 LOAD_INSTANTIATE(entt::handle, ser20::iarchive_associative_t);
 LOAD_INSTANTIATE(entt::handle, ser20::iarchive_binary_t);
+
+
+SAVE(const_entity_handle_link)
+{
+    if(!is_saving_single())
+    {
+        SAVE_FUNCTION_NAME(ar, obj.handle);
+    }
+    else
+    {
+        SAVE_FUNCTION_NAME(ar, entt::const_handle{});
+    }
+}
+SAVE_INSTANTIATE(const_entity_handle_link, ser20::oarchive_associative_t);
+SAVE_INSTANTIATE(const_entity_handle_link, ser20::oarchive_binary_t);
+
+LOAD(entity_handle_link)
+{
+    LOAD_FUNCTION_NAME(ar, obj.handle);
+}
+
+LOAD_INSTANTIATE(entity_handle_link, ser20::iarchive_associative_t);
+LOAD_INSTANTIATE(entity_handle_link, ser20::iarchive_binary_t);
+
 
 SAVE(entity_components<entt::const_handle>)
 {
@@ -135,6 +164,7 @@ SAVE(entity_components<entt::const_handle>)
 }
 SAVE_INSTANTIATE(entity_components<entt::const_handle>, ser20::oarchive_associative_t);
 SAVE_INSTANTIATE(entity_components<entt::const_handle>, ser20::oarchive_binary_t);
+
 
 LOAD(entity_components<entt::handle>)
 {

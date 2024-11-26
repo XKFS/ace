@@ -69,9 +69,8 @@ struct mono_saver<Archive, entt::entity>
     {
         auto& ar = static_cast<Archive&>(arbase);
 
-        entt::handle e;
+        ser20::const_entity_handle_link e;
 
-        if(!is_saving_single())
         {
             auto mutable_field = mono::make_field_invoker<entt::entity>(field);
             auto val = mutable_field.get_value(obj);
@@ -79,7 +78,7 @@ struct mono_saver<Archive, entt::entity>
             auto& ctx = engine::context();
             auto& ec = ctx.get_cached<ecs>();
             auto& scene = ec.get_scene();
-            e = scene.create_entity(val);
+            e.handle = scene.create_entity(val);
         }
 
         return try_save(ar, ser20::make_nvp(field.get_name(), e));
@@ -91,9 +90,8 @@ struct mono_saver<Archive, entt::entity>
     {
         auto& ar = static_cast<Archive&>(arbase);
 
-        entt::handle e;
+        ser20::const_entity_handle_link e;
 
-        if(!is_saving_single())
         {
             auto mutable_prop = mono::make_property_invoker<entt::entity>(prop);
             auto val = mutable_prop.get_value(obj);
@@ -101,7 +99,7 @@ struct mono_saver<Archive, entt::entity>
             auto& ctx = engine::context();
             auto& ec = ctx.get_cached<ecs>();
             auto& scene = ec.get_scene();
-            e = scene.create_entity(val);
+            e.handle = scene.create_entity(val);
         }
 
         return try_save(ar, ser20::make_nvp(prop.get_name(), e));
@@ -162,10 +160,10 @@ struct mono_loader<Archive, entt::entity>
         if(is_supported_type<entt::entity>(field.get_type()))
         {
             auto mutable_field = mono::make_field_invoker<entt::entity>(field);
-            entt::handle val{};
+            ser20::entity_handle_link val{};
             if(try_load(ar, ser20::make_nvp(field.get_name(), val)))
             {
-                mutable_field.set_value(obj, val.entity());
+                mutable_field.set_value(obj, val.handle.entity());
             }
             return true;
         }
@@ -181,10 +179,10 @@ struct mono_loader<Archive, entt::entity>
         if(is_supported_type<entt::entity>(prop.get_type()))
         {
             auto mutable_prop = mono::make_property_invoker<entt::entity>(prop);
-            entt::handle val{};
+            ser20::entity_handle_link val{};
             if(try_load(ar, ser20::make_nvp(prop.get_name(), val)))
             {
-                mutable_prop.set_value(obj, val.entity());
+                mutable_prop.set_value(obj, val.handle.entity());
             }
             return true;
         }

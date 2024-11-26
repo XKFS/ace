@@ -194,8 +194,7 @@ auto defaults::create_embedded_mesh_entity(rtti::context& ctx, scene& scn, const
     model model;
     model.set_lod(lod, 0);
     model.set_material(am.get_asset<material>("engine:/embedded/standard"), 0);
-    auto object = scn.create_entity();
-    object.get_or_emplace<tag_component>().tag = name;
+    auto object = scn.create_entity(name);
 
     auto& transf_comp = object.get_or_emplace<transform_component>();
 
@@ -287,8 +286,7 @@ auto defaults::create_light_entity(rtti::context& ctx, scene& scn, light_type ty
 {
     auto& am = ctx.get_cached<asset_manager>();
 
-    auto object = scn.create_entity();
-    object.get_or_emplace<tag_component>().tag = name + " Light";
+    auto object = scn.create_entity(name + " Light");
 
     auto& transf_comp = object.get_or_emplace<transform_component>();
     transf_comp.set_position_local({0.0f, 1.0f, 0.0f});
@@ -309,8 +307,7 @@ auto defaults::create_reflection_probe_entity(rtti::context& ctx, scene& scn, pr
 {
     auto& am = ctx.get_cached<asset_manager>();
 
-    auto object = scn.create_entity();
-    object.get_or_emplace<tag_component>().tag = name + " Probe";
+    auto object = scn.create_entity(name + " Probe");
 
     auto& transf_comp = object.get_or_emplace<transform_component>();
     transf_comp.set_position_local({0.0f, 0.1f, 0.0f});
@@ -327,8 +324,7 @@ auto defaults::create_reflection_probe_entity(rtti::context& ctx, scene& scn, pr
 
 auto defaults::create_camera_entity(rtti::context& ctx, scene& scn, const std::string& name) -> entt::handle
 {
-    auto object = scn.create_entity();
-    object.get_or_emplace<tag_component>().tag = name;
+    auto object = scn.create_entity(name);
 
     auto& transf_comp = object.get_or_emplace<transform_component>();
     transf_comp.set_position_local({0.0f, 1.0f, -10.0f});

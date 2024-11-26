@@ -204,7 +204,8 @@ auto internal_m2n_destroy_entity(entt::entity id) -> bool
 auto internal_m2n_is_entity_valid(entt::entity id) -> bool
 {
     auto e = get_entity_from_id(id);
-    return e.valid();
+    bool valid = e.valid();
+    return valid;
 }
 
 auto internal_m2n_find_entity_by_tag(const std::string& tag) -> uint32_t

@@ -16,7 +16,7 @@ struct id_component
     /**
      * @brief The unique identifier for the entity.
      */
-    hpp::uuid id = generate_uuid();
+    hpp::uuid id;
 };
 
 /**

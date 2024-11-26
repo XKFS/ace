@@ -57,14 +57,31 @@ void draw_item(const std::vector<project_item>& v, std::function<void(ImVec2)> c
     ImVec2 item_size(ImGui::GetContentRegionAvail().x, height);
 
     callback(item_size);
-
+    bool hovered = ImGui::IsItemHovered();
     ImGui::SetCursorPos(pos);
     ImGui::Dummy({});
     ImGui::Indent();
+
+    // ImGui::BeginGroup();
+    // {
+    //     ImGui::AlignTextToFramePadding();
+    //     ImGui::NewLine();
+
+    //     ImGui::AlignTextToFramePadding();
+    //     ImGui::TextUnformatted(fmt::format("{} {}.", 0, ICON_MDI_FOLDER).c_str());
+
+    //     ImGui::AlignTextToFramePadding();
+    //     ImGui::NewLine();
+    // }
+    // ImGui::EndGroup();
+    // ImGui::SameLine(0.0f, 1.0f);
+    ImGui::BeginGroup();
+
+    size_t i = 0;
     for(const auto& item : v)
     {
         ImGui::AlignTextToFramePadding();
-        ImGui::Text("%s:", item.tag.c_str());
+        ImGui::Text("%s", item.tag.c_str());
 
         ImGui::SameLine();
 
@@ -76,9 +93,16 @@ void draw_item(const std::vector<project_item>& v, std::function<void(ImVec2)> c
         {
             ImGui::PushWindowFontScale(item.scale);
         }
-        ImGui::AlignTextToFramePadding();
 
-        ImGui::Text("%s", item.name.c_str());
+        ImGui::AlignTextToFramePadding();
+        if(i == 0 && hovered)
+        {
+            ImGui::TextLink(fmt::format("{}", item.name).c_str());
+        }
+        else
+        {
+            ImGui::Text("%s", item.name.c_str());
+        }
 
         if(item.scale > 0)
         {
@@ -89,7 +113,10 @@ void draw_item(const std::vector<project_item>& v, std::function<void(ImVec2)> c
         {
             ImGui::PopFont();
         }
+
+        i++;
     }
+    ImGui::EndGroup();
     ImGui::Unindent();
 
     ImGui::EndGroup();
@@ -228,7 +255,7 @@ void hub::on_start_page_render(rtti::context& ctx)
 
                     project_item project_name{};
                     project_name.font = ImGui::Font::Black;
-                    // project_name.size = 20;
+                    project_name.scale = 1.2;
                     project_name.tag = "Project";
                     project_name.name = name;
 
@@ -256,8 +283,10 @@ void hub::on_start_page_render(rtti::context& ctx)
                     if(&prj != &rencent_projects.back())
                     {
                         ImGui::PushStyleColor(ImGuiCol_Separator, ImGui::GetColorU32(ImGuiCol_TextDisabled, 0.5f));
-                        ImGui::PushStyleColor(ImGuiCol_SeparatorHovered, ImGui::GetColorU32(ImGuiCol_TextDisabled, 0.5f));
-                        ImGui::PushStyleColor(ImGuiCol_SeparatorActive, ImGui::GetColorU32(ImGuiCol_TextDisabled, 0.5f));
+                        ImGui::PushStyleColor(ImGuiCol_SeparatorHovered,
+                                              ImGui::GetColorU32(ImGuiCol_TextDisabled, 0.5f));
+                        ImGui::PushStyleColor(ImGuiCol_SeparatorActive,
+                                              ImGui::GetColorU32(ImGuiCol_TextDisabled, 0.5f));
 
                         ImGui::Separator();
 

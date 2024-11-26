@@ -18,8 +18,8 @@ namespace
 template<typename T>
 auto is_supported_type(const mono::mono_type& type) -> bool
 {
-    const auto& expected_name = type.get_fullname();
-    bool is_supported = std::is_same_v<entt::entity, T> && expected_name == "Ace.Core.Entity";
+    const auto& expected_name = type.get_name();
+    bool is_supported = std::is_same_v<entt::entity, T> && expected_name == "Entity";
 
     if(!is_supported)
     {
@@ -244,7 +244,9 @@ SAVE(script_component::script_object)
             {"Single",  &mono_saver<Archive, float>::try_save_mono_property},
             {"Double",  &mono_saver<Archive, double>::try_save_mono_property},
             {"Char",    &mono_saver<Archive, char16_t>::try_save_mono_property},
-            {"String",  &mono_saver<Archive, std::string>::try_save_mono_property}
+            {"String",  &mono_saver<Archive, std::string>::try_save_mono_property},
+            {"Entity",  &mono_saver<Archive, entt::entity>::try_save_mono_property}
+
         };
         // clang-format on
 

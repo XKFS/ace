@@ -253,7 +253,7 @@ auto make_rigidbody_shape(physics_component& comp) -> std::shared_ptr<btCompound
             {
                 const auto& shape = hpp::get<physics_cylinder_shape>(s.shape);
 
-                btVector3 half_extends(shape.radius, shape.length, shape.radius);
+                btVector3 half_extends(shape.radius, shape.length * 0.5f, shape.radius);
                 btCylinderShape* cylinder_shape = new btCylinderShape(half_extends);
 
                 btTransform localTransform = btTransform::getIdentity();

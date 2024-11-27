@@ -1,6 +1,6 @@
 #include "inspector_script.h"
 #include "inspectors.h"
-
+#include <engine/assets/asset_manager.h>
 #include <monopp/mono_field_invoker.h>
 #include <monopp/mono_property_invoker.h>
 
@@ -163,6 +163,53 @@ auto inspect_mono_field<entt::handle>(rtti::context& ctx, mono::mono_object& obj
     return result;
 }
 
+// template<>
+// auto inspect_mono_field<asset_handle<prefab>>(rtti::context& ctx, mono::mono_object& obj, mono::mono_field& field, const var_info& info)
+//     -> inspect_result
+// {
+//     inspect_result result;
+
+//     var_info field_info;
+//     field_info.is_property = true;
+//     field_info.read_only = info.read_only || field.is_readonly();
+
+//     auto mutable_field = mono::make_field_invoker<mono::mono_object>(field);
+//     auto val = mutable_field.get_value(obj);
+
+//     auto prop = field.get_type().get_property("uid");
+//     auto mutable_prop = mono::make_property_invoker<hpp::uuid>(prop);
+//     auto uid = mutable_prop.get_value(val);
+
+//     auto& am = ctx.get_cached<asset_manager>();
+//     auto handle = am.get_asset<prefab>(uid);
+
+//     auto attribs = field.get_attributes();
+//     auto tooltip_attrib = find_attribute("TooltipAttribute", attribs);
+
+//     std::string tooltip;
+//     if(tooltip_attrib.valid())
+//     {
+//         auto invoker = mono::make_field_invoker<std::string>(tooltip_attrib.get_type(), "tooltip");
+//         tooltip = invoker.get_value(tooltip_attrib);
+//     }
+
+
+//     rttr::variant var = handle;
+
+//     {
+//         property_layout layout(field.get_name(), tooltip);
+//         result |= inspect_var(ctx, var, field_info);
+//     }
+
+//     if(result.changed)
+//     {
+//         auto v = var.get_value<asset_handle<prefab>>();
+//         mutable_prop.set_value(val, v.uid());
+//     }
+
+//     return result;
+// }
+
 template<typename T>
 auto inspect_mono_property(rtti::context& ctx, mono::mono_object& obj, mono::mono_property& prop, const var_info& info)
     -> inspect_result
@@ -250,6 +297,19 @@ auto inspector_mono_object::inspect(rtti::context& ctx,
             {
                 result |= field_inspector(ctx, data, field, info);
             }
+            else
+            {
+                var_info field_info;
+                field_info.is_property = true;
+                field_info.read_only = true;
+
+                std::string unknown = field.get_type().get_name();
+                rttr::variant var = unknown;
+                {
+                    property_layout layout(field.get_name());
+                    result |= inspect_var(ctx, var, field_info);
+                }
+            }
         }
     }
 
@@ -270,7 +330,8 @@ auto inspector_mono_object::inspect(rtti::context& ctx,
                                                                      {"Single", &inspect_mono_property<float>},
                                                                      {"Double", &inspect_mono_property<double>},
                                                                      {"Char", &inspect_mono_property<char16_t>},
-                                                                     {"String", &inspect_mono_property<std::string>}};
+                                                                     {"String", &inspect_mono_property<std::string>},
+                                                                     {"Entity", &inspect_mono_property<entt::handle>}};
 
         auto it = reg.find(type_name);
         if(it != reg.end())
@@ -293,6 +354,19 @@ auto inspector_mono_object::inspect(rtti::context& ctx,
             if(property_inspector)
             {
                 result |= property_inspector(ctx, data, prop, info);
+            }
+            else
+            {
+                var_info field_info;
+                field_info.is_property = true;
+                field_info.read_only = true;
+
+                std::string unknown = prop.get_type().get_name();
+                rttr::variant var = unknown;
+                {
+                    property_layout layout(prop.get_name());
+                    result |= inspect_var(ctx, var, field_info);
+                }
             }
         }
     }

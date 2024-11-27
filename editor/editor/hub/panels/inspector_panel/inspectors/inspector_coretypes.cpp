@@ -190,10 +190,10 @@ auto inspector_string::inspect(rtti::context& ctx,
 
     ImGuiInputTextFlags flags = ImGuiInputTextFlags_AutoSelectAll;
 
-    // if(info.read_only)
-    // {
-    //     flags |= ImGuiInputTextFlags_ReadOnly;
-    // }
+    if(info.read_only)
+    {
+        flags |= ImGuiInputTextFlags_ReadOnly;
+    }
 
     inspect_result result{};
     result.changed |= ImGui::InputTextWidget<128>("##", data, false, flags);

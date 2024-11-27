@@ -374,7 +374,9 @@ LOAD(script_component::script_object)
             {"Single",  &mono_loader<Archive, float>::try_load_mono_property},
             {"Double",  &mono_loader<Archive, double>::try_load_mono_property},
             {"Char",    &mono_loader<Archive, char16_t>::try_load_mono_property},
-            {"String",  &mono_loader<Archive, std::string>::try_load_mono_property}
+            {"String",  &mono_loader<Archive, std::string>::try_load_mono_property},
+            {"Entity",  &mono_loader<Archive, entt::entity>::try_load_mono_property}
+
         };
         // clang-format on
 

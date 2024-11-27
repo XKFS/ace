@@ -22,12 +22,6 @@ auto const_handle_cast(entt::const_handle chandle) -> entt::handle
     return handle;
 }
 
-struct entity_loader
-{
-    entt::registry* reg{};
-    std::map<entt::entity, entt::handle> mapping;
-};
-
 template<typename Entity>
 struct entity_components
 {
@@ -40,35 +34,129 @@ struct entity_data
     entity_components<Entity> components;
 };
 
-thread_local entity_loader* current_loader{};
-thread_local int loader_count = 0;
-thread_local int saving_single = 0;
-void push_loader(entt::registry& registry)
+struct save_context
 {
-    loader_count++;
-    if(current_loader)
+    bool to_prefab{};
+    entt::const_handle save_source{};
+};
+
+struct load_context
+{
+    entt::registry* reg{};
+    std::map<entt::entity, entt::handle> mapping;
+};
+
+thread_local load_context* load_ctx_ptr{};
+thread_local save_context* save_ctx_ptr{};
+
+auto push_load_context(entt::registry& registry) -> bool
+{
+    if(load_ctx_ptr)
     {
-        return;
+        return false;
     }
-    current_loader = new entity_loader();
-    current_loader->reg = &registry;
+    load_ctx_ptr = new load_context();
+    load_ctx_ptr->reg = &registry;
+    return true;
 }
 
-void pop_loader()
+void pop_load_context(bool push_result)
 {
-    loader_count--;
-    if(loader_count <= 0)
+    if(push_result && load_ctx_ptr)
     {
-        delete current_loader;
-        current_loader = {};
+        delete load_ctx_ptr;
+        load_ctx_ptr = {};
     }
 }
 
-auto get_loader() -> entity_loader&
+auto get_load_context() -> load_context&
 {
-    assert(current_loader);
-    return *current_loader;
+    assert(load_ctx_ptr);
+    return *load_ctx_ptr;
 }
+
+auto push_save_context() -> bool
+{
+    if(save_ctx_ptr)
+    {
+        return false;
+    }
+    save_ctx_ptr = new save_context();
+
+    return true;
+}
+
+void pop_save_context(bool push_result)
+{
+    if(push_result && save_ctx_ptr)
+    {
+        delete save_ctx_ptr;
+        save_ctx_ptr = {};
+    }
+}
+
+auto get_save_context() -> save_context&
+{
+    assert(save_ctx_ptr);
+    return *save_ctx_ptr;
+}
+
+auto is_parent(entt::const_handle potential_parent, entt::const_handle child) -> bool
+{
+    if(!potential_parent)
+    {
+        return false;
+    }
+    // Traverse up the hierarchy from `child`
+    while(true)
+    {
+        // Access the transform component once per entity
+        const auto* transform = child.try_get<transform_component>();
+        if(!transform)
+        {
+            return false; // Reached the root without finding `potential_parent`
+        }
+        auto parent = transform->get_parent();
+        if(!parent)
+        {
+            return false;
+        }
+
+        if(parent == potential_parent)
+        {
+            return true; // Found the parent relationship
+        }
+
+        child = parent; // Move up the hierarchy
+    }
+}
+auto find_root(entt::const_handle e) -> entt::const_handle
+{
+    // Loop to find the root entity
+    while(true)
+    {
+        // Access the `transform_component` once
+        const auto* transform = e.try_get<transform_component>();
+        if(!transform || !transform->get_parent())
+        {
+            break; // If no parent, we are at the root
+        }
+        e = transform->get_parent(); // Move to the parent entity
+    }
+    return e; // Root entity
+}
+
+auto are_related(entt::const_handle lhs, entt::const_handle rhs) -> bool
+{
+    return find_root(lhs) == find_root(rhs);
+}
+
+enum entity_flags
+{
+    none,
+    resolve_with_existing,
+    resolve_with_loaded,
+};
 
 } // namespace ace
 
@@ -76,7 +164,6 @@ using namespace ace;
 
 namespace ser20
 {
-
 
 SAVE(entt::const_handle)
 {
@@ -94,20 +181,20 @@ LOAD(entt::handle)
     bool valid = id != entt::null && id != entt::handle::entity_type(0);
     if(valid)
     {
-        auto& loader = get_loader();
-        auto it = loader.mapping.find(id);
-        if(it != loader.mapping.end())
+        auto& load_ctx = get_load_context();
+        auto it = load_ctx.mapping.find(id);
+        if(it != load_ctx.mapping.end())
         {
             obj = it->second;
         }
         else if(obj)
         {
-            loader.mapping[id] = obj;
+            load_ctx.mapping[id] = obj;
         }
         else
         {
-            obj = entt::handle(*loader.reg, loader.reg->create());;
-            loader.mapping[id] = obj;
+            obj = entt::handle(*load_ctx.reg, load_ctx.reg->create());
+            load_ctx.mapping[id] = obj;
         }
     }
     else
@@ -119,16 +206,39 @@ LOAD(entt::handle)
 LOAD_INSTANTIATE(entt::handle, ser20::iarchive_associative_t);
 LOAD_INSTANTIATE(entt::handle, ser20::iarchive_binary_t);
 
-
 SAVE(const_entity_handle_link)
 {
-    if(!is_saving_single())
+    auto save_ctx = get_save_context();
+    bool is_saving_single = save_ctx.save_source.valid();
+    if(!is_saving_single)
     {
+        try_save(ar, ser20::make_nvp("flags", entity_flags::resolve_with_loaded));
         SAVE_FUNCTION_NAME(ar, obj.handle);
     }
     else
     {
-        SAVE_FUNCTION_NAME(ar, entt::const_handle{});
+        entt::const_handle to_save = obj.handle;
+        uint32_t flags = entity_flags::resolve_with_loaded;
+
+        bool save_source_is_parent = is_parent(save_ctx.save_source, obj.handle);
+
+        if(save_ctx.to_prefab)
+        {
+            if(!save_source_is_parent)
+            {
+                to_save = {};
+            }
+        }
+        else
+        {
+            if(!save_source_is_parent)
+            {
+                flags = entity_flags::resolve_with_existing;
+            }
+        }
+
+        try_save(ar, ser20::make_nvp("flags", flags));
+        SAVE_FUNCTION_NAME(ar, to_save);
     }
 }
 SAVE_INSTANTIATE(const_entity_handle_link, ser20::oarchive_associative_t);
@@ -136,12 +246,57 @@ SAVE_INSTANTIATE(const_entity_handle_link, ser20::oarchive_binary_t);
 
 LOAD(entity_handle_link)
 {
-    LOAD_FUNCTION_NAME(ar, obj.handle);
+    // LOAD_FUNCTION_NAME(ar, obj.handle);
+
+    entity_flags flags{};
+    try_load(ar, ser20::make_nvp("flags", flags));
+
+    entt::handle::entity_type id{};
+    try_load(ar, ser20::make_nvp("id", id));
+
+    bool valid = id != entt::null && id != entt::handle::entity_type(0);
+    if(valid)
+    {
+        auto& load_ctx = get_load_context();
+        auto it = load_ctx.mapping.find(id);
+        if(it != load_ctx.mapping.end())
+        {
+            obj.handle = it->second;
+        }
+        else if(obj.handle)
+        {
+            load_ctx.mapping[id] = obj.handle;
+        }
+        else
+        {
+            if(flags == entity_flags::resolve_with_existing)
+            {
+                entt::handle check_entity(*load_ctx.reg, id);
+                if(check_entity)
+                {
+                    obj.handle = check_entity;
+                    load_ctx.mapping[id] = obj.handle;
+                }
+                else
+                {
+                    obj = {};
+                }
+            }
+            else
+            {
+                obj.handle = entt::handle(*load_ctx.reg, load_ctx.reg->create());
+                load_ctx.mapping[id] = obj.handle;
+            }
+        }
+    }
+    else
+    {
+        obj = {};
+    }
 }
 
 LOAD_INSTANTIATE(entity_handle_link, ser20::iarchive_associative_t);
 LOAD_INSTANTIATE(entity_handle_link, ser20::iarchive_binary_t);
-
 
 SAVE(entity_components<entt::const_handle>)
 {
@@ -164,7 +319,6 @@ SAVE(entity_components<entt::const_handle>)
 }
 SAVE_INSTANTIATE(entity_components<entt::const_handle>, ser20::oarchive_associative_t);
 SAVE_INSTANTIATE(entity_components<entt::const_handle>, ser20::oarchive_binary_t);
-
 
 LOAD(entity_components<entt::handle>)
 {
@@ -241,6 +395,10 @@ void flatten_hierarchy(entt::const_handle obj, std::vector<entity_data<entt::con
 template<typename Archive>
 void save_to_archive(Archive& ar, entt::const_handle obj)
 {
+    bool pushed = push_save_context();
+    auto& save_ctx = get_save_context();
+    save_ctx.save_source = obj;
+
     bool is_root = obj.all_of<root_component>();
     if(!is_root)
     {
@@ -261,6 +419,9 @@ void save_to_archive(Archive& ar, entt::const_handle obj)
     {
         const_handle_cast(obj).erase<root_component>();
     }
+
+    save_ctx.save_source = {};
+    pop_save_context(pushed);
 }
 
 template<typename Archive>
@@ -295,11 +456,11 @@ auto load_from_archive_start(Archive& ar,
                              entt::registry& registry,
                              const std::function<void(entt::handle)>& on_create = {}) -> entt::handle
 {
-    push_loader(registry);
+    bool pushed = push_load_context(registry);
 
     auto obj = load_from_archive_impl(ar, registry, on_create);
 
-    pop_loader();
+    pop_load_context(pushed);
 
     return obj;
 }
@@ -313,6 +474,8 @@ void load_from_archive(Archive& ar, entt::handle& obj, const std::function<void(
 template<typename Archive>
 void save_to_archive(Archive& ar, const entt::registry& reg)
 {
+    bool pushed = push_save_context();
+
     size_t count = 0;
     reg.view<transform_component, root_component>().each(
         [&](auto e, auto&& comp1, auto&& comp2)
@@ -326,6 +489,8 @@ void save_to_archive(Archive& ar, const entt::registry& reg)
         {
             save_to_archive(ar, entt::const_handle(reg, e));
         });
+
+    pop_save_context(pushed);
 }
 
 template<typename Archive>
@@ -335,7 +500,7 @@ void load_from_archive(Archive& ar, entt::registry& reg)
     size_t count = 0;
     try_load(ar, ser20::make_nvp("entities_count", count));
 
-    push_loader(reg);
+    bool pushed = push_load_context(reg);
 
     for(size_t i = 0; i < count; ++i)
     {
@@ -343,16 +508,10 @@ void load_from_archive(Archive& ar, entt::registry& reg)
         load_from_archive(ar, e);
     }
 
-    pop_loader();
-
+    pop_load_context(pushed);
 }
 
 } // namespace
-
-auto is_saving_single() -> bool
-{
-    return saving_single > 0;
-}
 
 void save_to_stream(std::ostream& stream, entt::const_handle obj)
 {
@@ -361,11 +520,7 @@ void save_to_stream(std::ostream& stream, entt::const_handle obj)
         // APPLOG_INFO_PERF(std::chrono::microseconds);
 
         auto ar = ser20::create_oarchive_associative(stream);
-
-        saving_single++;
         save_to_archive(ar, obj);
-        saving_single--;
-
     }
 }
 
@@ -373,7 +528,14 @@ void save_to_file(const std::string& absolute_path, entt::const_handle obj)
 {
     std::ofstream stream(absolute_path);
 
+    bool pushed = push_save_context();
+    auto& save_ctx = get_save_context();
+    save_ctx.to_prefab = true;
+
     save_to_stream(stream, obj);
+
+    save_ctx.to_prefab = false;
+    pop_save_context(pushed);
 }
 
 void save_to_stream_bin(std::ostream& stream, entt::const_handle obj)
@@ -382,16 +544,22 @@ void save_to_stream_bin(std::ostream& stream, entt::const_handle obj)
     {
         ser20::oarchive_binary_t ar(stream);
 
-        saving_single++;
         save_to_archive(ar, obj);
-        saving_single--;
     }
 }
 
 void save_to_file_bin(const std::string& absolute_path, entt::const_handle obj)
 {
     std::ofstream stream(absolute_path, std::ios::binary);
+
+    bool pushed = push_save_context();
+    auto& save_ctx = get_save_context();
+    save_ctx.to_prefab = true;
+
     save_to_stream_bin(stream, obj);
+    save_ctx.to_prefab = false;
+
+    pop_save_context(pushed);
 }
 
 void load_from_view(std::string_view view, entt::handle& obj)

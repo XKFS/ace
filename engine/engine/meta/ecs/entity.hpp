@@ -10,8 +10,6 @@
 namespace ace
 {
 
-auto is_saving_single() -> bool;
-
 template<typename T>
 concept HasCharAndTraits = requires {
     typename T::char_type;

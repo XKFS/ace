@@ -165,15 +165,15 @@ using namespace ace;
 namespace ser20
 {
 
-SAVE(entt::const_handle)
+template<typename Archive>
+void save_entity(Archive& ar, const entt::const_handle& obj, entity_flags flags)
 {
     entt::handle::entity_type id = obj.valid() ? obj.entity() : entt::null;
     try_save(ar, ser20::make_nvp("id", id));
 }
-SAVE_INSTANTIATE(entt::const_handle, ser20::oarchive_associative_t);
-SAVE_INSTANTIATE(entt::const_handle, ser20::oarchive_binary_t);
 
-LOAD(entt::handle)
+template<typename Archive>
+void load_entity(Archive& ar, entt::handle& obj, entity_flags flags)
 {
     entt::handle::entity_type id{};
     try_load(ar, ser20::make_nvp("id", id));
@@ -193,89 +193,13 @@ LOAD(entt::handle)
         }
         else
         {
-            obj = entt::handle(*load_ctx.reg, load_ctx.reg->create());
-            load_ctx.mapping[id] = obj;
-        }
-    }
-    else
-    {
-        obj = {};
-    }
-}
-
-LOAD_INSTANTIATE(entt::handle, ser20::iarchive_associative_t);
-LOAD_INSTANTIATE(entt::handle, ser20::iarchive_binary_t);
-
-SAVE(const_entity_handle_link)
-{
-    auto save_ctx = get_save_context();
-    bool is_saving_single = save_ctx.save_source.valid();
-    if(!is_saving_single)
-    {
-        try_save(ar, ser20::make_nvp("flags", entity_flags::resolve_with_loaded));
-        SAVE_FUNCTION_NAME(ar, obj.handle);
-    }
-    else
-    {
-        entt::const_handle to_save = obj.handle;
-        uint32_t flags = entity_flags::resolve_with_loaded;
-
-        bool save_source_is_parent = is_parent(save_ctx.save_source, obj.handle);
-
-        if(save_ctx.to_prefab)
-        {
-            if(!save_source_is_parent)
-            {
-                to_save = {};
-            }
-        }
-        else
-        {
-            if(!save_source_is_parent)
-            {
-                flags = entity_flags::resolve_with_existing;
-            }
-        }
-
-        try_save(ar, ser20::make_nvp("flags", flags));
-        SAVE_FUNCTION_NAME(ar, to_save);
-    }
-}
-SAVE_INSTANTIATE(const_entity_handle_link, ser20::oarchive_associative_t);
-SAVE_INSTANTIATE(const_entity_handle_link, ser20::oarchive_binary_t);
-
-LOAD(entity_handle_link)
-{
-    // LOAD_FUNCTION_NAME(ar, obj.handle);
-
-    entity_flags flags{};
-    try_load(ar, ser20::make_nvp("flags", flags));
-
-    entt::handle::entity_type id{};
-    try_load(ar, ser20::make_nvp("id", id));
-
-    bool valid = id != entt::null && id != entt::handle::entity_type(0);
-    if(valid)
-    {
-        auto& load_ctx = get_load_context();
-        auto it = load_ctx.mapping.find(id);
-        if(it != load_ctx.mapping.end())
-        {
-            obj.handle = it->second;
-        }
-        else if(obj.handle)
-        {
-            load_ctx.mapping[id] = obj.handle;
-        }
-        else
-        {
             if(flags == entity_flags::resolve_with_existing)
             {
                 entt::handle check_entity(*load_ctx.reg, id);
                 if(check_entity)
                 {
-                    obj.handle = check_entity;
-                    load_ctx.mapping[id] = obj.handle;
+                    obj = check_entity;
+                    load_ctx.mapping[id] = obj;
                 }
                 else
                 {
@@ -284,8 +208,8 @@ LOAD(entity_handle_link)
             }
             else
             {
-                obj.handle = entt::handle(*load_ctx.reg, load_ctx.reg->create());
-                load_ctx.mapping[id] = obj.handle;
+                obj = entt::handle(*load_ctx.reg, load_ctx.reg->create());
+                load_ctx.mapping[id] = obj;
             }
         }
     }
@@ -293,6 +217,72 @@ LOAD(entity_handle_link)
     {
         obj = {};
     }
+}
+
+SAVE(entt::const_handle)
+{
+    save_entity(ar, obj, entity_flags::none);
+}
+SAVE_INSTANTIATE(entt::const_handle, ser20::oarchive_associative_t);
+SAVE_INSTANTIATE(entt::const_handle, ser20::oarchive_binary_t);
+
+LOAD(entt::handle)
+{
+    load_entity(ar, obj, entity_flags::none);
+}
+
+LOAD_INSTANTIATE(entt::handle, ser20::iarchive_associative_t);
+LOAD_INSTANTIATE(entt::handle, ser20::iarchive_binary_t);
+
+SAVE(const_entity_handle_link)
+{
+    // Saving entity links is a little more complex than just entities
+    // The rule is as follows.
+    // If we are saving as single entity hierarch :
+    // If the entity link is not part of it :
+    // -> if we are saving to prefab, break the link
+    // -> if we are duplicating resolve the link on load with exsisting scene.
+    entity_flags flags = entity_flags::resolve_with_loaded;
+    entt::const_handle to_save = obj.handle;
+
+    auto& save_ctx = get_save_context();
+
+    bool is_saving_single = save_ctx.save_source.valid();
+    if(is_saving_single)
+    {
+        // is the entity a child of the hierarchy that we are saving?
+        bool save_source_is_parent = is_parent(save_ctx.save_source, obj.handle);
+
+        // if it is an external entity
+        if(!save_source_is_parent)
+        {
+            if(save_ctx.to_prefab)
+            {
+                // when saving prefabs, external entities
+                // should not be saved
+                to_save = {};
+            }
+            else
+            {
+                // when saving entities for duplication purpose, external entities
+                // should not be resolved from the existing scene
+                flags = entity_flags::resolve_with_existing;
+            }
+        }
+    }
+
+    try_save(ar, ser20::make_nvp("flags", flags));
+    save_entity(ar, to_save, flags);
+}
+SAVE_INSTANTIATE(const_entity_handle_link, ser20::oarchive_associative_t);
+SAVE_INSTANTIATE(const_entity_handle_link, ser20::oarchive_binary_t);
+
+LOAD(entity_handle_link)
+{
+    entity_flags flags{};
+    try_load(ar, ser20::make_nvp("flags", flags));
+
+    load_entity(ar, obj.handle, flags);
 }
 
 LOAD_INSTANTIATE(entity_handle_link, ser20::iarchive_associative_t);

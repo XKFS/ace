@@ -15,6 +15,8 @@ namespace ace
 {
 namespace
 {
+
+
 template<typename T>
 auto is_supported_type(const mono::mono_type& type) -> bool
 {
@@ -425,7 +427,6 @@ LOAD_INSTANTIATE(script_component::script_object, ser20::iarchive_binary_t);
 SAVE(script_component)
 {
     const auto& comps = obj.get_script_components();
-
     try_save(ar, ser20::make_nvp("script_components", comps));
 }
 SAVE_INSTANTIATE(script_component, ser20::oarchive_associative_t);

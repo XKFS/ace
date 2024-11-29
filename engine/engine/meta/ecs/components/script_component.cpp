@@ -1,36 +1,29 @@
 #include "script_component.hpp"
 
+#include <engine/meta/assets/asset_handle.hpp>
 #include <engine/meta/ecs/entity.hpp>
 #include <serialization/associative_archive.h>
 #include <serialization/binary_archive.h>
 
+#include <engine/assets/asset_manager.h>
 #include <engine/engine.h>
 #include <engine/events.h>
-
 #include <engine/scripting/ecs/systems/script_system.h>
 #include <monopp/mono_field_invoker.h>
 #include <monopp/mono_property_invoker.h>
 
+#include <engine/meta/rendering/material.hpp>
+#include <engine/meta/rendering/mesh.hpp>
+#include <graphics/texture.h>
+
+#include <engine/meta/animation/animation.hpp>
+#include <engine/meta/audio/audio_clip.hpp>
+#include <engine/meta/ecs/entity.hpp>
+#include <engine/meta/physics/physics_material.hpp>
+
 namespace ace
 {
-namespace
-{
 
-
-template<typename T>
-auto is_supported_type(const mono::mono_type& type) -> bool
-{
-    const auto& expected_name = type.get_name();
-    bool is_supported = std::is_same_v<entt::entity, T> && expected_name == "Entity";
-
-    if(!is_supported)
-    {
-        is_supported |= mono::is_compatible_type<T>(type);
-    }
-
-    return is_supported;
-}
-} // namespace
 REFLECT(script_component)
 {
     rttr::registration::class_<script_component>("script_component")(rttr::metadata("category", "SCRIPTING"),
@@ -41,154 +34,299 @@ REFLECT(script_component)
 template<typename Archive, typename T>
 struct mono_saver
 {
+    template<typename Invoker>
+    static auto try_save_mono_invoker(ser20::detail::OutputArchiveBase& arbase,
+                                      const mono::mono_object& obj,
+                                      const Invoker& invoker) -> bool
+    {
+        auto& ar = static_cast<Archive&>(arbase);
+        auto val = invoker.get_value(obj);
+        return try_save(ar, ser20::make_nvp(invoker.get_name(), val));
+    }
+
     static auto try_save_mono_field(ser20::detail::OutputArchiveBase& arbase,
                                     const mono::mono_object& obj,
                                     const mono::mono_field& field) -> bool
     {
-        auto& ar = static_cast<Archive&>(arbase);
-        auto mutable_field = mono::make_field_invoker<T>(field);
-        auto val = mutable_field.get_value(obj);
-        return try_save(ar, ser20::make_nvp(field.get_name(), val));
+        auto invoker = mono::make_field_invoker<T>(field);
+        return try_save_mono_invoker(arbase, obj, invoker);
     }
 
     static auto try_save_mono_property(ser20::detail::OutputArchiveBase& arbase,
                                        const mono::mono_object& obj,
                                        const mono::mono_property& prop) -> bool
     {
-        auto& ar = static_cast<Archive&>(arbase);
-        auto mutable_prop = mono::make_property_invoker<T>(prop);
-        auto val = mutable_prop.get_value(obj);
-        return try_save(ar, ser20::make_nvp(prop.get_name(), val));
+        auto invoker = mono::make_property_invoker<T>(prop);
+        return try_save_mono_invoker(arbase, obj, invoker);
     }
 };
 
 template<typename Archive>
 struct mono_saver<Archive, entt::entity>
 {
+    template<typename Invoker>
+    static auto try_save_mono_invoker(ser20::detail::OutputArchiveBase& arbase,
+                                      const mono::mono_object& obj,
+                                      const Invoker& invoker) -> bool
+    {
+        auto& ar = static_cast<Archive&>(arbase);
+        auto val = invoker.get_value(obj);
+
+        auto& ctx = engine::context();
+        auto& ec = ctx.get_cached<ecs>();
+        auto& scene = ec.get_scene();
+        ser20::const_entity_handle_link e;
+        e.handle = scene.create_entity(val);
+
+        return try_save(ar, ser20::make_nvp(invoker.get_name(), e));
+    }
+
     static auto try_save_mono_field(ser20::detail::OutputArchiveBase& arbase,
                                     const mono::mono_object& obj,
                                     const mono::mono_field& field) -> bool
     {
-        auto& ar = static_cast<Archive&>(arbase);
-
-        ser20::const_entity_handle_link e;
-
-        {
-            auto mutable_field = mono::make_field_invoker<entt::entity>(field);
-            auto val = mutable_field.get_value(obj);
-
-            auto& ctx = engine::context();
-            auto& ec = ctx.get_cached<ecs>();
-            auto& scene = ec.get_scene();
-            e.handle = scene.create_entity(val);
-        }
-
-        return try_save(ar, ser20::make_nvp(field.get_name(), e));
+        auto invoker = mono::make_field_invoker<entt::entity>(field);
+        return try_save_mono_invoker(arbase, obj, invoker);
     }
 
     static auto try_save_mono_property(ser20::detail::OutputArchiveBase& arbase,
                                        const mono::mono_object& obj,
                                        const mono::mono_property& prop) -> bool
     {
+        auto invoker = mono::make_property_invoker<entt::entity>(prop);
+        return try_save_mono_invoker(arbase, obj, invoker);
+    }
+};
+
+template<typename Archive, typename T>
+struct mono_saver<Archive, asset_handle<T>>
+{
+    template<typename Invoker>
+    static auto try_save_mono_invoker(ser20::detail::OutputArchiveBase& arbase,
+                                      const mono::mono_object& obj,
+                                      const Invoker& invoker) -> bool
+    {
         auto& ar = static_cast<Archive&>(arbase);
 
-        ser20::const_entity_handle_link e;
+        auto val = invoker.get_value(obj);
 
+        asset_handle<T> asset{};
+        if(val)
         {
-            auto mutable_prop = mono::make_property_invoker<entt::entity>(prop);
-            auto val = mutable_prop.get_value(obj);
+            const auto& invoker_type = invoker.get_type();
+            auto guid_property = invoker_type.get_property("uid");
+            auto mutable_uid_property = mono::make_property_invoker<hpp::uuid>(guid_property);
+            auto uid = mutable_uid_property.get_value(val);
 
             auto& ctx = engine::context();
-            auto& ec = ctx.get_cached<ecs>();
-            auto& scene = ec.get_scene();
-            e.handle = scene.create_entity(val);
+            auto& am = ctx.get_cached<asset_manager>();
+            asset = am.get_asset<T>(uid);
         }
 
-        return try_save(ar, ser20::make_nvp(prop.get_name(), e));
+        return try_save(ar, ser20::make_nvp(invoker.get_name(), asset));
+    }
+
+    static auto try_save_mono_field(ser20::detail::OutputArchiveBase& arbase,
+                                    const mono::mono_object& obj,
+                                    const mono::mono_field& field) -> bool
+    {
+        auto invoker = mono::make_field_invoker<mono::mono_object>(field);
+        return try_save_mono_invoker(arbase, obj, invoker);
+    }
+
+    static auto try_save_mono_property(ser20::detail::OutputArchiveBase& arbase,
+                                       const mono::mono_object& obj,
+                                       const mono::mono_property& prop) -> bool
+    {
+        auto invoker = mono::make_property_invoker<mono::mono_object>(prop);
+        return try_save_mono_invoker(arbase, obj, invoker);
     }
 };
 
 template<typename Archive, typename T>
 struct mono_loader
 {
-    static auto try_load_mono_field(ser20::detail::InputArchiveBase& arbase,
-                                    mono::mono_object& obj,
-                                    mono::mono_field& field) -> bool
+    template<typename U>
+    static auto is_supported_type(const mono::mono_type& type) -> bool
+    {
+        return mono::is_compatible_type<U>(type);
+    }
+
+    template<typename Invoker>
+    static auto try_load_mono_invoker(ser20::detail::InputArchiveBase& arbase,
+                                      mono::mono_object& obj,
+                                      const Invoker& invoker) -> bool
     {
         auto& ar = static_cast<Archive&>(arbase);
 
-        if(is_supported_type<T>(field.get_type()))
+        if(is_supported_type<T>(invoker.get_type()))
         {
-            auto mutable_field = mono::make_field_invoker<T>(field);
             T val{};
-            if(try_load(ar, ser20::make_nvp(field.get_name(), val)))
+            if(try_load(ar, ser20::make_nvp(invoker.get_name(), val)))
             {
-                mutable_field.set_value(obj, val);
+                invoker.set_value(obj, val);
             }
             return true;
         }
         return false;
     }
 
+    static auto try_load_mono_field(ser20::detail::InputArchiveBase& arbase,
+                                    mono::mono_object& obj,
+                                    mono::mono_field& field) -> bool
+    {
+        auto invoker = mono::make_field_invoker<T>(field);
+        return try_load_mono_invoker(arbase, obj, invoker);
+    }
+
     static auto try_load_mono_property(ser20::detail::InputArchiveBase& arbase,
                                        mono::mono_object& obj,
                                        mono::mono_property& prop) -> bool
     {
-        auto& ar = static_cast<Archive&>(arbase);
-
-        if(is_supported_type<T>(prop.get_type()))
-        {
-            auto mutable_field = mono::make_property_invoker<T>(prop);
-            T val{};
-            if(try_load(ar, ser20::make_nvp(prop.get_name(), val)))
-            {
-                mutable_field.set_value(obj, val);
-            }
-            return true;
-        }
-        return false;
+        auto invoker = mono::make_property_invoker<T>(prop);
+        return try_load_mono_invoker(arbase, obj, invoker);
     }
 };
 
 template<typename Archive>
 struct mono_loader<Archive, entt::entity>
 {
-    static auto try_load_mono_field(ser20::detail::InputArchiveBase& arbase,
-                                    mono::mono_object& obj,
-                                    mono::mono_field& field) -> bool
+    template<typename U>
+    static auto is_supported_type(const mono::mono_type& type) -> bool
+    {
+        const auto& expected_name = type.get_name();
+        bool is_supported = std::is_same_v<entt::entity, U> && expected_name == "Entity";
+        return is_supported;
+    }
+
+    template<typename Invoker>
+    static auto try_load_mono_invoker(ser20::detail::InputArchiveBase& arbase,
+                                      mono::mono_object& obj,
+                                      const Invoker& invoker) -> bool
     {
         auto& ar = static_cast<Archive&>(arbase);
 
-        if(is_supported_type<entt::entity>(field.get_type()))
+        if(is_supported_type<entt::entity>(invoker.get_type()))
         {
-            auto mutable_field = mono::make_field_invoker<entt::entity>(field);
             ser20::entity_handle_link val{};
-            if(try_load(ar, ser20::make_nvp(field.get_name(), val)))
+            if(try_load(ar, ser20::make_nvp(invoker.get_name(), val)))
             {
-                mutable_field.set_value(obj, val.handle.entity());
+                invoker.set_value(obj, val.handle.entity());
             }
             return true;
         }
         return false;
     }
 
+    static auto try_load_mono_field(ser20::detail::InputArchiveBase& arbase,
+                                    mono::mono_object& obj,
+                                    mono::mono_field& field) -> bool
+    {
+        auto invoker = mono::make_field_invoker<entt::entity>(field);
+        return try_load_mono_invoker(arbase, obj, invoker);
+    }
+
     static auto try_load_mono_property(ser20::detail::InputArchiveBase& arbase,
                                        mono::mono_object& obj,
                                        mono::mono_property& prop) -> bool
     {
+        auto invoker = mono::make_property_invoker<entt::entity>(prop);
+        return try_load_mono_invoker(arbase, obj, invoker);
+    }
+};
+
+template<typename Archive, typename T>
+struct mono_loader<Archive, asset_handle<T>>
+{
+    template<typename U>
+    static auto is_supported_type(const mono::mono_type& type) -> bool
+    {
+        const auto& expected_name = type.get_name();
+        bool is_supported = false;
+
+        if(!is_supported)
+        {
+            is_supported |= std::is_same_v<asset_handle<gfx::texture>, U> && expected_name == "Texture";
+        }
+        if(!is_supported)
+        {
+            is_supported |= std::is_same_v<asset_handle<material>, U> && expected_name == "Material";
+        }
+        if(!is_supported)
+        {
+            is_supported |= std::is_same_v<asset_handle<mesh>, U> && expected_name == "Mesh";
+        }
+        if(!is_supported)
+        {
+            is_supported |= std::is_same_v<asset_handle<animation_clip>, U> && expected_name == "AnimationClip";
+        }
+        if(!is_supported)
+        {
+            is_supported |= std::is_same_v<asset_handle<prefab>, U> && expected_name == "Prefab";
+        }
+        if(!is_supported)
+        {
+            is_supported |= std::is_same_v<asset_handle<scene_prefab>, U> && expected_name == "Scene";
+        }
+        if(!is_supported)
+        {
+            is_supported |= std::is_same_v<asset_handle<physics_material>, U> && expected_name == "PhysicsMaterial";
+        }
+        if(!is_supported)
+        {
+            is_supported |= std::is_same_v<asset_handle<audio_clip>, U> && expected_name == "AudioClip";
+        }
+
+        return is_supported;
+    }
+
+    template<typename Invoker>
+    static auto try_load_mono_invoker(ser20::detail::InputArchiveBase& arbase,
+                                      mono::mono_object& obj,
+                                      const Invoker& invoker) -> bool
+    {
         auto& ar = static_cast<Archive&>(arbase);
 
-        if(is_supported_type<entt::entity>(prop.get_type()))
+        if(is_supported_type<asset_handle<T>>(invoker.get_type()))
         {
-            auto mutable_prop = mono::make_property_invoker<entt::entity>(prop);
-            ser20::entity_handle_link val{};
-            if(try_load(ar, ser20::make_nvp(prop.get_name(), val)))
+            asset_handle<T> val{};
+            if(try_load(ar, ser20::make_nvp(invoker.get_name(), val)))
             {
-                mutable_prop.set_value(obj, val.handle.entity());
+                const auto& field_type = invoker.get_type();
+                auto guid_property = field_type.get_property("uid");
+                auto mutable_uid_property = mono::make_property_invoker<hpp::uuid>(guid_property);
+
+                auto var = invoker.get_value(obj);
+                if(!var && val)
+                {
+                    var = field_type.new_instance();
+                    invoker.set_value(obj, var);
+                }
+
+                if(var)
+                {
+                    mutable_uid_property.set_value(var, val.uid());
+                }
             }
             return true;
         }
         return false;
+    }
+
+    static auto try_load_mono_field(ser20::detail::InputArchiveBase& arbase,
+                                    mono::mono_object& obj,
+                                    mono::mono_field& field) -> bool
+    {
+        auto invoker = mono::make_field_invoker<mono::mono_object>(field);
+        return try_load_mono_invoker(arbase, obj, invoker);
+    }
+
+    static auto try_load_mono_property(ser20::detail::InputArchiveBase& arbase,
+                                       mono::mono_object& obj,
+                                       mono::mono_property& prop) -> bool
+    {
+        auto invoker = mono::make_property_invoker<mono::mono_object>(prop);
+        return try_load_mono_invoker(arbase, obj, invoker);
     }
 };
 
@@ -214,7 +352,15 @@ SAVE(script_component::script_object)
             {"Double",  &mono_saver<Archive, double>::try_save_mono_field},
             {"Char",    &mono_saver<Archive, char16_t>::try_save_mono_field},
             {"String",  &mono_saver<Archive, std::string>::try_save_mono_field},
-            {"Entity",  &mono_saver<Archive, entt::entity>::try_save_mono_field}
+            {"Entity",  &mono_saver<Archive, entt::entity>::try_save_mono_field},
+            {"Texture",         &mono_saver<Archive, asset_handle<gfx::texture>>::try_save_mono_field},
+            {"Material",        &mono_saver<Archive, asset_handle<material>>::try_save_mono_field},
+            {"Mesh",            &mono_saver<Archive, asset_handle<mesh>>::try_save_mono_field},
+            {"AnimationClip",   &mono_saver<Archive, asset_handle<animation_clip>>::try_save_mono_field},
+            {"Prefab",          &mono_saver<Archive, asset_handle<prefab>>::try_save_mono_field},
+            {"Scene",           &mono_saver<Archive, asset_handle<scene_prefab>>::try_save_mono_field},
+            {"PhysicsMaterial", &mono_saver<Archive, asset_handle<physics_material>>::try_save_mono_field},
+            {"AudioClip",       &mono_saver<Archive, asset_handle<audio_clip>>::try_save_mono_field},
         };
         // clang-format on
 
@@ -247,7 +393,15 @@ SAVE(script_component::script_object)
             {"Double",  &mono_saver<Archive, double>::try_save_mono_property},
             {"Char",    &mono_saver<Archive, char16_t>::try_save_mono_property},
             {"String",  &mono_saver<Archive, std::string>::try_save_mono_property},
-            {"Entity",  &mono_saver<Archive, entt::entity>::try_save_mono_property}
+            {"Entity",  &mono_saver<Archive, entt::entity>::try_save_mono_property},
+            {"Texture",         &mono_saver<Archive, asset_handle<gfx::texture>>::try_save_mono_property},
+            {"Material",        &mono_saver<Archive, asset_handle<material>>::try_save_mono_property},
+            {"Mesh",            &mono_saver<Archive, asset_handle<mesh>>::try_save_mono_property},
+            {"AnimationClip",   &mono_saver<Archive, asset_handle<animation_clip>>::try_save_mono_property},
+            {"Prefab",          &mono_saver<Archive, asset_handle<prefab>>::try_save_mono_property},
+            {"Scene",           &mono_saver<Archive, asset_handle<scene_prefab>>::try_save_mono_property},
+            {"PhysicsMaterial", &mono_saver<Archive, asset_handle<physics_material>>::try_save_mono_property},
+            {"AudioClip",       &mono_saver<Archive, asset_handle<audio_clip>>::try_save_mono_property},
 
         };
         // clang-format on
@@ -330,7 +484,7 @@ LOAD(script_component::script_object)
     auto get_field_serilizer = [](const std::string& type_name) -> const mono_field_serializer&
     {
         // clang-format off
-        static std::map<std::string, mono_field_serializer> reg = {
+        static const std::map<std::string, mono_field_serializer> reg = {
             {"SByte",   &mono_loader<Archive, int8_t>::try_load_mono_field},
             {"Byte",    &mono_loader<Archive, uint8_t>::try_load_mono_field},
             {"Int16",   &mono_loader<Archive, int16_t>::try_load_mono_field},
@@ -344,7 +498,16 @@ LOAD(script_component::script_object)
             {"Double",  &mono_loader<Archive, double>::try_load_mono_field},
             {"Char",    &mono_loader<Archive, char16_t>::try_load_mono_field},
             {"String",  &mono_loader<Archive, std::string>::try_load_mono_field},
-            {"Entity",  &mono_loader<Archive, entt::entity>::try_load_mono_field}
+            {"Entity",  &mono_loader<Archive, entt::entity>::try_load_mono_field},
+            {"Texture",         &mono_loader<Archive, asset_handle<gfx::texture>>::try_load_mono_field},
+            {"Material",        &mono_loader<Archive, asset_handle<material>>::try_load_mono_field},
+            {"Mesh",            &mono_loader<Archive, asset_handle<mesh>>::try_load_mono_field},
+            {"AnimationClip",   &mono_loader<Archive, asset_handle<animation_clip>>::try_load_mono_field},
+            {"Prefab",          &mono_loader<Archive, asset_handle<prefab>>::try_load_mono_field},
+            {"Scene",           &mono_loader<Archive, asset_handle<scene_prefab>>::try_load_mono_field},
+            {"PhysicsMaterial", &mono_loader<Archive, asset_handle<physics_material>>::try_load_mono_field},
+            {"AudioClip",       &mono_loader<Archive, asset_handle<audio_clip>>::try_load_mono_field},
+
         };
         // clang-format on
 
@@ -363,7 +526,7 @@ LOAD(script_component::script_object)
     auto get_property_serilizer = [](const std::string& type_name) -> const mono_property_serializer&
     {
         // clang-format off
-        static std::map<std::string, mono_property_serializer> reg = {
+        static const std::map<std::string, mono_property_serializer> reg = {
             {"SByte",   &mono_loader<Archive, int8_t>::try_load_mono_property},
             {"Byte",    &mono_loader<Archive, uint8_t>::try_load_mono_property},
             {"Int16",   &mono_loader<Archive, int16_t>::try_load_mono_property},
@@ -377,7 +540,15 @@ LOAD(script_component::script_object)
             {"Double",  &mono_loader<Archive, double>::try_load_mono_property},
             {"Char",    &mono_loader<Archive, char16_t>::try_load_mono_property},
             {"String",  &mono_loader<Archive, std::string>::try_load_mono_property},
-            {"Entity",  &mono_loader<Archive, entt::entity>::try_load_mono_property}
+            {"Entity",  &mono_loader<Archive, entt::entity>::try_load_mono_property},
+            {"Texture",         &mono_loader<Archive, asset_handle<gfx::texture>>::try_load_mono_property},
+            {"Material",        &mono_loader<Archive, asset_handle<material>>::try_load_mono_property},
+            {"Mesh",            &mono_loader<Archive, asset_handle<mesh>>::try_load_mono_property},
+            {"AnimationClip",   &mono_loader<Archive, asset_handle<animation_clip>>::try_load_mono_property},
+            {"Prefab",          &mono_loader<Archive, asset_handle<prefab>>::try_load_mono_property},
+            {"Scene",           &mono_loader<Archive, asset_handle<scene_prefab>>::try_load_mono_property},
+            {"PhysicsMaterial", &mono_loader<Archive, asset_handle<physics_material>>::try_load_mono_property},
+            {"AudioClip",       &mono_loader<Archive, asset_handle<audio_clip>>::try_load_mono_property},
 
         };
         // clang-format on

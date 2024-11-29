@@ -4,6 +4,16 @@
 #include <monopp/mono_field_invoker.h>
 #include <monopp/mono_property_invoker.h>
 
+
+#include <graphics/texture.h>
+#include <engine/rendering/mesh.h>
+#include <engine/rendering/material.h>
+
+#include <engine/animation/animation.h>
+#include <engine/audio/audio_clip.h>
+#include <engine/ecs/prefab.h>
+#include <engine/physics/physics_material.h>
+
 namespace ace
 {
 
@@ -25,223 +35,284 @@ auto find_attribute(const std::string& name, const std::vector<mono::mono_object
 }
 
 template<typename T>
-auto inspect_mono_field(rtti::context& ctx, mono::mono_object& obj, mono::mono_field& field, const var_info& info)
-    -> inspect_result
+struct mono_inspector
 {
-    inspect_result result;
-
-    var_info field_info;
-    field_info.is_property = true;
-    field_info.read_only = info.read_only || field.is_readonly();
-
-    auto mutable_field = mono::make_field_invoker<T>(field);
-    auto val = mutable_field.get_value(obj);
-
-    auto attribs = field.get_attributes();
-    auto range_attrib = find_attribute("RangeAttribute", attribs);
-    auto min_attrib = find_attribute("MinAttribute", attribs);
-    auto max_attrib = find_attribute("MaxAttribute", attribs);
-    auto step_attrib = find_attribute("StepAttribute", attribs);
-    auto tooltip_attrib = find_attribute("TooltipAttribute", attribs);
-
-    std::string tooltip;
-    if(tooltip_attrib.valid())
+    template<typename Invoker>
+    static auto inspect_invoker(rtti::context& ctx,
+                                mono::mono_object& obj,
+                                const Invoker& mutable_field,
+                                const var_info& info) -> inspect_result
     {
-        auto invoker = mono::make_field_invoker<std::string>(tooltip_attrib.get_type(), "tooltip");
-        tooltip = invoker.get_value(tooltip_attrib);
-    }
+        auto val = mutable_field.get_value(obj);
 
-    inspector::meta_getter getter = [&](const rttr::variant& name) -> rttr::variant
-    {
-        if(!name.is_type<std::string>())
+        inspect_result result;
+
+        auto attribs = mutable_field.get_attributes();
+        auto range_attrib = find_attribute("RangeAttribute", attribs);
+        auto min_attrib = find_attribute("MinAttribute", attribs);
+        auto max_attrib = find_attribute("MaxAttribute", attribs);
+        auto step_attrib = find_attribute("StepAttribute", attribs);
+        auto tooltip_attrib = find_attribute("TooltipAttribute", attribs);
+
+        std::string tooltip;
+        if(tooltip_attrib.valid())
         {
+            auto invoker = mono::make_field_invoker<std::string>(tooltip_attrib.get_type(), "tooltip");
+            tooltip = invoker.get_value(tooltip_attrib);
+        }
+
+        inspector::meta_getter getter = [&](const rttr::variant& name) -> rttr::variant
+        {
+            if(!name.is_type<std::string>())
+            {
+                return {};
+            }
+            const auto& key = name.get_value<std::string>();
+            if(key == "min")
+            {
+                if(min_attrib.valid())
+                {
+                    auto invoker = mono::make_field_invoker<float>(min_attrib.get_type(), "min");
+                    float min_value = invoker.get_value(min_attrib);
+                    return min_value;
+                }
+                if(range_attrib.valid())
+                {
+                    auto invoker = mono::make_field_invoker<float>(range_attrib.get_type(), "min");
+                    float min_value = invoker.get_value(range_attrib);
+                    return min_value;
+                }
+            }
+
+            else if(key == "max")
+            {
+                if(max_attrib.valid())
+                {
+                    auto invoker = mono::make_field_invoker<float>(max_attrib.get_type(), "max");
+                    float max_value = invoker.get_value(max_attrib);
+                    return max_value;
+                }
+                if(range_attrib.valid())
+                {
+                    auto invoker = mono::make_field_invoker<float>(range_attrib.get_type(), "max");
+                    float max_value = invoker.get_value(range_attrib);
+                    return max_value;
+                }
+            }
+
+            else if(key == "step")
+            {
+                if(step_attrib.valid())
+                {
+                    auto invoker = mono::make_field_invoker<float>(step_attrib.get_type(), "step");
+                    float value = invoker.get_value(step_attrib);
+                    return value;
+                }
+            }
+
             return {};
-        }
-        const auto& key = name.get_value<std::string>();
-        if(key == "min")
+        };
+
+        rttr::variant var = val;
+
         {
-            if(min_attrib.valid())
-            {
-                auto invoker = mono::make_field_invoker<float>(min_attrib.get_type(), "min");
-                float min_value = invoker.get_value(min_attrib);
-                return min_value;
-            }
-            if(range_attrib.valid())
-            {
-                auto invoker = mono::make_field_invoker<float>(range_attrib.get_type(), "min");
-                float min_value = invoker.get_value(range_attrib);
-                return min_value;
-            }
+            property_layout layout(mutable_field.get_name(), tooltip);
+            result |= inspect_var(ctx, var, info, getter);
         }
 
-        else if(key == "max")
+        if(result.changed)
         {
-            if(max_attrib.valid())
-            {
-                auto invoker = mono::make_field_invoker<float>(max_attrib.get_type(), "max");
-                float max_value = invoker.get_value(max_attrib);
-                return max_value;
-            }
-            if(range_attrib.valid())
-            {
-                auto invoker = mono::make_field_invoker<float>(range_attrib.get_type(), "max");
-                float max_value = invoker.get_value(range_attrib);
-                return max_value;
-            }
+            val = var.get_value<T>();
+            mutable_field.set_value(obj, val);
         }
 
-        else if(key == "step")
-        {
-            if(step_attrib.valid())
-            {
-                auto invoker = mono::make_field_invoker<float>(step_attrib.get_type(), "step");
-                float value = invoker.get_value(step_attrib);
-                return value;
-            }
-        }
-
-        return {};
-    };
-
-    rttr::variant var = val;
-
-    {
-        property_layout layout(field.get_name(), tooltip);
-        result |= inspect_var(ctx, var, field_info, getter);
+        return result;
     }
 
-    if(result.changed)
+    static auto inspect_field(rtti::context& ctx, mono::mono_object& obj, mono::mono_field& field, const var_info& info)
+        -> inspect_result
     {
-        val = var.get_value<T>();
-        mutable_field.set_value(obj, val);
+        auto invoker = mono::make_field_invoker<T>(field);
+
+        var_info field_info;
+        field_info.is_property = true;
+        field_info.read_only = info.read_only || field.is_readonly();
+
+        return inspect_invoker(ctx, obj, invoker, field_info);
     }
 
-    return result;
-}
+    static auto inspect_property(rtti::context& ctx,
+                                 mono::mono_object& obj,
+                                 mono::mono_property& field,
+                                 const var_info& info) -> inspect_result
+    {
+        auto invoker = mono::make_property_invoker<T>(field);
+
+        var_info field_info;
+        field_info.is_property = true;
+        field_info.read_only = info.read_only || field.is_readonly();
+
+        return inspect_invoker(ctx, obj, invoker, info);
+    }
+};
 
 template<>
-auto inspect_mono_field<entt::handle>(rtti::context& ctx, mono::mono_object& obj, mono::mono_field& field, const var_info& info)
-    -> inspect_result
+struct mono_inspector<entt::handle>
 {
-    inspect_result result;
-
-    var_info field_info;
-    field_info.is_property = true;
-    field_info.read_only = info.read_only || field.is_readonly();
-
-    auto mutable_field = mono::make_field_invoker<entt::entity>(field);
-    auto val = mutable_field.get_value(obj);
-
-    auto& ec = ctx.get_cached<ecs>();
-    auto& scene = ec.get_scene();
-    auto e = scene.create_entity(val);
-
-    auto attribs = field.get_attributes();
-    auto tooltip_attrib = find_attribute("TooltipAttribute", attribs);
-
-    std::string tooltip;
-    if(tooltip_attrib.valid())
+    template<typename Invoker>
+    static auto inspect_invoker(rtti::context& ctx,
+                                mono::mono_object& obj,
+                                const Invoker& mutable_field,
+                                const var_info& info) -> inspect_result
     {
-        auto invoker = mono::make_field_invoker<std::string>(tooltip_attrib.get_type(), "tooltip");
-        tooltip = invoker.get_value(tooltip_attrib);
+        inspect_result result;
+
+        auto val = mutable_field.get_value(obj);
+
+        auto& ec = ctx.get_cached<ecs>();
+        auto& scene = ec.get_scene();
+        auto e = scene.create_entity(val);
+
+        auto attribs = mutable_field.get_attributes();
+        auto tooltip_attrib = find_attribute("TooltipAttribute", attribs);
+
+        std::string tooltip;
+        if(tooltip_attrib.valid())
+        {
+            auto invoker = mono::make_field_invoker<std::string>(tooltip_attrib.get_type(), "tooltip");
+            tooltip = invoker.get_value(tooltip_attrib);
+        }
+
+        rttr::variant var = e;
+
+        {
+            property_layout layout(mutable_field.get_name(), tooltip);
+            result |= inspect_var(ctx, var, info);
+        }
+
+        if(result.changed)
+        {
+            auto v = var.get_value<entt::handle>();
+            mutable_field.set_value(obj, v.entity());
+        }
+
+        return result;
     }
 
-
-    rttr::variant var = e;
-
+    static auto inspect_field(rtti::context& ctx, mono::mono_object& obj, mono::mono_field& field, const var_info& info)
+        -> inspect_result
     {
-        property_layout layout(field.get_name(), tooltip);
-        result |= inspect_var(ctx, var, field_info);
+        auto invoker = mono::make_field_invoker<entt::entity>(field);
+
+        var_info field_info;
+        field_info.is_property = true;
+        field_info.read_only = info.read_only || field.is_readonly();
+
+        return inspect_invoker(ctx, obj, invoker, field_info);
     }
 
-    if(result.changed)
+    static auto inspect_property(rtti::context& ctx,
+                                 mono::mono_object& obj,
+                                 mono::mono_property& field,
+                                 const var_info& info) -> inspect_result
     {
-        auto v = var.get_value<entt::handle>();
-        mutable_field.set_value(obj, v.entity());
+        auto invoker = mono::make_property_invoker<entt::entity>(field);
+
+        var_info field_info;
+        field_info.is_property = true;
+        field_info.read_only = info.read_only || field.is_readonly();
+
+        return inspect_invoker(ctx, obj, invoker, info);
     }
-
-    return result;
-}
-
-// template<>
-// auto inspect_mono_field<asset_handle<prefab>>(rtti::context& ctx, mono::mono_object& obj, mono::mono_field& field, const var_info& info)
-//     -> inspect_result
-// {
-//     inspect_result result;
-
-//     var_info field_info;
-//     field_info.is_property = true;
-//     field_info.read_only = info.read_only || field.is_readonly();
-
-//     auto mutable_field = mono::make_field_invoker<mono::mono_object>(field);
-//     auto val = mutable_field.get_value(obj);
-
-//     auto prop = field.get_type().get_property("uid");
-//     auto mutable_prop = mono::make_property_invoker<hpp::uuid>(prop);
-//     auto uid = mutable_prop.get_value(val);
-
-//     auto& am = ctx.get_cached<asset_manager>();
-//     auto handle = am.get_asset<prefab>(uid);
-
-//     auto attribs = field.get_attributes();
-//     auto tooltip_attrib = find_attribute("TooltipAttribute", attribs);
-
-//     std::string tooltip;
-//     if(tooltip_attrib.valid())
-//     {
-//         auto invoker = mono::make_field_invoker<std::string>(tooltip_attrib.get_type(), "tooltip");
-//         tooltip = invoker.get_value(tooltip_attrib);
-//     }
-
-
-//     rttr::variant var = handle;
-
-//     {
-//         property_layout layout(field.get_name(), tooltip);
-//         result |= inspect_var(ctx, var, field_info);
-//     }
-
-//     if(result.changed)
-//     {
-//         auto v = var.get_value<asset_handle<prefab>>();
-//         mutable_prop.set_value(val, v.uid());
-//     }
-
-//     return result;
-// }
+};
 
 template<typename T>
-auto inspect_mono_property(rtti::context& ctx, mono::mono_object& obj, mono::mono_property& prop, const var_info& info)
-    -> inspect_result
+struct mono_inspector<asset_handle<T>>
 {
-    inspect_result result;
-
-    var_info prop_info;
-    prop_info.is_property = true;
-    prop_info.read_only = info.read_only;
-
-    auto mutable_prop = mono::make_property_invoker<T>(prop);
-    auto val = mutable_prop.get_value(obj);
-
-    rttr::variant var = val;
-
-    ImGui::PushReadonly(prop_info.read_only);
-
+    template<typename Invoker>
+    static auto inspect_invoker(rtti::context& ctx,
+                                mono::mono_object& obj,
+                                const Invoker& mutable_field,
+                                const var_info& info) -> inspect_result
     {
-        property_layout layout(prop.get_name());
-        result |= inspect_var(ctx, var, prop_info);
+        inspect_result result;
+        const auto& field_type = mutable_field.get_type();
+
+        auto val = mutable_field.get_value(obj);
+
+        auto prop = field_type.get_property("uid");
+        auto mutable_prop = mono::make_property_invoker<hpp::uuid>(prop);
+
+        asset_handle<T> asset;
+        if(val)
+        {
+            auto uid = mutable_prop.get_value(val);
+
+            auto& am = ctx.get_cached<asset_manager>();
+            asset = am.get_asset<T>(uid);
+        }
+
+        auto attribs = mutable_field.get_attributes();
+        auto tooltip_attrib = find_attribute("TooltipAttribute", attribs);
+
+        std::string tooltip;
+        if(tooltip_attrib.valid())
+        {
+            auto invoker = mono::make_field_invoker<std::string>(tooltip_attrib.get_type(), "tooltip");
+            tooltip = invoker.get_value(tooltip_attrib);
+        }
+
+        rttr::variant var = asset;
+
+        {
+            property_layout layout(mutable_field.get_name(), tooltip);
+            result |= inspect_var(ctx, var, info);
+        }
+
+        if(result.changed)
+        {
+            auto v = var.get_value<asset_handle<T>>();
+            if(v && !val)
+            {
+                val = field_type.new_instance();
+                mutable_field.set_value(obj, val);
+            }
+
+            if(val)
+            {
+                mutable_prop.set_value(val, v.uid());
+            }
+        }
+
+        return result;
     }
 
-    if(result.changed)
+    static auto inspect_field(rtti::context& ctx, mono::mono_object& obj, mono::mono_field& field, const var_info& info)
+        -> inspect_result
     {
-        val = var.get_value<T>();
-        mutable_prop.set_value(obj, val);
+        auto invoker = mono::make_field_invoker<mono::mono_object>(field);
+
+        var_info field_info;
+        field_info.is_property = true;
+        field_info.read_only = info.read_only || field.is_readonly();
+
+        return inspect_invoker(ctx, obj, invoker, field_info);
     }
 
-    ImGui::PopReadonly();
+    static auto inspect_property(rtti::context& ctx,
+                                 mono::mono_object& obj,
+                                 mono::mono_property& field,
+                                 const var_info& info) -> inspect_result
+    {
+        auto invoker = mono::make_property_invoker<mono::mono_object>(field);
 
-    return result;
-}
+        var_info field_info;
+        field_info.is_property = true;
+        field_info.read_only = info.read_only || field.is_readonly();
+
+        return inspect_invoker(ctx, obj, invoker, info);
+    }
+};
 
 auto inspector_mono_object::inspect(rtti::context& ctx,
                                     rttr::variant& var,
@@ -259,21 +330,33 @@ auto inspector_mono_object::inspect(rtti::context& ctx,
 
     auto get_field_inspector = [](const std::string& type_name) -> const mono_field_inspector&
     {
-        static std::map<std::string, mono_field_inspector> reg = {{"SByte", &inspect_mono_field<int8_t>},
-                                                                  {"Byte", &inspect_mono_field<uint8_t>},
-                                                                  {"Int16", &inspect_mono_field<int16_t>},
-                                                                  {"UInt16", &inspect_mono_field<uint16_t>},
-                                                                  {"Int32", &inspect_mono_field<int32_t>},
-                                                                  {"UInt32", &inspect_mono_field<uint32_t>},
-                                                                  {"Int64", &inspect_mono_field<int64_t>},
-                                                                  {"UInt64", &inspect_mono_field<uint64_t>},
-                                                                  {"Boolean", &inspect_mono_field<bool>},
-                                                                  {"Single", &inspect_mono_field<float>},
-                                                                  {"Double", &inspect_mono_field<double>},
-                                                                  {"Char", &inspect_mono_field<char16_t>},
-                                                                  {"String", &inspect_mono_field<std::string>},
-                                                                  {"Entity", &inspect_mono_field<entt::handle>}};
+        // clang-format off
+        static std::map<std::string, mono_field_inspector> reg = {
+            {"SByte",   &mono_inspector<int8_t>::inspect_field},
+            {"Byte",    &mono_inspector<uint8_t>::inspect_field},
+            {"Int16",   &mono_inspector<int16_t>::inspect_field},
+            {"UInt16",  &mono_inspector<uint16_t>::inspect_field},
+            {"Int32",   &mono_inspector<int32_t>::inspect_field},
+            {"UInt32",  &mono_inspector<uint32_t>::inspect_field},
+            {"Int64",   &mono_inspector<int64_t>::inspect_field},
+            {"UInt64",  &mono_inspector<uint64_t>::inspect_field},
+            {"Boolean", &mono_inspector<bool>::inspect_field},
+            {"Single",  &mono_inspector<float>::inspect_field},
+            {"Double",  &mono_inspector<double>::inspect_field},
+            {"Char",    &mono_inspector<char16_t>::inspect_field},
+            {"String",  &mono_inspector<std::string>::inspect_field},
+            {"Entity",  &mono_inspector<entt::handle>::inspect_field},
+            {"Texture",         &mono_inspector<asset_handle<gfx::texture>>::inspect_field},
+            {"Material",        &mono_inspector<asset_handle<material>>::inspect_field},
+            {"Mesh",            &mono_inspector<asset_handle<mesh>>::inspect_field},
+            {"AnimationClip",   &mono_inspector<asset_handle<animation_clip>>::inspect_field},
+            {"Prefab",          &mono_inspector<asset_handle<prefab>>::inspect_field},
+            {"Scene",           &mono_inspector<asset_handle<scene_prefab>>::inspect_field},
+            {"PhysicsMaterial", &mono_inspector<asset_handle<physics_material>>::inspect_field},
+            {"AudioClip",       &mono_inspector<asset_handle<audio_clip>>::inspect_field},
 
+        };
+        // clang-format on
 
         auto it = reg.find(type_name);
         if(it != reg.end())
@@ -318,20 +401,32 @@ auto inspector_mono_object::inspect(rtti::context& ctx,
 
     auto get_property_inspector = [](const std::string& type_name) -> const mono_property_inspector&
     {
-        static std::map<std::string, mono_property_inspector> reg = {{"SByte", &inspect_mono_property<int8_t>},
-                                                                     {"Byte", &inspect_mono_property<uint8_t>},
-                                                                     {"Int16", &inspect_mono_property<int16_t>},
-                                                                     {"UInt16", &inspect_mono_property<uint16_t>},
-                                                                     {"Int32", &inspect_mono_property<int32_t>},
-                                                                     {"UInt32", &inspect_mono_property<uint32_t>},
-                                                                     {"Int64", &inspect_mono_property<int64_t>},
-                                                                     {"UInt64", &inspect_mono_property<uint64_t>},
-                                                                     {"Boolean", &inspect_mono_property<bool>},
-                                                                     {"Single", &inspect_mono_property<float>},
-                                                                     {"Double", &inspect_mono_property<double>},
-                                                                     {"Char", &inspect_mono_property<char16_t>},
-                                                                     {"String", &inspect_mono_property<std::string>},
-                                                                     {"Entity", &inspect_mono_property<entt::handle>}};
+        // clang-format off
+        static std::map<std::string, mono_property_inspector> reg = {
+            {"SByte",   &mono_inspector<int8_t>::inspect_property},
+            {"Byte",    &mono_inspector<uint8_t>::inspect_property},
+            {"Int16",   &mono_inspector<int16_t>::inspect_property},
+            {"UInt16",  &mono_inspector<uint16_t>::inspect_property},
+            {"Int32",   &mono_inspector<int32_t>::inspect_property},
+            {"UInt32",  &mono_inspector<uint32_t>::inspect_property},
+            {"Int64",   &mono_inspector<int64_t>::inspect_property},
+            {"UInt64",  &mono_inspector<uint64_t>::inspect_property},
+            {"Boolean", &mono_inspector<bool>::inspect_property},
+            {"Single",  &mono_inspector<float>::inspect_property},
+            {"Double",  &mono_inspector<double>::inspect_property},
+            {"Char",    &mono_inspector<char16_t>::inspect_property},
+            {"String",  &mono_inspector<std::string>::inspect_property},
+            {"Entity",  &mono_inspector<entt::handle>::inspect_property},
+            {"Texture",         &mono_inspector<asset_handle<gfx::texture>>::inspect_property},
+            {"Material",        &mono_inspector<asset_handle<material>>::inspect_property},
+            {"Mesh",            &mono_inspector<asset_handle<mesh>>::inspect_property},
+            {"AnimationClip",   &mono_inspector<asset_handle<animation_clip>>::inspect_property},
+            {"Prefab",          &mono_inspector<asset_handle<prefab>>::inspect_property},
+            {"Scene",           &mono_inspector<asset_handle<scene_prefab>>::inspect_property},
+            {"PhysicsMaterial", &mono_inspector<asset_handle<physics_material>>::inspect_property},
+            {"AudioClip",       &mono_inspector<asset_handle<audio_clip>>::inspect_property}
+            };
+        // clang-format on
 
         auto it = reg.find(type_name);
         if(it != reg.end())

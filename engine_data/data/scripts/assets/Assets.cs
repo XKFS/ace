@@ -35,6 +35,30 @@ public class Assets
 
 }
 
+public class Texture : Asset<Texture>
+{
+}
+
+public class Material : Asset<Material>
+{
+}
+
+public class Mesh : Asset<Mesh>
+{
+}
+
+public class AnimationClip : Asset<AnimationClip>
+{
+}
+
+
+public class PhysicsMaterial : Asset<PhysicsMaterial>
+{
+}
+
+public class AudioClip : Asset<AudioClip>
+{
+}
 
 }
 

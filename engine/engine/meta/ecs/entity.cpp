@@ -386,8 +386,6 @@ template<typename Archive>
 void save_to_archive(Archive& ar, entt::const_handle obj)
 {
     bool pushed = push_save_context();
-    auto& save_ctx = get_save_context();
-    save_ctx.save_source = obj;
 
     bool is_root = obj.all_of<root_component>();
     if(!is_root)
@@ -410,7 +408,6 @@ void save_to_archive(Archive& ar, entt::const_handle obj)
         const_handle_cast(obj).erase<root_component>();
     }
 
-    save_ctx.save_source = {};
     pop_save_context(pushed);
 }
 
@@ -520,11 +517,13 @@ void save_to_file(const std::string& absolute_path, entt::const_handle obj)
 
     bool pushed = push_save_context();
     auto& save_ctx = get_save_context();
+    save_ctx.save_source = obj;
     save_ctx.to_prefab = true;
 
     save_to_stream(stream, obj);
 
     save_ctx.to_prefab = false;
+    save_ctx.save_source = {};
     pop_save_context(pushed);
 }
 
@@ -544,11 +543,12 @@ void save_to_file_bin(const std::string& absolute_path, entt::const_handle obj)
 
     bool pushed = push_save_context();
     auto& save_ctx = get_save_context();
+    save_ctx.save_source = obj;
     save_ctx.to_prefab = true;
 
     save_to_stream_bin(stream, obj);
     save_ctx.to_prefab = false;
-
+    save_ctx.save_source = {};
     pop_save_context(pushed);
 }
 

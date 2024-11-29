@@ -5,19 +5,8 @@ namespace Ace
 {
 namespace Core
 {
-public class Scene
+public class Scene : Asset<Scene>
 {
-
-	public Scene()
-	{
-		internal_m2n_create_scene();
-	}
-
-	~Scene()
-	{
-		internal_m2n_destroy_scene();
-	}
-
 	public static void LoadScene(string key)
 	{
 		internal_m2n_load_scene(key);

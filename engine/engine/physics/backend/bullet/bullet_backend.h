@@ -28,6 +28,8 @@ struct bullet_backend
 
     static void on_create_component(entt::registry& r, entt::entity e);
     static void on_destroy_component(entt::registry& r, entt::entity e);
+    static void on_destroy_bullet_rigidbody_component(entt::registry& r, entt::entity e);
+
 
     static void draw_system_gizmos(rtti::context& ctx, const camera& cam, gfx::dd_raii& dd);
     static void draw_gizmo(rtti::context& ctx, physics_component& comp, const camera& cam, gfx::dd_raii& dd);

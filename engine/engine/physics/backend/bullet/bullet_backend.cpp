@@ -355,7 +355,7 @@ void make_rigidbody(bullet::world& world, entt::handle entity, physics_component
     world.dynamics_world->addRigidBody(body.internal.get());
 }
 
-void destroy_phyisics_body(bullet::world& world, entt::handle entity)
+void destroy_phyisics_body(bullet::world& world, entt::handle entity, bool from_physics_component)
 {
     auto body = entity.try_get<bullet::rigidbody>();
 
@@ -366,7 +366,10 @@ void destroy_phyisics_body(bullet::world& world, entt::handle entity)
         body->internal_shape = {};
     }
 
-    entity.remove<bullet::rigidbody>();
+    if(from_physics_component)
+    {
+        entity.remove<bullet::rigidbody>();
+    }
 }
 
 void recreate_phyisics_body(bullet::world& world, physics_component& comp, bool force = false)
@@ -378,7 +381,7 @@ void recreate_phyisics_body(bullet::world& world, physics_component& comp, bool 
 
     if(needs_recreation)
     {
-        destroy_phyisics_body(world, comp.get_owner());
+        destroy_phyisics_body(world, comp.get_owner(), true);
         make_rigidbody(world, owner, comp);
     }
     else
@@ -521,13 +524,26 @@ void bullet_backend::on_create_component(entt::registry& r, entt::entity e)
         //recreate_phyisics_body(*world, comp, true);
     }
 }
+
 void bullet_backend::on_destroy_component(entt::registry& r, entt::entity e)
 {
+    // this function will be called for both physics_component and bullet::rigidbody
     auto world = r.ctx().find<bullet::world>();
     if(world)
     {
         entt::handle entity(r, e);
-        destroy_phyisics_body(*world, entity);
+        destroy_phyisics_body(*world, entity, true);
+    }
+}
+
+void bullet_backend::on_destroy_bullet_rigidbody_component(entt::registry& r, entt::entity e)
+{
+    // this function will be called for both physics_component and bullet::rigidbody
+    auto world = r.ctx().find<bullet::world>();
+    if(world)
+    {
+        entt::handle entity(r, e);
+        destroy_phyisics_body(*world, entity, false);
     }
 }
 
@@ -577,6 +593,9 @@ void bullet_backend::on_play_begin(rtti::context& ctx)
 
     auto& world = registry.ctx().emplace<bullet::world>(bullet::create_dynamics_world());
 
+
+    registry.on_destroy<bullet::rigidbody>().connect<&on_destroy_bullet_rigidbody_component>();
+
     registry.view<physics_component>().each(
         [&](auto e, auto&& comp)
         {
@@ -594,10 +613,15 @@ void bullet_backend::on_play_end(rtti::context& ctx)
     registry.view<physics_component>().each(
         [&](auto e, auto&& comp)
         {
-            destroy_phyisics_body(world, comp.get_owner());
+            destroy_phyisics_body(world, comp.get_owner(), true);
         });
 
+
+    registry.on_destroy<bullet::rigidbody>().disconnect<&on_destroy_bullet_rigidbody_component>();
+
     registry.ctx().erase<bullet::world>();
+
+
 }
 
 void bullet_backend::on_pause(rtti::context& ctx)

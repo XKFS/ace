@@ -1,6 +1,8 @@
 #pragma once
 #include <engine/engine_export.h>
 #include <engine/scripting/ecs/components/script_component.h>
+#include <engine/physics/ecs/components/physics_component.h>
+
 #include <engine/threading/threader.h>
 
 #include <base/basetypes.hpp>
@@ -33,6 +35,15 @@ struct script_system
 
     auto is_create_called() const -> bool;
     auto is_start_called() const -> bool;
+
+
+    void on_sensor_enter(entt::handle sensor, entt::handle other);
+    void on_sensor_exit(entt::handle sensor, entt::handle other);
+
+
+    void on_collision_enter(entt::handle a, entt::handle b, const std::vector<manifold_point>& manifolds);
+    void on_collision_exit(entt::handle a, entt::handle b, const std::vector<manifold_point>& manifolds);
+
     /**
      * @brief Called when a physics component is created.
      * @param r The registry containing the component.

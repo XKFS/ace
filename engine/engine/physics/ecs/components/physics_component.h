@@ -80,6 +80,38 @@ enum class physics_property : uint8_t
     count
 };
 
+enum class force_mode : uint8_t
+{
+    // Interprets the input as torque (measured in Newton-metres), and changes the angular velocity by the value of
+    // torque * DT / mass. The effect depends on the simulation step length and the mass of the body.
+    force,
+
+    // Interprets the parameter as angular acceleration (measured in degrees per second squared), and changes the
+    // angular velocity by the value of torque * DT. The effect depends on the simulation step length but does not
+    // depend on the mass of the body.
+    acceleration,
+
+    // Interprets the parameter as an angular momentum (measured in kilogram-meters-squared per second), and changes the
+    // angular velocity by the value of torque / mass. The effect depends on the mass of the body but doesn't depend on
+    // the simulation step length.
+    impulse,
+
+    //: Interprets the parameter as a direct angular velocity change (measured in degrees per second), and changes the
+    //: angular velocity by the value of torque. The effect doesn't depend on the mass of the body and the simulation
+    //: step length.
+    velocity_change,
+};
+
+struct manifold_point
+{
+    math::vec3 a{};
+    math::vec3 b{};
+    math::vec3 normal_on_a{};
+    math::vec3 normal_on_b{};
+    float impulse{};
+    float distance{};
+};
+
 /**
  * @class physics_component
  * @brief Component that handles physics properties and behaviors.
@@ -233,17 +265,19 @@ public:
      */
     void set_material(const asset_handle<physics_material>& material);
 
-    /**
-     * @brief Applies an impulse to the component.
-     * @param impulse The impulse vector.
-     */
-    void apply_impulse(const math::vec3& impulse);
+    void apply_explosion_force(float explosion_force,
+                               const math::vec3& explosion_position,
+                               float explosion_radius,
+                               float upwards_modifier = 0.0f,
+                               force_mode mode = force_mode::force);
+
+    void apply_force(const math::vec3& force, force_mode mode = force_mode::force);
 
     /**
      * @brief Applies a torque impulse to the component.
      * @param torque_impulse The torque impulse vector.
      */
-    void apply_torque_impulse(const math::vec3& torque_impulse);
+    void apply_torque(const math::vec3& torque, force_mode mode = force_mode::force);
 
     /**
      * @brief Clears kinematic velocities.

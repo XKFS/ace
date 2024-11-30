@@ -4,8 +4,11 @@
 #include <engine/events.h>
 #include <math/transform.hpp>
 
+#include <engine/ecs/components/id_component.h>
 #include <engine/ecs/components/transform_component.h>
 #include <engine/ecs/ecs.h>
+#include <engine/engine.h>
+#include <engine/scripting/ecs/systems/script_system.h>
 
 #include <btBulletDynamicsCommon.h>
 
@@ -13,7 +16,9 @@
 
 namespace bullet
 {
-
+namespace
+{
+bool enable_logging = false;
 const btVector3 gravity_sun(btScalar(0), btScalar(-274), btScalar(0));
 const btVector3 gravity_mercury(btScalar(0), btScalar(-3.7), btScalar(0));
 const btVector3 gravity_venus(btScalar(0), btScalar(-8.87), btScalar(0));
@@ -25,6 +30,31 @@ const btVector3 gravity_uranus(btScalar(0), btScalar(-8.69), btScalar(0));
 const btVector3 gravity_neptune(btScalar(0), btScalar(-11.15), btScalar(0));
 const btVector3 gravity_pluto(btScalar(0), btScalar(-0.62), btScalar(0));
 const btVector3 gravity_moon(btScalar(0), btScalar(-1.625), btScalar(0));
+
+auto to_bullet(const math::vec3& v) -> btVector3
+{
+    return {v.x, v.y, v.z};
+}
+
+auto from_bullet(const btVector3& v) -> math::vec3
+{
+    return {v.getX(), v.getY(), v.getZ()};
+}
+
+auto to_bullet(const math::quat& q) -> btQuaternion
+{
+    return {q.x, q.y, q.z, q.w};
+}
+
+auto from_bullet(const btQuaternion& q) -> math::quat
+{
+    math::quat r;
+    r.x = q.getX();
+    r.y = q.getY();
+    r.z = q.getZ();
+    r.w = q.getW();
+    return r;
+}
 
 auto to_bx(const btVector3& data) -> bx::Vec3
 {
@@ -39,8 +69,7 @@ auto to_bx_color(const btVector3& in) -> uint32_t
 #define COL32_A_SHIFT 24
 #define COL32_A_MASK  0xFF000000
 
-    uint32_t out;
-    out = ((uint32_t)(in.getX() * 255.0f)) << COL32_R_SHIFT;
+    uint32_t out = ((uint32_t)(in.getX() * 255.0f)) << COL32_R_SHIFT;
     out |= ((uint32_t)(in.getY() * 255.0f)) << COL32_G_SHIFT;
     out |= ((uint32_t)(in.getZ() * 255.0f)) << COL32_B_SHIFT;
     out |= ((uint32_t)(1.0f * 255.0f)) << COL32_A_SHIFT;
@@ -122,6 +151,145 @@ public:
     }
 };
 
+auto get_entity_from_user_pointer(void* pointer) -> entt::handle
+{
+    auto& ctx = ace::engine::context();
+    auto& ec = ctx.get_cached<ace::ecs>();
+    auto id = static_cast<entt::entity>(uintptr_t(pointer));
+
+    return ec.get_scene().create_entity(id);
+}
+
+auto get_entity_tag_from_user_pointer(void* pointer) -> const std::string&
+{
+    auto e = get_entity_from_user_pointer(pointer);
+
+    return e.get<ace::tag_component>().tag;
+}
+
+void handle_regular_collision(btPersistentManifold* manifold,
+                              const btCollisionObject* obj_a,
+                              const btCollisionObject* obj_b,
+                              bool enter)
+{
+    int num_contacts = manifold->getNumContacts();
+    if(num_contacts == 0)
+    {
+        return;
+    }
+
+    auto& ctx = ace::engine::context();
+    auto& scripting = ctx.get_cached<ace::script_system>();
+
+    auto a_entity = get_entity_from_user_pointer(obj_a->getUserPointer());
+    auto b_entity = get_entity_from_user_pointer(obj_b->getUserPointer());
+
+    // Log regular collision
+    if(enable_logging)
+    {
+        APPLOG_INFO("Collision {} between entities {} and {}",
+                    enter ? "enter" : "exit",
+                    get_entity_tag_from_user_pointer(obj_a->getUserPointer()),
+                    get_entity_tag_from_user_pointer(obj_b->getUserPointer()));
+    }
+
+    std::vector<ace::manifold_point> contacts;
+    contacts.reserve(num_contacts);
+    for(int i = 0; i < num_contacts; i++)
+    {
+        const btManifoldPoint& contact_point = manifold->getContactPoint(i);
+
+        auto& point = contacts.emplace_back();
+        point.b = from_bullet(contact_point.getPositionWorldOnB());
+        point.a = from_bullet(contact_point.getPositionWorldOnA());
+        point.normal_on_b = from_bullet(contact_point.m_normalWorldOnB);
+        point.normal_on_a = -point.normal_on_b;
+        point.impulse = contact_point.getAppliedImpulse();
+        point.distance = contact_point.getDistance();
+
+        // Access collision details
+        if(enable_logging)
+        {
+            // Log contact points and impulse
+            APPLOG_INFO("Contact Point A: {}", point.a);
+            APPLOG_INFO("Contact Point B: {}", point.b);
+            APPLOG_INFO("Normal on A: {}", point.normal_on_a);
+            APPLOG_INFO("Normal on B: {}", point.normal_on_b);
+            APPLOG_INFO("Applied Impulse: {}", point.impulse);
+            APPLOG_INFO("Distance: {}", point.distance);
+        }
+    }
+
+    if(enter)
+    {
+        scripting.on_collision_enter(a_entity, b_entity, contacts);
+    }
+    else
+    {
+        scripting.on_collision_exit(a_entity, b_entity, contacts);
+    }
+}
+
+void contact_callback(btPersistentManifold* const& manifold, bool enter)
+{
+    const btCollisionObject* obj_a = manifold->getBody0();
+    const btCollisionObject* obj_b = manifold->getBody1();
+
+    // Determine if either object is a sensor
+    bool is_sensor_a = obj_a->getCollisionFlags() & btCollisionObject::CF_NO_CONTACT_RESPONSE;
+    bool is_sensor_b = obj_b->getCollisionFlags() & btCollisionObject::CF_NO_CONTACT_RESPONSE;
+
+    if(is_sensor_a || is_sensor_b)
+    {
+        // Sensor interaction
+        const btCollisionObject* sensor = is_sensor_a ? obj_a : obj_b;
+        const btCollisionObject* other = is_sensor_a ? obj_b : obj_a;
+
+        // Log or handle sensor "enter/exit" event
+        if(enable_logging)
+        {
+            APPLOG_INFO("Sensor {} {} by {}",
+                        enter ? "entered" : "exited",
+                        get_entity_tag_from_user_pointer(sensor->getUserPointer()),
+                        get_entity_tag_from_user_pointer(other->getUserPointer()));
+        }
+
+        auto& ctx = ace::engine::context();
+        auto& scripting = ctx.get_cached<ace::script_system>();
+
+        auto sensor_entity = get_entity_from_user_pointer(sensor->getUserPointer());
+        auto other_entity = get_entity_from_user_pointer(other->getUserPointer());
+
+        if(enter)
+        {
+            scripting.on_sensor_enter(sensor_entity, other_entity);
+        }
+        else
+        {
+            scripting.on_sensor_exit(sensor_entity, other_entity);
+        }
+    }
+    else
+    {
+        // Regular collision handling
+        handle_regular_collision(manifold, obj_a, obj_b, enter);
+    }
+}
+
+void contact_started_callback(btPersistentManifold* const& manifold)
+{
+    contact_callback(manifold, true);
+}
+
+void contact_ended_callback(btPersistentManifold* const& manifold)
+{
+    contact_callback(manifold, false);
+}
+auto contact_processed_callback(btManifoldPoint& cp, void* body0, void* body1) -> bool
+{
+    return true;
+}
+
 struct rigidbody
 {
     std::shared_ptr<btRigidBody> internal{};
@@ -139,6 +307,9 @@ struct world
 
 auto create_dynamics_world() -> bullet::world
 {
+    gContactStartedCallback = contact_started_callback;
+    gContactEndedCallback = contact_ended_callback;
+    gContactProcessedCallback = contact_processed_callback;
     bullet::world world{};
     /// collision configuration contains default setup for memory, collision setup
     world.collision_config = std::make_shared<btDefaultCollisionConfiguration>();
@@ -164,31 +335,22 @@ auto create_dynamics_world() -> bullet::world
     return world;
 }
 
-auto to_bullet(const math::vec3& v) -> btVector3
+ATTRIBUTE_ALIGNED16(class)
+btCompoundShapeOwning : public btCompoundShape
 {
-    return {v.x, v.y, v.z};
-}
+public:
+    BT_DECLARE_ALIGNED_ALLOCATOR();
 
-auto from_bullet(const btVector3& v) -> math::vec3
-{
-    return {v.getX(), v.getY(), v.getZ()};
-}
-
-auto to_bullet(const math::quat& q) -> btQuaternion
-{
-    return {q.x, q.y, q.z, q.w};
-}
-
-auto from_bullet(const btQuaternion& q) -> math::quat
-{
-    math::quat r;
-    r.x = q.getX();
-    r.y = q.getY();
-    r.z = q.getZ();
-    r.w = q.getW();
-    return r;
-}
-
+    ~btCompoundShapeOwning() override
+    {
+        /*delete all the btBU_Simplex1to4 ChildShapes*/
+        for(int i = 0; i < m_children.size(); i++)
+        {
+            delete m_children[i].m_childShape;
+        }
+    }
+};
+} // namespace
 } // namespace bullet
 
 namespace ace
@@ -213,57 +375,56 @@ auto make_rigidbody_shape(physics_component& comp) -> std::shared_ptr<btCompound
     {
         return nullptr;
     }
-    else
+
+    // use an ownning compound shape. When sharing is implemented we can go back to non owning
+    auto cp = std::make_shared<bullet::btCompoundShapeOwning>();
+    for(const auto& s : compound_shapes)
     {
-        auto cp = std::make_shared<btCompoundShape>();
-        for(const auto& s : compound_shapes)
+        if(hpp::holds_alternative<physics_box_shape>(s.shape))
         {
-            if(hpp::holds_alternative<physics_box_shape>(s.shape))
-            {
-                const auto& shape = hpp::get<physics_box_shape>(s.shape);
-                auto half_extends = shape.extends * 0.5f;
+            const auto& shape = hpp::get<physics_box_shape>(s.shape);
+            auto half_extends = shape.extends * 0.5f;
 
-                btBoxShape* box_shape = new btBoxShape({half_extends.x, half_extends.y, half_extends.z});
+            btBoxShape* box_shape = new btBoxShape({half_extends.x, half_extends.y, half_extends.z});
 
-                btTransform localTransform = btTransform::getIdentity();
-                localTransform.setOrigin(bullet::to_bullet(shape.center));
-                cp->addChildShape(localTransform, box_shape);
-            }
-            else if(hpp::holds_alternative<physics_sphere_shape>(s.shape))
-            {
-                const auto& shape = hpp::get<physics_sphere_shape>(s.shape);
-
-                btSphereShape* sphere_shape = new btSphereShape(shape.radius);
-
-                btTransform localTransform = btTransform::getIdentity();
-                localTransform.setOrigin(bullet::to_bullet(shape.center));
-                cp->addChildShape(localTransform, sphere_shape);
-            }
-            else if(hpp::holds_alternative<physics_capsule_shape>(s.shape))
-            {
-                const auto& shape = hpp::get<physics_capsule_shape>(s.shape);
-
-                btCapsuleShape* capsule_shape = new btCapsuleShape(shape.radius, shape.length);
-
-                btTransform localTransform = btTransform::getIdentity();
-                localTransform.setOrigin(bullet::to_bullet(shape.center));
-                cp->addChildShape(localTransform, capsule_shape);
-            }
-            else if(hpp::holds_alternative<physics_cylinder_shape>(s.shape))
-            {
-                const auto& shape = hpp::get<physics_cylinder_shape>(s.shape);
-
-                btVector3 half_extends(shape.radius, shape.length * 0.5f, shape.radius);
-                btCylinderShape* cylinder_shape = new btCylinderShape(half_extends);
-
-                btTransform localTransform = btTransform::getIdentity();
-                localTransform.setOrigin(bullet::to_bullet(shape.center));
-                cp->addChildShape(localTransform, cylinder_shape);
-            }
+            btTransform local_transform = btTransform::getIdentity();
+            local_transform.setOrigin(bullet::to_bullet(shape.center));
+            cp->addChildShape(local_transform, box_shape);
         }
+        else if(hpp::holds_alternative<physics_sphere_shape>(s.shape))
+        {
+            const auto& shape = hpp::get<physics_sphere_shape>(s.shape);
 
-        return cp;
+            btSphereShape* sphere_shape = new btSphereShape(shape.radius);
+
+            btTransform local_transform = btTransform::getIdentity();
+            local_transform.setOrigin(bullet::to_bullet(shape.center));
+            cp->addChildShape(local_transform, sphere_shape);
+        }
+        else if(hpp::holds_alternative<physics_capsule_shape>(s.shape))
+        {
+            const auto& shape = hpp::get<physics_capsule_shape>(s.shape);
+
+            btCapsuleShape* capsule_shape = new btCapsuleShape(shape.radius, shape.length);
+
+            btTransform local_transform = btTransform::getIdentity();
+            local_transform.setOrigin(bullet::to_bullet(shape.center));
+            cp->addChildShape(local_transform, capsule_shape);
+        }
+        else if(hpp::holds_alternative<physics_cylinder_shape>(s.shape))
+        {
+            const auto& shape = hpp::get<physics_cylinder_shape>(s.shape);
+
+            btVector3 half_extends(shape.radius, shape.length * 0.5f, shape.radius);
+            btCylinderShape* cylinder_shape = new btCylinderShape(half_extends);
+
+            btTransform local_transform = btTransform::getIdentity();
+            local_transform.setOrigin(bullet::to_bullet(shape.center));
+            cp->addChildShape(local_transform, cylinder_shape);
+        }
     }
+
+    return cp;
 }
 
 void update_rigidbody_shape(bullet::rigidbody& body, physics_component& comp)
@@ -289,17 +450,17 @@ void update_rigidbody_kind(bullet::rigidbody& body, physics_component& comp)
 void update_rigidbody_mass_and_inertia(bullet::rigidbody& body, physics_component& comp)
 {
     btScalar mass(0);
-    btVector3 localInertia(0, 0, 0);
+    btVector3 local_inertia(0, 0, 0);
     if(!comp.is_kinematic())
     {
         auto shape = body.internal->getCollisionShape();
         if(shape)
         {
             mass = comp.get_mass();
-            shape->calculateLocalInertia(mass, localInertia);
+            shape->calculateLocalInertia(mass, local_inertia);
         }
     }
-    body.internal->setMassProps(mass, localInertia);
+    body.internal->setMassProps(mass, local_inertia);
 }
 
 void update_rigidbody_gravity(bullet::world& world, bullet::rigidbody& body, physics_component& comp)
@@ -345,6 +506,7 @@ void make_rigidbody(bullet::world& world, entt::handle entity, physics_component
 
     body.internal = std::make_shared<btRigidBody>(comp.get_mass(), nullptr, nullptr);
     body.internal->setFlags(BT_DISABLE_WORLD_GRAVITY);
+    body.internal->setUserPointer((void*)uintptr_t(entity.entity()));
     update_rigidbody_kind(body, comp);
     update_rigidbody_shape(body, comp);
     update_rigidbody_mass_and_inertia(body, comp);
@@ -510,19 +672,48 @@ void from_physics(transform_component& transform, physics_component& comp)
     comp.set_dirty(system_id, false);
 }
 
+void add_force(btRigidBody* body, const btVector3& force, force_mode mode)
+{
+    // Apply force based on ForceMode
+    switch(mode)
+    {
+        case force_mode::force: // Continuous force
+            body->applyCentralForce(force);
+            break;
+
+        case force_mode::acceleration:
+        { // Force independent of mass
+            btVector3 accelerationForce = force * body->getMass();
+            body->applyCentralForce(accelerationForce);
+            break;
+        }
+
+        case force_mode::impulse: // Instantaneous impulse
+            body->applyCentralImpulse(force);
+            break;
+
+        case force_mode::velocity_change: // Direct velocity change
+        {
+            btVector3 new_velocity = body->getLinearVelocity() + force; // Accumulate velocity
+            body->setLinearVelocity(new_velocity);
+            break;
+        }
+    }
+}
+
 } // namespace
 
 void bullet_backend::on_create_component(entt::registry& r, entt::entity e)
 {
-    entt::handle entity(r, e);
+    // entt::handle entity(r, e);
 
-    auto world = r.ctx().find<bullet::world>();
-    if(world)
-    {
-        entt::handle entity(r, e);
-        auto& comp = entity.get<physics_component>();
-        //recreate_phyisics_body(*world, comp, true);
-    }
+    // auto world = r.ctx().find<bullet::world>();
+    // if(world)
+    // {
+    //     entt::handle entity(r, e);
+    //     auto& comp = entity.get<physics_component>();
+    //     recreate_phyisics_body(*world, comp, true);
+    // }
 }
 
 void bullet_backend::on_destroy_component(entt::registry& r, entt::entity e)
@@ -547,24 +738,116 @@ void bullet_backend::on_destroy_bullet_rigidbody_component(entt::registry& r, en
     }
 }
 
-void bullet_backend::apply_impulse(physics_component& comp, const math::vec3& impulse)
+void bullet_backend::apply_explosion_force(physics_component& comp,
+                                           float explosion_force,
+                                           const math::vec3& explosion_position,
+                                           float explosion_radius,
+                                           float upwards_modifier,
+                                           force_mode mode)
 {
     auto owner = comp.get_owner();
 
     if(auto bbody = owner.try_get<bullet::rigidbody>())
     {
-        bbody->internal->applyCentralImpulse({impulse.x, impulse.y, impulse.z});
+        const auto& body = bbody->internal;
+
+        // Ensure the object is a dynamic rigid body
+        if(body && body->getInvMass() > 0)
+        {
+            btVector3 explosionPosition(explosion_position.x, explosion_position.y, explosion_position.z);
+            // Get the position of the rigid body
+            btVector3 bodyPosition = body->getWorldTransform().getOrigin();
+
+            // Calculate the vector from the explosion position to the body
+            btVector3 direction = bodyPosition - explosionPosition;
+            float distance = direction.length();
+
+            // Skip objects outside the explosion radius
+            if(distance > explosion_radius && explosion_radius > 0.0f)
+            {
+                return;
+            }
+
+            // Normalize the direction vector
+            if(distance > 0.0f)
+            {
+                direction /= distance; // Normalize direction
+            }
+            else
+            {
+                direction.setZero(); // If explosion is at the same position as the body
+            }
+
+            // Apply upwards modifier
+            if(upwards_modifier != 0.0f)
+            {
+                direction.setY(direction.getY() + upwards_modifier);
+                direction.normalize();
+            }
+
+            // Calculate the explosion force magnitude based on distance
+            float attenuation = 1.0f - (distance / explosion_radius);
+            btVector3 force = direction * explosion_force * attenuation;
+
+            add_force(body.get(), force, mode);
+
+            wake_up(*bbody);
+        }
+    }
+}
+
+void bullet_backend::apply_force(physics_component& comp, const math::vec3& force, force_mode mode)
+{
+    auto owner = comp.get_owner();
+
+    if(auto bbody = owner.try_get<bullet::rigidbody>())
+    {
+        const auto& body = bbody->internal;
+        btVector3 vector{force.x, force.y, force.z};
+
+        add_force(body.get(), vector, mode);
         wake_up(*bbody);
     }
 }
 
-void bullet_backend::apply_torque_impulse(physics_component& comp, const math::vec3& impulse)
+void bullet_backend::apply_torque(physics_component& comp, const math::vec3& torque, force_mode mode)
 {
     auto owner = comp.get_owner();
 
     if(auto bbody = owner.try_get<bullet::rigidbody>())
     {
-        bbody->internal->applyTorqueImpulse({impulse.x, impulse.y, impulse.z});
+        const auto& body = bbody->internal;
+        btVector3 vector{torque.x, torque.y, torque.z};
+
+        switch(mode)
+        {
+            case force_mode::force: // Continuous torque
+                body->applyTorque(vector);
+                break;
+
+            case force_mode::acceleration: // Angular acceleration
+            {
+                btVector3 inertia_tensor = body->getInvInertiaDiagLocal();
+                btVector3 angular_acceleration(
+                    inertia_tensor.getX() != 0 ? torque.x * (1.0f / inertia_tensor.getX()) : 0.0f,
+                    inertia_tensor.getY() != 0 ? torque.y * (1.0f / inertia_tensor.getY()) : 0.0f,
+                    inertia_tensor.getZ() != 0 ? torque.z * (1.0f / inertia_tensor.getZ()) : 0.0f);
+                body->applyTorque(angular_acceleration);
+            }
+            break;
+
+            case force_mode::impulse: // Angular impulse
+                body->applyTorqueImpulse(vector);
+                break;
+
+            case force_mode::velocity_change: // Direct angular velocity change
+            {
+                btVector3 new_velocity = body->getLinearVelocity() + vector; // Accumulate velocity
+                body->setAngularVelocity(new_velocity);
+                break;
+            }
+        }
+
         wake_up(*bbody);
     }
 }
@@ -593,7 +876,6 @@ void bullet_backend::on_play_begin(rtti::context& ctx)
 
     auto& world = registry.ctx().emplace<bullet::world>(bullet::create_dynamics_world());
 
-
     registry.on_destroy<bullet::rigidbody>().connect<&on_destroy_bullet_rigidbody_component>();
 
     registry.view<physics_component>().each(
@@ -616,12 +898,9 @@ void bullet_backend::on_play_end(rtti::context& ctx)
             destroy_phyisics_body(world, comp.get_owner(), true);
         });
 
-
     registry.on_destroy<bullet::rigidbody>().disconnect<&on_destroy_bullet_rigidbody_component>();
 
     registry.ctx().erase<bullet::world>();
-
-
 }
 
 void bullet_backend::on_pause(rtti::context& ctx)
@@ -653,7 +932,7 @@ void bullet_backend::on_frame_update(rtti::context& ctx, delta_t dt)
 
     // update physics
     world.dynamics_world->stepSimulation(dt.count());
-
+    // world.collision_checker.process_manifolds(world.dynamics_world.get());
     // update transform from phyiscs interpolated spatial properties
     registry.view<transform_component, physics_component>().each(
         [&](auto e, auto&& transform, auto&& rigidbody)

@@ -44,19 +44,21 @@ public:
      */
     static void on_destroy_component(entt::registry& r, entt::entity e);
 
-    /**
-     * @brief Applies an impulse to the specified physics component.
-     * @param comp The physics component.
-     * @param impulse The impulse vector.
-     */
-    static void apply_impulse(physics_component& comp, const math::vec3& impulse);
+    static void apply_explosion_force(physics_component& comp,
+                                      float explosion_force,
+                                      const math::vec3& explosion_position,
+                                      float explosion_radius,
+                                      float upwards_modifier,
+                                      force_mode mode);
+
+    static void apply_force(physics_component& comp, const math::vec3& force, force_mode mode);
 
     /**
-     * @brief Applies a torque impulse to the specified physics component.
+     * @brief Applies a torque to the specified physics component.
      * @param comp The physics component.
-     * @param torque_impulse The torque impulse vector.
+     * @param torque The torque vector.
      */
-    static void apply_torque_impulse(physics_component& comp, const math::vec3& torque_impulse);
+    static void apply_torque(physics_component& comp, const math::vec3& torque, force_mode mode);
 
     /**
      * @brief Clears kinematic velocities for the specified physics component.

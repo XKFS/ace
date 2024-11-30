@@ -94,15 +94,24 @@ void physics_system::on_frame_update(rtti::context& ctx, delta_t dt)
         backend_.on_frame_update(ctx, dt);
     }
 }
-
-void physics_system::apply_impulse(physics_component& comp, const math::vec3& impulse)
+void physics_system::apply_explosion_force(physics_component& comp,
+                                           float explosion_force,
+                                           const math::vec3& explosion_position,
+                                           float explosion_radius,
+                                           float upwards_modifier,
+                                           force_mode mode)
 {
-    backend_type::apply_impulse(comp, impulse);
+    backend_type::apply_explosion_force(comp, explosion_force, explosion_position, explosion_radius, upwards_modifier, mode);
 }
 
-void physics_system::apply_torque_impulse(physics_component& comp, const math::vec3& torque_impulse)
+void physics_system::apply_force(physics_component& comp, const math::vec3& force, force_mode mode)
 {
-    backend_type::apply_torque_impulse(comp, torque_impulse);
+    backend_type::apply_force(comp, force, mode);
+}
+
+void physics_system::apply_torque(physics_component& comp, const math::vec3& torque, force_mode mode)
+{
+    backend_type::apply_torque(comp, torque, mode);
 }
 
 void physics_system::clear_kinematic_velocities(physics_component& comp)

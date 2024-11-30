@@ -57,7 +57,7 @@ public:
     auto get_native_component(const mono::mono_type& type) -> script_object;
 
     auto get_script_components() const -> const script_components_t&;
-
+    auto has_script_components() const -> bool;
 
     void create();
     void start();

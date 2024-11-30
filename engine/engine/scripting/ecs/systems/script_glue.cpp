@@ -9,10 +9,10 @@
 #include <monort/mono_pod_wrapper.h>
 #include <monort/monort.h>
 
-#include <engine/scripting/ecs/components/script_component.h>
-#include <engine//input/input.h>
 #include <engine/assets/asset_manager.h>
+#include <engine/input/input.h>
 #include <engine/meta/ecs/components/all_components.h>
+#include <engine/scripting/ecs/components/script_component.h>
 
 #include <filesystem/filesystem.h>
 #include <logging/logging.h>
@@ -133,13 +133,16 @@ auto save_get_component(entt::entity id) -> T*
     if(!e)
     {
         raise_invalid_entity_exception();
-        return nullptr;;
+        return nullptr;
+        ;
     }
     auto comp = e.try_get<T>();
 
     if(!comp)
     {
-        mono::raise_exception("System", "Exception", fmt::format("Entity does not have component of type {}.", hpp::type_name_str<T>()));
+        mono::raise_exception("System",
+                              "Exception",
+                              fmt::format("Entity does not have component of type {}.", hpp::type_name_str<T>()));
         return nullptr;
     }
 
@@ -574,7 +577,7 @@ auto internal_m2n_get_position_global(entt::entity id) -> math::vec3
 }
 
 void internal_m2n_set_position_global(entt::entity id, const math::vec3& value)
-{    
+{
     if(auto comp = save_get_component<transform_component>(id))
     {
         comp->set_position_global(value);
@@ -583,7 +586,6 @@ void internal_m2n_set_position_global(entt::entity id, const math::vec3& value)
 
 void internal_m2n_move_by_global(entt::entity id, const math::vec3& value)
 {
-
     if(auto comp = save_get_component<transform_component>(id))
     {
         comp->move_by_global(value);
@@ -609,7 +611,7 @@ void internal_m2n_set_position_local(entt::entity id, const math::vec3& value)
 }
 
 void internal_m2n_move_by_local(entt::entity id, const math::vec3& value)
-{   
+{
     if(auto comp = save_get_component<transform_component>(id))
     {
         comp->move_by_local(value);
@@ -783,7 +785,7 @@ void internal_m2n_set_scale_local(entt::entity id, const math::vec3& value)
 }
 
 void internal_m2n_scale_by_local(entt::entity id, const math::vec3& amount)
-{    
+{
     if(auto comp = save_get_component<transform_component>(id))
     {
         comp->scale_by_local(amount);
@@ -828,24 +830,36 @@ void internal_m2n_set_skew_local(entt::entity id, const math::vec3& value)
 }
 
 //------------------------------
-void internal_m2n_apply_impulse(entt::entity id, const math::vec3& value)
+
+void internal_m2n_apply_explosion_force(entt::entity id,
+                                        float explosion_force,
+                                        const math::vec3& explosion_position,
+                                        float explosion_radius,
+                                        float upwards_modifier,
+                                        force_mode mode)
 {
     if(auto comp = save_get_component<physics_component>(id))
     {
-        comp->apply_impulse(value);
+        comp->apply_explosion_force(explosion_force, explosion_position, explosion_radius, upwards_modifier, mode);
+    }
+}
+void internal_m2n_apply_force(entt::entity id, const math::vec3& value, force_mode mode)
+{
+    if(auto comp = save_get_component<physics_component>(id))
+    {
+        comp->apply_force(value, mode);
     }
 }
 
-void internal_m2n_apply_torque_impulse(entt::entity id, const math::vec3& value)
+void internal_m2n_apply_torque(entt::entity id, const math::vec3& value, force_mode mode)
 {
     if(auto comp = save_get_component<physics_component>(id))
     {
-        comp->apply_torque_impulse(value);
+        comp->apply_torque(value, mode);
     }
 }
 
 //------------------------------
-
 
 void internal_m2n_animation_blend(entt::entity id, hpp::uuid guid, float seconds)
 {
@@ -890,7 +904,6 @@ void internal_m2n_animation_stop(entt::entity id)
         comp->get_player().stop();
     }
 }
-
 
 //------------------------------
 auto internal_m2n_from_euler_rad(const math::vec3& euler) -> math::quat
@@ -992,13 +1005,10 @@ auto internal_m2n_input_is_down(const std::string& name) -> bool
     return input.is_released(name);
 }
 
-
-
 } // namespace
 
 auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
-{    
-
+{
     APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
 
     {
@@ -1089,8 +1099,9 @@ auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
 
     {
         auto reg = mono::internal_call_registry("Ace.Core.PhysicsComponent");
-        reg.add_internal_call("internal_m2n_apply_impulse", internal_call(internal_m2n_apply_impulse));
-        reg.add_internal_call("internal_m2n_apply_torque_impulse", internal_call(internal_m2n_apply_torque_impulse));
+        reg.add_internal_call("internal_m2n_apply_explosion_force", internal_call(internal_m2n_apply_explosion_force));
+        reg.add_internal_call("internal_m2n_apply_force", internal_call(internal_m2n_apply_force));
+        reg.add_internal_call("internal_m2n_apply_torque", internal_call(internal_m2n_apply_torque));
     }
 
     {
@@ -1100,9 +1111,7 @@ auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
         reg.add_internal_call("internal_m2n_animation_pause", internal_call(internal_m2n_animation_pause));
         reg.add_internal_call("internal_m2n_animation_resume", internal_call(internal_m2n_animation_resume));
         reg.add_internal_call("internal_m2n_animation_stop", internal_call(internal_m2n_animation_stop));
-
     }
-
 
     {
         auto reg = mono::internal_call_registry("Ace.Core.Assets");
@@ -1126,12 +1135,13 @@ auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
 
     {
         auto reg = mono::internal_call_registry("Ace.Core.Input");
-        reg.add_internal_call("internal_m2n_input_get_analog_value", internal_call(internal_m2n_input_get_analog_value));
-        reg.add_internal_call("internal_m2n_input_get_digital_value", internal_call(internal_m2n_input_get_analog_value));
+        reg.add_internal_call("internal_m2n_input_get_analog_value",
+                              internal_call(internal_m2n_input_get_analog_value));
+        reg.add_internal_call("internal_m2n_input_get_digital_value",
+                              internal_call(internal_m2n_input_get_analog_value));
         reg.add_internal_call("internal_m2n_input_is_pressed", internal_call(internal_m2n_input_is_pressed));
         reg.add_internal_call("internal_m2n_input_is_released", internal_call(internal_m2n_input_is_released));
         reg.add_internal_call("internal_m2n_input_is_down", internal_call(internal_m2n_input_is_down));
-
     }
     // mono::managed_interface::init(assembly);
 

@@ -263,4 +263,8 @@ auto script_component::get_script_components() const -> const script_components_
     return script_components_;
 }
 
+auto script_component::has_script_components() const -> bool
+{
+    return !script_components_.empty();
+}
 } // namespace ace

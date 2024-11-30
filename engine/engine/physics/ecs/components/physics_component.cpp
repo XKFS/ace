@@ -1,7 +1,7 @@
 #include "physics_component.h"
+#include <cstdint>
 #include <engine/ecs/components/transform_component.h>
 #include <engine/physics/ecs/systems/physics_system.h>
-#include <cstdint>
 
 namespace ace
 {
@@ -200,20 +200,37 @@ void physics_component::on_change_material()
     set_property_dirty(physics_property::material, true);
 }
 
-void physics_component::apply_impulse(const math::vec3& impulse)
+void physics_component::apply_explosion_force(float explosion_force,
+                                              const math::vec3& explosion_position,
+                                              float explosion_radius,
+                                              float upwards_modifier,
+                                              force_mode mode)
 {
     auto owner = get_owner();
     auto& registry = *owner.registry();
 
-    physics_system::apply_impulse(*this, impulse);
+    physics_system::apply_explosion_force(*this,
+                                          explosion_force,
+                                          explosion_position,
+                                          explosion_radius,
+                                          upwards_modifier,
+                                          mode);
 }
 
-void physics_component::apply_torque_impulse(const math::vec3& torque_impulse)
+void physics_component::apply_force(const math::vec3& force, force_mode mode)
 {
     auto owner = get_owner();
     auto& registry = *owner.registry();
 
-    physics_system::apply_torque_impulse(*this, torque_impulse);
+    physics_system::apply_force(*this, force, mode);
+}
+
+void physics_component::apply_torque(const math::vec3& torque, force_mode mode)
+{
+    auto owner = get_owner();
+    auto& registry = *owner.registry();
+
+    physics_system::apply_torque(*this, torque, mode);
 }
 
 void physics_component::clear_kinematic_velocities()

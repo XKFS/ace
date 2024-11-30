@@ -570,4 +570,27 @@ auto script_system::get_lib_compiled_key(const std::string& protocol) -> std::st
     return output;
 }
 
+void script_system::on_sensor_enter(entt::handle sensor, entt::handle other)
+{
+    auto comp = sensor.try_get<script_component>();
+    if(!comp)
+    {
+        return;
+    }
+
+
+}
+
+void script_system::on_sensor_exit(entt::handle sensor, entt::handle other)
+{
+}
+
+void script_system::on_collision_enter(entt::handle a, entt::handle b, const std::vector<manifold_point>& manifolds)
+{
+}
+
+void script_system::on_collision_exit(entt::handle a, entt::handle b, const std::vector<manifold_point>& manifolds)
+{
+}
+
 } // namespace ace

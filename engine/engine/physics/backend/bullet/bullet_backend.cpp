@@ -10,6 +10,7 @@
 #include <engine/engine.h>
 #include <engine/scripting/ecs/systems/script_system.h>
 
+#define BT_USE_SSE_IN_API
 #include <btBulletDynamicsCommon.h>
 
 #include <logging/logging.h>
@@ -672,8 +673,12 @@ void from_physics(transform_component& transform, physics_component& comp)
     comp.set_dirty(system_id, false);
 }
 
-void add_force(btRigidBody* body, const btVector3& force, force_mode mode)
+auto add_force(btRigidBody* body, const btVector3& force, force_mode mode) -> bool
 {
+    if(force.fuzzyZero())
+    {
+        return false;
+    }
     // Apply force based on ForceMode
     switch(mode)
     {
@@ -699,6 +704,46 @@ void add_force(btRigidBody* body, const btVector3& force, force_mode mode)
             break;
         }
     }
+    return true;
+}
+
+auto add_torque(btRigidBody* body, const btVector3& torque, force_mode mode) -> bool
+{
+    if(torque.fuzzyZero())
+    {
+        return false;
+    }
+    // Apply force based on ForceMode
+    switch(mode)
+    {
+        case force_mode::force: // Continuous torque
+            body->applyTorque(torque);
+            break;
+
+        case force_mode::acceleration: // Angular acceleration
+        {
+            btVector3 inertia_tensor = body->getInvInertiaDiagLocal();
+            btVector3 angular_acceleration(
+                inertia_tensor.getX() != 0 ? torque.getX() * (1.0f / inertia_tensor.getX()) : 0.0f,
+                inertia_tensor.getY() != 0 ? torque.getY() * (1.0f / inertia_tensor.getY()) : 0.0f,
+                inertia_tensor.getZ() != 0 ? torque.getZ() * (1.0f / inertia_tensor.getZ()) : 0.0f);
+            body->applyTorque(angular_acceleration);
+        }
+        break;
+
+        case force_mode::impulse: // Angular impulse
+            body->applyTorqueImpulse(torque);
+            break;
+
+        case force_mode::velocity_change: // Direct angular velocity change
+        {
+            btVector3 new_velocity = body->getLinearVelocity() + torque; // Accumulate velocity
+            body->setAngularVelocity(new_velocity);
+            break;
+        }
+    }
+
+    return true;
 }
 
 } // namespace
@@ -754,12 +799,11 @@ void bullet_backend::apply_explosion_force(physics_component& comp,
         // Ensure the object is a dynamic rigid body
         if(body && body->getInvMass() > 0)
         {
-            btVector3 explosionPosition(explosion_position.x, explosion_position.y, explosion_position.z);
             // Get the position of the rigid body
-            btVector3 bodyPosition = body->getWorldTransform().getOrigin();
+            btVector3 body_position = body->getWorldTransform().getOrigin();
 
             // Calculate the vector from the explosion position to the body
-            btVector3 direction = bodyPosition - explosionPosition;
+            btVector3 direction = body_position - bullet::to_bullet(explosion_position);
             float distance = direction.length();
 
             // Skip objects outside the explosion radius
@@ -789,9 +833,11 @@ void bullet_backend::apply_explosion_force(physics_component& comp,
             float attenuation = 1.0f - (distance / explosion_radius);
             btVector3 force = direction * explosion_force * attenuation;
 
-            add_force(body.get(), force, mode);
+            if(add_force(body.get(), force, mode))
+            {
+                wake_up(*bbody);
+            }
 
-            wake_up(*bbody);
         }
     }
 }
@@ -803,10 +849,12 @@ void bullet_backend::apply_force(physics_component& comp, const math::vec3& forc
     if(auto bbody = owner.try_get<bullet::rigidbody>())
     {
         const auto& body = bbody->internal;
-        btVector3 vector{force.x, force.y, force.z};
+        auto vector = bullet::to_bullet(force);
 
-        add_force(body.get(), vector, mode);
-        wake_up(*bbody);
+        if(add_force(body.get(), vector, mode))
+        {
+            wake_up(*bbody);
+        }
     }
 }
 
@@ -816,9 +864,12 @@ void bullet_backend::apply_torque(physics_component& comp, const math::vec3& tor
 
     if(auto bbody = owner.try_get<bullet::rigidbody>())
     {
+        auto vector = bullet::to_bullet(torque);
+        if(vector.fuzzyZero())
+        {
+            return;
+        }
         const auto& body = bbody->internal;
-        btVector3 vector{torque.x, torque.y, torque.z};
-
         switch(mode)
         {
             case force_mode::force: // Continuous torque

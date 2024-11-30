@@ -5,6 +5,7 @@
 #include <engine/ecs/components/transform_component.h>
 #include <engine/ecs/ecs.h>
 #include <engine/physics/ecs/components/physics_component.h>
+#include <engine/profiler/profiler.h>
 
 #include <logging/logging.h>
 
@@ -87,6 +88,8 @@ void physics_system::on_skip_next_frame(rtti::context& ctx)
 
 void physics_system::on_frame_update(rtti::context& ctx, delta_t dt)
 {
+    APP_SCOPE_PERF("Physics System");
+
     auto& ev = ctx.get_cached<events>();
 
     if(ev.is_playing && !ev.is_paused)

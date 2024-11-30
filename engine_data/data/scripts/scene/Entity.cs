@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -10,6 +11,18 @@ namespace Core
 public struct Entity : IEquatable<Entity>
 {
 	public readonly uint Id;
+
+	public string tag
+    {
+        get
+        {
+            return internal_m2n_get_tag(this);
+        }
+		set
+        {
+            internal_m2n_set_tag(this, value);
+        }
+    }
 
 	public TransformComponent transform
     {
@@ -66,16 +79,49 @@ public struct Entity : IEquatable<Entity>
 		return internal_m2n_get_component(this, typeof(T)) as T; 
 	}
 
+	    //
+    // Summary:
+    //     The non-generic version of this method.
+    //
+    // Parameters:
+    //   type:
+    //     The type of component to search for.
+    //
+    // Returns:
+    //     An array containing all matching components of type type.
+    public Component[] GetComponents(Type type)
+    {
+        return (Component[])internal_m2n_get_components(this, type);
+    }
+
+    public T[] GetComponents<T>() where T : Component
+    {
+		return (T[])internal_m2n_get_components(this, typeof(T));
+
+    }
 	public bool RemoveComponent(Component component)
 	{
-		return internal_m2n_remove_component(this, component);
+		return internal_m2n_remove_component_instance(this, component);
+	}
+
+	public bool RemoveComponent<T>() where T : Component
+	{
+		return internal_m2n_remove_component(this, typeof(T)); 
 	}
 
 	internal Entity(uint id)
 	{
 		Id = id;
 	}
-	
+
+		
+	[MethodImpl(MethodImplOptions.InternalCall)] 
+	private static extern string internal_m2n_get_tag(Entity id);
+
+	[MethodImpl(MethodImplOptions.InternalCall)] 
+	private static extern void internal_m2n_set_tag(Entity id, string tag);
+
+
 	[MethodImpl(MethodImplOptions.InternalCall)] 
 	private static extern Component internal_m2n_add_component(Entity id, Type obj);
 	
@@ -83,10 +129,17 @@ public struct Entity : IEquatable<Entity>
 	private static extern Component internal_m2n_get_component(Entity id, Type obj);
 
 	[MethodImpl(MethodImplOptions.InternalCall)] 
+	private static extern Array internal_m2n_get_components(Entity id, Type obj);
+
+	[MethodImpl(MethodImplOptions.InternalCall)] 
 	private static extern bool internal_m2n_has_component(Entity id, Type obj);
 
 	[MethodImpl(MethodImplOptions.InternalCall)] 
-	private static extern bool internal_m2n_remove_component(Entity id, Component obj);
+	private static extern bool internal_m2n_remove_component_instance(Entity id, Component obj);
+
+	[MethodImpl(MethodImplOptions.InternalCall)] 
+	private static extern bool internal_m2n_remove_component(Entity id, Type obj);
+
 
 	[MethodImpl(MethodImplOptions.InternalCall)] 
 	private static extern Component internal_m2n_get_transform_component(Entity id, Type obj);

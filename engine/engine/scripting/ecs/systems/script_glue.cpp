@@ -94,6 +94,7 @@ inline auto converter::convert(const quaternion& q) -> math::quat
 {
     return math::quat::wxyz(q.w, q.x, q.y, q.z);
 }
+
 } // namespace managed_interface
 
 register_basic_mono_converter_for_pod(math::vec2, managed_interface::vector2);
@@ -127,14 +128,13 @@ void raise_invalid_entity_exception()
 }
 
 template<typename T>
-auto save_get_component(entt::entity id) -> T*
+auto safe_get_component(entt::entity id) -> T*
 {
     auto e = get_entity_from_id(id);
     if(!e)
     {
         raise_invalid_entity_exception();
         return nullptr;
-        ;
     }
     auto comp = e.try_get<T>();
 
@@ -436,6 +436,28 @@ auto internal_remove_native_component(const mono::mono_object& obj, entt::handle
     return false;
 }
 
+auto internal_remove_native_component(const mono::mono_type& type, entt::handle e, script_component& script_comp)
+    -> bool
+{
+    const auto& type_name = type.get_name();
+
+    // TODO OPTIMIZE
+
+    bool removed = false;
+    const auto& lut = native_comp_lut::get_action_table(type_name);
+    if(lut.is_valid())
+    {
+        removed = lut.remove_native(type_name, e);
+    }
+
+    if(removed)
+    {
+        return script_comp.remove_native_component(type);
+    }
+
+    return false;
+}
+
 auto internal_m2n_add_component(entt::entity id, const mono::mono_type& type) -> mono::mono_object
 {
     auto e = get_entity_from_id(id);
@@ -481,6 +503,25 @@ auto internal_m2n_get_component(entt::entity id, const mono::mono_type& type) ->
     return {};
 }
 
+auto internal_m2n_get_components(entt::entity id, const mono::mono_type& type) -> std::vector<mono::mono_object>
+{
+    auto e = get_entity_from_id(id);
+    if(!e)
+    {
+        raise_invalid_entity_exception();
+        return {};
+    }
+
+    auto& script_comp = e.get_or_emplace<script_component>();
+
+    if(auto native_comp = internal_get_native_component(type, e, script_comp))
+    {
+        return {native_comp};
+    }
+
+    return script_comp.get_script_components(type);
+}
+
 auto internal_m2n_get_transform_component(entt::entity id, const mono::mono_type& type) -> mono::mono_object
 {
     auto e = get_entity_from_id(id);
@@ -494,6 +535,25 @@ auto internal_m2n_get_transform_component(entt::entity id, const mono::mono_type
     return internal_get_native_component_impl(type, e, script_comp, true);
 }
 
+auto internal_m2n_get_tag(entt::entity id) -> const std::string&
+{
+    if(auto comp = safe_get_component<tag_component>(id))
+    {
+        return comp->tag;
+    }
+
+    static const std::string empty;
+    return empty;
+}
+
+void internal_m2n_set_tag(entt::entity id, const std::string& tag)
+{
+    if(auto comp = safe_get_component<tag_component>(id))
+    {
+        comp->tag = tag;
+    }
+}
+
 auto internal_m2n_has_component(entt::entity id, const mono::mono_type& type) -> bool
 {
     auto comp = internal_m2n_get_component(id, type);
@@ -501,7 +561,7 @@ auto internal_m2n_has_component(entt::entity id, const mono::mono_type& type) ->
     return comp.valid();
 }
 
-auto internal_m2n_remove_component(entt::entity id, const mono::mono_object& comp) -> bool
+auto internal_m2n_remove_component_instance(entt::entity id, const mono::mono_object& comp) -> bool
 {
     auto e = get_entity_from_id(id);
     if(!e)
@@ -517,6 +577,24 @@ auto internal_m2n_remove_component(entt::entity id, const mono::mono_object& com
     }
 
     return script_comp.remove_script_component(comp);
+}
+
+auto internal_m2n_remove_component(entt::entity id, const mono::mono_type& type) -> bool
+{
+    auto e = get_entity_from_id(id);
+    if(!e)
+    {
+        raise_invalid_entity_exception();
+        return false;
+    }
+    auto& script_comp = e.get_or_emplace<script_component>();
+
+    if(internal_remove_native_component(type, e, script_comp))
+    {
+        return true;
+    }
+
+    return script_comp.remove_script_component(type);
 }
 
 //-------------------------------------------------------------------------
@@ -568,7 +646,7 @@ void internal_m2n_log_error(const std::string& message, const std::string& func,
 //-------------------------------------------------------------------------
 auto internal_m2n_get_position_global(entt::entity id) -> math::vec3
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         return comp->get_position_global();
     }
@@ -578,7 +656,7 @@ auto internal_m2n_get_position_global(entt::entity id) -> math::vec3
 
 void internal_m2n_set_position_global(entt::entity id, const math::vec3& value)
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         comp->set_position_global(value);
     }
@@ -586,7 +664,7 @@ void internal_m2n_set_position_global(entt::entity id, const math::vec3& value)
 
 void internal_m2n_move_by_global(entt::entity id, const math::vec3& value)
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         comp->move_by_global(value);
     }
@@ -594,7 +672,7 @@ void internal_m2n_move_by_global(entt::entity id, const math::vec3& value)
 
 auto internal_m2n_get_position_local(entt::entity id) -> math::vec3
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         return comp->get_position_local();
     }
@@ -604,7 +682,7 @@ auto internal_m2n_get_position_local(entt::entity id) -> math::vec3
 
 void internal_m2n_set_position_local(entt::entity id, const math::vec3& value)
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         comp->set_position_local(value);
     }
@@ -612,7 +690,7 @@ void internal_m2n_set_position_local(entt::entity id, const math::vec3& value)
 
 void internal_m2n_move_by_local(entt::entity id, const math::vec3& value)
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         comp->move_by_local(value);
     }
@@ -621,7 +699,7 @@ void internal_m2n_move_by_local(entt::entity id, const math::vec3& value)
 //--------------------------------------------------
 auto internal_m2n_get_rotation_euler_global(entt::entity id) -> math::vec3
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         return comp->get_rotation_euler_global();
     }
@@ -631,7 +709,7 @@ auto internal_m2n_get_rotation_euler_global(entt::entity id) -> math::vec3
 
 void internal_m2n_rotate_by_euler_global(entt::entity id, const math::vec3& amount)
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         comp->rotate_by_euler_global(amount);
     }
@@ -639,7 +717,7 @@ void internal_m2n_rotate_by_euler_global(entt::entity id, const math::vec3& amou
 
 void internal_m2n_rotate_axis_global(entt::entity id, float degrees, const math::vec3& axis)
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         comp->rotate_axis_global(degrees, axis);
     }
@@ -647,7 +725,7 @@ void internal_m2n_rotate_axis_global(entt::entity id, float degrees, const math:
 
 void internal_m2n_look_at(entt::entity id, const math::vec3& point, const math::vec3& up)
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         comp->look_at(point, up);
     }
@@ -655,7 +733,7 @@ void internal_m2n_look_at(entt::entity id, const math::vec3& point, const math::
 
 void internal_m2n_set_rotation_euler_global(entt::entity id, const math::vec3& value)
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         comp->set_rotation_euler_global(value);
     }
@@ -663,7 +741,7 @@ void internal_m2n_set_rotation_euler_global(entt::entity id, const math::vec3& v
 
 auto internal_m2n_get_rotation_euler_local(entt::entity id) -> math::vec3
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         return comp->get_rotation_euler_local();
     }
@@ -673,7 +751,7 @@ auto internal_m2n_get_rotation_euler_local(entt::entity id) -> math::vec3
 
 void internal_m2n_set_rotation_euler_local(entt::entity id, const math::vec3& value)
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         comp->set_rotation_euler_local(value);
     }
@@ -681,7 +759,7 @@ void internal_m2n_set_rotation_euler_local(entt::entity id, const math::vec3& va
 
 void internal_m2n_rotate_by_euler_local(entt::entity id, const math::vec3& amount)
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         comp->rotate_by_euler_local(amount);
     }
@@ -689,7 +767,7 @@ void internal_m2n_rotate_by_euler_local(entt::entity id, const math::vec3& amoun
 
 auto internal_m2n_get_rotation_global(entt::entity id) -> math::quat
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         return comp->get_rotation_global();
     }
@@ -699,7 +777,7 @@ auto internal_m2n_get_rotation_global(entt::entity id) -> math::quat
 
 void internal_m2n_set_rotation_global(entt::entity id, const math::quat& value)
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         comp->set_rotation_global(value);
     }
@@ -707,7 +785,7 @@ void internal_m2n_set_rotation_global(entt::entity id, const math::quat& value)
 
 void internal_m2n_rotate_by_global(entt::entity id, const math::quat& amount)
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         comp->rotate_by_global(amount);
     }
@@ -715,7 +793,7 @@ void internal_m2n_rotate_by_global(entt::entity id, const math::quat& amount)
 
 auto internal_m2n_get_rotation_local(entt::entity id) -> math::quat
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         return comp->get_rotation_local();
     }
@@ -725,7 +803,7 @@ auto internal_m2n_get_rotation_local(entt::entity id) -> math::quat
 
 void internal_m2n_set_rotation_local(entt::entity id, const math::quat& value)
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         comp->set_rotation_local(value);
     }
@@ -733,7 +811,7 @@ void internal_m2n_set_rotation_local(entt::entity id, const math::quat& value)
 
 void internal_m2n_rotate_by_local(entt::entity id, const math::quat& amount)
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         comp->rotate_by_local(amount);
     }
@@ -742,7 +820,7 @@ void internal_m2n_rotate_by_local(entt::entity id, const math::quat& amount)
 //--------------------------------------------------
 auto internal_m2n_get_scale_global(entt::entity id) -> math::vec3
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         return comp->get_scale_global();
     }
@@ -752,7 +830,7 @@ auto internal_m2n_get_scale_global(entt::entity id) -> math::vec3
 
 void internal_m2n_set_scale_global(entt::entity id, const math::vec3& value)
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         comp->set_scale_global(value);
     }
@@ -760,7 +838,7 @@ void internal_m2n_set_scale_global(entt::entity id, const math::vec3& value)
 
 void internal_m2n_scale_by_global(entt::entity id, const math::vec3& amount)
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         comp->scale_by_global(amount);
     }
@@ -768,7 +846,7 @@ void internal_m2n_scale_by_global(entt::entity id, const math::vec3& amount)
 
 auto internal_m2n_get_scale_local(entt::entity id) -> math::vec3
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         return comp->get_scale_local();
     }
@@ -778,7 +856,7 @@ auto internal_m2n_get_scale_local(entt::entity id) -> math::vec3
 
 void internal_m2n_set_scale_local(entt::entity id, const math::vec3& value)
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         comp->set_scale_local(value);
     }
@@ -786,7 +864,7 @@ void internal_m2n_set_scale_local(entt::entity id, const math::vec3& value)
 
 void internal_m2n_scale_by_local(entt::entity id, const math::vec3& amount)
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         comp->scale_by_local(amount);
     }
@@ -795,7 +873,7 @@ void internal_m2n_scale_by_local(entt::entity id, const math::vec3& amount)
 //--------------------------------------------------
 auto internal_m2n_get_skew_global(entt::entity id) -> math::vec3
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         return comp->get_skew_global();
     }
@@ -805,7 +883,7 @@ auto internal_m2n_get_skew_global(entt::entity id) -> math::vec3
 
 void internal_m2n_setl_skew_globa(entt::entity id, const math::vec3& value)
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         comp->set_skew_global(value);
     }
@@ -813,7 +891,7 @@ void internal_m2n_setl_skew_globa(entt::entity id, const math::vec3& value)
 
 auto internal_m2n_get_skew_local(entt::entity id) -> math::vec3
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         return comp->get_skew_local();
     }
@@ -823,7 +901,7 @@ auto internal_m2n_get_skew_local(entt::entity id) -> math::vec3
 
 void internal_m2n_set_skew_local(entt::entity id, const math::vec3& value)
 {
-    if(auto comp = save_get_component<transform_component>(id))
+    if(auto comp = safe_get_component<transform_component>(id))
     {
         comp->set_skew_local(value);
     }
@@ -838,14 +916,14 @@ void internal_m2n_apply_explosion_force(entt::entity id,
                                         float upwards_modifier,
                                         force_mode mode)
 {
-    if(auto comp = save_get_component<physics_component>(id))
+    if(auto comp = safe_get_component<physics_component>(id))
     {
         comp->apply_explosion_force(explosion_force, explosion_position, explosion_radius, upwards_modifier, mode);
     }
 }
 void internal_m2n_apply_force(entt::entity id, const math::vec3& value, force_mode mode)
 {
-    if(auto comp = save_get_component<physics_component>(id))
+    if(auto comp = safe_get_component<physics_component>(id))
     {
         comp->apply_force(value, mode);
     }
@@ -853,7 +931,7 @@ void internal_m2n_apply_force(entt::entity id, const math::vec3& value, force_mo
 
 void internal_m2n_apply_torque(entt::entity id, const math::vec3& value, force_mode mode)
 {
-    if(auto comp = save_get_component<physics_component>(id))
+    if(auto comp = safe_get_component<physics_component>(id))
     {
         comp->apply_torque(value, mode);
     }
@@ -863,7 +941,7 @@ void internal_m2n_apply_torque(entt::entity id, const math::vec3& value, force_m
 
 void internal_m2n_animation_blend(entt::entity id, hpp::uuid guid, float seconds)
 {
-    if(auto comp = save_get_component<animation_component>(id))
+    if(auto comp = safe_get_component<animation_component>(id))
     {
         auto& ctx = engine::context();
         auto& am = ctx.get_cached<asset_manager>();
@@ -875,7 +953,7 @@ void internal_m2n_animation_blend(entt::entity id, hpp::uuid guid, float seconds
 
 void internal_m2n_animation_play(entt::entity id)
 {
-    if(auto comp = save_get_component<animation_component>(id))
+    if(auto comp = safe_get_component<animation_component>(id))
     {
         comp->get_player().play();
     }
@@ -883,7 +961,7 @@ void internal_m2n_animation_play(entt::entity id)
 
 void internal_m2n_animation_pause(entt::entity id)
 {
-    if(auto comp = save_get_component<animation_component>(id))
+    if(auto comp = safe_get_component<animation_component>(id))
     {
         comp->get_player().pause();
     }
@@ -891,7 +969,7 @@ void internal_m2n_animation_pause(entt::entity id)
 
 void internal_m2n_animation_resume(entt::entity id)
 {
-    if(auto comp = save_get_component<animation_component>(id))
+    if(auto comp = safe_get_component<animation_component>(id))
     {
         comp->get_player().resume();
     }
@@ -899,7 +977,7 @@ void internal_m2n_animation_resume(entt::entity id)
 
 void internal_m2n_animation_stop(entt::entity id)
 {
-    if(auto comp = save_get_component<animation_component>(id))
+    if(auto comp = safe_get_component<animation_component>(id))
     {
         comp->get_player().stop();
     }
@@ -1029,6 +1107,7 @@ auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
                               internal_call(internal_m2n_create_entity_from_prefab_uid));
         reg.add_internal_call("internal_m2n_create_entity_from_prefab_key",
                               internal_call(internal_m2n_create_entity_from_prefab_key));
+        reg.add_internal_call("internal_m2n_clone_entity", internal_call(internal_m2n_clone_entity));
         reg.add_internal_call("internal_m2n_destroy_entity", internal_call(internal_m2n_destroy_entity));
         reg.add_internal_call("internal_m2n_is_entity_valid", internal_call(internal_m2n_is_entity_valid));
         reg.add_internal_call("internal_m2n_find_entity_by_tag", internal_call(internal_m2n_find_entity_by_tag));
@@ -1039,9 +1118,14 @@ auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
         reg.add_internal_call("internal_m2n_add_component", internal_call(internal_m2n_add_component));
         reg.add_internal_call("internal_m2n_get_component", internal_call(internal_m2n_get_component));
         reg.add_internal_call("internal_m2n_has_component", internal_call(internal_m2n_has_component));
+        reg.add_internal_call("internal_m2n_get_components", internal_call(internal_m2n_get_components));
+        reg.add_internal_call("internal_m2n_remove_component_instance", internal_call(internal_m2n_remove_component_instance));
+
         reg.add_internal_call("internal_m2n_remove_component", internal_call(internal_m2n_remove_component));
         reg.add_internal_call("internal_m2n_get_transform_component",
                               internal_call(internal_m2n_get_transform_component));
+        reg.add_internal_call("internal_m2n_get_tag", internal_call(internal_m2n_get_tag));
+        reg.add_internal_call("internal_m2n_set_tag", internal_call(internal_m2n_set_tag));
     }
 
     {

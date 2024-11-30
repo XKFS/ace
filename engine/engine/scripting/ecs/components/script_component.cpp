@@ -8,6 +8,24 @@
 namespace ace
 {
 
+namespace
+{
+
+struct managed_vector3
+{
+    float x,y,z;
+};
+
+struct managed_contact_point
+{
+    managed_vector3 point{};
+    managed_vector3 normal{};
+    float distance{};
+    float impulse{};
+};
+
+}
+
 void script_component::on_create_component(entt::registry& r, entt::entity e)
 {
     entt::handle entity(r, e);
@@ -44,6 +62,42 @@ void script_component::destroy()
     process_pending_deletions();
 }
 
+void script_component::on_sensor_enter(entt::handle other)
+{
+    for(auto& script : script_components_)
+    {
+        auto& obj = script.scoped->object;
+        on_sensor_enter(obj, other);
+    }
+}
+
+void script_component::on_sensor_exit(entt::handle other)
+{
+    for(auto& script : script_components_)
+    {
+        auto& obj = script.scoped->object;
+        on_sensor_exit(obj, other);
+    }
+}
+
+void script_component::on_collision_enter(entt::handle b, const std::vector<manifold_point>& manifolds, bool use_b)
+{
+    for(auto& script : script_components_)
+    {
+        auto& obj = script.scoped->object;
+        on_collision_enter(obj, b, manifolds, use_b);
+    }
+}
+
+void script_component::on_collision_exit(entt::handle b, const std::vector<manifold_point>& manifolds, bool use_b)
+{
+    for(auto& script : script_components_)
+    {
+        auto& obj = script.scoped->object;
+        on_collision_exit(obj, b, manifolds, use_b);
+    }
+}
+
 void script_component::create(const mono::mono_object& obj)
 {
     auto method = mono::make_method_invoker<void()>(obj, "internal_n2m_on_create");
@@ -65,6 +119,68 @@ void script_component::set_entity(const mono::mono_object& obj, entt::handle e)
 {
     auto method = mono::make_method_invoker<void(entt::entity)>(obj, "internal_n2m_set_entity");
     method(obj, e.entity());
+}
+
+void script_component::on_sensor_enter(const mono::mono_object& obj, entt::handle other)
+{
+    auto method = mono::make_method_invoker<void(entt::entity)>(obj, "internal_n2m_on_sensor_enter");
+    method(obj, other.entity());
+}
+
+void script_component::on_sensor_exit(const mono::mono_object& obj, entt::handle other)
+{
+    auto method = mono::make_method_invoker<void(entt::entity)>(obj, "internal_n2m_on_sensor_exit");
+    method(obj, other.entity());
+}
+
+
+void script_component::on_collision_enter(const mono::mono_object& obj, entt::handle b, const std::vector<manifold_point>& manifolds, bool use_b)
+{
+    std::vector<managed_contact_point> points;
+    points.reserve(manifolds.size());
+    for(const auto& manifold : manifolds)
+    {
+        auto& point = points.emplace_back();
+        if(use_b)
+        {
+            point.point = {manifold.b.x, manifold.b.y, manifold.b.z};
+            point.normal = {manifold.normal_on_b.x, manifold.normal_on_b.y, manifold.normal_on_b.z};
+        }
+        else
+        {
+            point.point = {manifold.a.x, manifold.a.y, manifold.a.z};
+            point.normal = {manifold.normal_on_a.x, manifold.normal_on_a.y, manifold.normal_on_a.z};
+        }
+        point.distance = manifold.distance;
+        point.impulse = manifold.impulse;
+    }
+
+    auto method = mono::make_method_invoker<void(entt::entity, const std::vector<managed_contact_point>&)>(obj, "internal_n2m_on_collision_enter");
+    method(obj, b.entity(), points);
+}
+
+void script_component::on_collision_exit(const mono::mono_object& obj, entt::handle b, const std::vector<manifold_point>& manifolds, bool use_b)
+{
+    std::vector<managed_contact_point> points;
+    points.reserve(manifolds.size());
+    for(const auto& manifold : manifolds)
+    {
+        auto& point = points.emplace_back();
+        if(use_b)
+        {
+            point.point = {manifold.b.x, manifold.b.y, manifold.b.z};
+            point.normal = {manifold.normal_on_b.x, manifold.normal_on_b.y, manifold.normal_on_b.z};
+        }
+        else
+        {
+            point.point = {manifold.a.x, manifold.a.y, manifold.a.z};
+            point.normal = {manifold.normal_on_a.x, manifold.normal_on_a.y, manifold.normal_on_a.z};
+        }
+        point.distance = manifold.distance;
+        point.impulse = manifold.impulse;
+    }
+    auto method = mono::make_method_invoker<void(entt::entity, const std::vector<managed_contact_point>&)>(obj, "internal_n2m_on_collision_exit");
+    method(obj, b.entity(), points);
 }
 
 void script_component::process_pending_deletions()
@@ -176,13 +292,31 @@ auto script_component::add_native_component(const mono::mono_type& type) -> scri
     return script_obj;
 }
 
+auto script_component::get_script_components(const mono::mono_type& type) -> std::vector<mono::mono_object>
+{
+    std::vector<mono::mono_object> result;
+    for(const auto& component : script_components_)
+    {
+        const auto& comp_type = component.scoped->object.get_type();
+
+        if(comp_type.get_internal_ptr() == type.get_internal_ptr() || comp_type.is_derived_from(type))
+        {
+            result.emplace_back(static_cast<mono::mono_object&>(component.scoped->object));
+        }
+    }
+
+    return result;
+}
+
 auto script_component::get_script_component(const mono::mono_type& type) -> script_object
 {
     auto it = std::find_if(std::begin(script_components_),
                            std::end(script_components_),
-                           [&](const auto& rhs)
+                           [&](const auto& component)
                            {
-                               return rhs.scoped->object.get_type().get_internal_ptr() == type.get_internal_ptr();
+                               const auto& comp_type = component.scoped->object.get_type();
+                               return comp_type.get_internal_ptr() == type.get_internal_ptr() ||
+                                      comp_type.is_derived_from(type);
                            });
 
     if(it != std::end(script_components_))
@@ -197,9 +331,11 @@ auto script_component::get_native_component(const mono::mono_type& type) -> scri
 {
     auto it = std::find_if(std::begin(native_components_),
                            std::end(native_components_),
-                           [&](const auto& rhs)
+                           [&](const auto& component)
                            {
-                               return rhs.scoped->object.get_type().get_internal_ptr() == type.get_internal_ptr();
+                               const auto& comp_type = component.scoped->object.get_type();
+                               return comp_type.get_internal_ptr() == type.get_internal_ptr() ||
+                                      comp_type.is_derived_from(type);
                            });
 
     if(it != std::end(native_components_))
@@ -220,15 +356,34 @@ auto script_component::remove_script_component(const mono::mono_object& obj) -> 
 
     std::erase_if(script_components_to_start_, checker);
 
-    auto it = std::find_if(std::begin(script_components_),
-                           std::end(script_components_),
-                           [&](const auto& rhs)
-                           {
-                               return rhs.scoped->object.get_internal_ptr() == obj.get_internal_ptr();
-                           });
+    auto it = std::find_if(std::begin(script_components_), std::end(script_components_), checker);
 
     if(it != std::end(script_components_))
     {
+        set_entity(obj, {});
+
+        it->marked_for_destroy = true;
+        return true;
+    }
+
+    return false;
+}
+
+auto script_component::remove_script_component(const mono::mono_type& type) -> bool
+{
+    auto checker = [&](const auto& rhs)
+    {
+        return rhs.scoped->object.get_type().get_internal_ptr() == type.get_internal_ptr();
+    };
+    std::erase_if(script_components_to_create_, checker);
+
+    std::erase_if(script_components_to_start_, checker);
+
+    auto it = std::find_if(std::begin(script_components_), std::end(script_components_), checker);
+
+    if(it != std::end(script_components_))
+    {
+        auto& obj = it->scoped->object;
         set_entity(obj, {});
 
         it->marked_for_destroy = true;
@@ -249,6 +404,27 @@ auto script_component::remove_native_component(const mono::mono_object& obj) -> 
 
     if(it != std::end(native_components_))
     {
+        set_entity(obj, {});
+
+        it->marked_for_destroy = true;
+        return true;
+    }
+
+    return false;
+}
+
+auto script_component::remove_native_component(const mono::mono_type& type) -> bool
+{
+    auto it = std::find_if(std::begin(native_components_),
+                           std::end(native_components_),
+                           [&](const auto& rhs)
+                           {
+                               return rhs.scoped->object.get_type().get_internal_ptr() == type.get_internal_ptr();
+                           });
+
+    if(it != std::end(native_components_))
+    {
+        auto& obj = it->scoped->object;
         set_entity(obj, {});
 
         it->marked_for_destroy = true;

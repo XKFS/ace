@@ -216,7 +216,7 @@ void handle_regular_collision(btPersistentManifold* manifold,
             APPLOG_INFO("Contact Point B: {}", point.b);
             APPLOG_INFO("Normal on A: {}", point.normal_on_a);
             APPLOG_INFO("Normal on B: {}", point.normal_on_b);
-            APPLOG_INFO("Applied Impulse: {}", point.impulse);
+            APPLOG_INFO("Impulse: {}", point.impulse);
             APPLOG_INFO("Distance: {}", point.distance);
         }
     }
@@ -304,6 +304,57 @@ struct world
     std::shared_ptr<btConstraintSolver> solver;
     std::shared_ptr<btDefaultCollisionConfiguration> collision_config;
     std::shared_ptr<btDiscreteDynamicsWorld> dynamics_world;
+
+    bool in_simulate{};
+    std::vector<std::pair<rigidbody, bool>> bodies_for_processing;
+
+    void add_rigidbody(const rigidbody& body)
+    {
+        if(in_simulate)
+        {
+            bodies_for_processing.emplace_back(body, true);
+        }
+        else
+        {
+            dynamics_world->addRigidBody(body.internal.get());
+        }
+    }
+
+    void remove_rigidbody(const rigidbody& body)
+    {
+        if(in_simulate)
+        {
+            bodies_for_processing.emplace_back(body, false);
+        }
+        else
+        {
+            dynamics_world->removeRigidBody(body.internal.get());
+        }
+    }
+
+    void process_pending_actions()
+    {
+        auto pending = std::move(bodies_for_processing);
+        for(auto& kvp : pending)
+        {
+            auto body = kvp.first;
+            auto add = kvp.second;
+            if(add)
+            {
+                dynamics_world->addRigidBody(body.internal.get());
+            }
+            else
+            {
+                dynamics_world->removeRigidBody(body.internal.get());
+            }
+        }
+    }
+    void simulate(delta_t dt)
+    {
+        in_simulate = true;
+        dynamics_world->stepSimulation(dt.count());
+        in_simulate = false;
+    }
 };
 
 auto create_dynamics_world() -> bullet::world
@@ -515,7 +566,7 @@ void make_rigidbody(bullet::world& world, entt::handle entity, physics_component
     update_rigidbody_material(body, comp);
     update_rigidbody_sensor(body, comp);
 
-    world.dynamics_world->addRigidBody(body.internal.get());
+    world.add_rigidbody(body);
 }
 
 void destroy_phyisics_body(bullet::world& world, entt::handle entity, bool from_physics_component)
@@ -524,9 +575,7 @@ void destroy_phyisics_body(bullet::world& world, entt::handle entity, bool from_
 
     if(body && body->internal)
     {
-        world.dynamics_world->removeRigidBody(body->internal.get());
-        body->internal = {};
-        body->internal_shape = {};
+        world.remove_rigidbody(*body);
     }
 
     if(from_physics_component)
@@ -628,14 +677,14 @@ void sync_transforms(bullet::world& world, physics_component& comp, const math::
 auto sync_transforms(physics_component& comp, math::transform& transform) -> bool
 {
     auto owner = comp.get_owner();
-    auto& body = owner.get<bullet::rigidbody>();
+    auto body = owner.try_get<bullet::rigidbody>();
 
-    if(!body.internal)
+    if(!body || !body->internal)
     {
         return false;
     }
 
-    const auto& bt_trans = body.internal->getWorldTransform();
+    const auto& bt_trans = body->internal->getWorldTransform();
     auto p = bullet::from_bullet(bt_trans.getOrigin());
     auto q = bullet::from_bullet(bt_trans.getRotation());
 
@@ -661,16 +710,16 @@ void to_physics(bullet::world& world, transform_component& transform, physics_co
     }
 }
 
-void from_physics(transform_component& transform, physics_component& comp)
+void from_physics(bullet::world& world, transform_component& transform, physics_component& comp)
 {
     auto transform_global = transform.get_transform_global();
     if(sync_transforms(comp, transform_global))
     {
         transform.set_transform_global(transform_global);
-    }
 
-    transform.set_dirty(system_id, false);
-    comp.set_dirty(system_id, false);
+        transform.set_dirty(system_id, false);
+        comp.set_dirty(system_id, false);
+    }
 }
 
 auto add_force(btRigidBody* body, const btVector3& force, force_mode mode) -> bool
@@ -688,8 +737,8 @@ auto add_force(btRigidBody* body, const btVector3& force, force_mode mode) -> bo
 
         case force_mode::acceleration:
         { // Force independent of mass
-            btVector3 accelerationForce = force * body->getMass();
-            body->applyCentralForce(accelerationForce);
+            btVector3 acceleration_force = force * body->getMass();
+            body->applyCentralForce(acceleration_force);
             break;
         }
 
@@ -750,15 +799,6 @@ auto add_torque(btRigidBody* body, const btVector3& torque, force_mode mode) -> 
 
 void bullet_backend::on_create_component(entt::registry& r, entt::entity e)
 {
-    // entt::handle entity(r, e);
-
-    // auto world = r.ctx().find<bullet::world>();
-    // if(world)
-    // {
-    //     entt::handle entity(r, e);
-    //     auto& comp = entity.get<physics_component>();
-    //     recreate_phyisics_body(*world, comp, true);
-    // }
 }
 
 void bullet_backend::on_destroy_component(entt::registry& r, entt::entity e)
@@ -837,7 +877,6 @@ void bullet_backend::apply_explosion_force(physics_component& comp,
             {
                 wake_up(*bbody);
             }
-
         }
     }
 }
@@ -945,6 +984,8 @@ void bullet_backend::on_frame_update(rtti::context& ctx, delta_t dt)
     auto& registry = *ec.get_scene().registry;
     auto& world = registry.ctx().get<bullet::world>();
 
+    world.process_pending_actions();
+
     // update phyiscs spatial properties from transform
     registry.view<transform_component, physics_component>().each(
         [&](auto e, auto&& transform, auto&& rigidbody)
@@ -953,14 +994,15 @@ void bullet_backend::on_frame_update(rtti::context& ctx, delta_t dt)
         });
 
     // update physics
-    world.dynamics_world->stepSimulation(dt.count());
-    // world.collision_checker.process_manifolds(world.dynamics_world.get());
+    world.simulate(dt);
     // update transform from phyiscs interpolated spatial properties
     registry.view<transform_component, physics_component>().each(
         [&](auto e, auto&& transform, auto&& rigidbody)
         {
-            from_physics(transform, rigidbody);
+            from_physics(world, transform, rigidbody);
         });
+
+    world.process_pending_actions();
 }
 
 void bullet_backend::draw_system_gizmos(rtti::context& ctx, const camera& cam, gfx::dd_raii& dd)

@@ -123,7 +123,7 @@ auto scene::create_entity(const std::string& tag, entt::handle parent) -> entt::
 
 auto scene::clone_entity(entt::handle clone_from, bool keep_parent) -> entt::handle
 {
-    APPLOG_INFO_PERF(std::chrono::microseconds);
+    // APPLOG_INFO_PERF(std::chrono::microseconds);
 
     auto* reg = clone_from.registry();
     entt::handle clone_to(*reg, reg->create());

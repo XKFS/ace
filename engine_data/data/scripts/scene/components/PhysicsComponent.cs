@@ -1,5 +1,8 @@
 using System;
+using System.Globalization;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Ace
 {
@@ -25,12 +28,86 @@ public enum ForceMode : byte
     // Interprets the parameter as a direct angular velocity change (measured in degrees per second), and changes the
     // angular velocity by the value of torque. The effect doesn't depend on the mass of the body and the simulation
     // step length.
-    [Tooltip(
-@"Interprets the parameter as a direct angular velocity change (measured in degrees per second), and changes the 
-angular velocity by the value of torque. The effect doesn't depend on the mass of the body and the simulation
-step length."
-    )]
     VelocityChange
+}
+
+
+[StructLayout(LayoutKind.Sequential)]
+public struct ContactPoint : IFormattable
+{
+    Vector3 point;
+    Vector3 normal;
+    float distance;
+    float impulse;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public override string ToString()
+    {
+        return ToString(null, null);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public string ToString(string format)
+    {
+        return ToString(format, null);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public string ToString(string format, IFormatProvider formatProvider)
+    {
+        if (string.IsNullOrEmpty(format))
+        {
+            format = "F2";
+        }
+
+        if (formatProvider == null)
+        {
+            formatProvider = CultureInfo.InvariantCulture.NumberFormat;
+        }
+
+        return string.Format(CultureInfo.InvariantCulture.NumberFormat, "(point={0}, normal={1}, distance={2}, impulse={3})",
+            point.ToString(format, formatProvider),
+            normal.ToString(format, formatProvider),
+            distance.ToString(format, formatProvider),
+            impulse.ToString(format, formatProvider));
+    }
+};
+
+public class Collision : IFormattable
+{
+    public Entity entity;
+    public ContactPoint[] contacts;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public override string ToString()
+    {
+        return ToString(null, null);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public string ToString(string format)
+    {
+        return ToString(format, null);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public string ToString(string format, IFormatProvider formatProvider)
+    {
+        if (string.IsNullOrEmpty(format))
+        {
+            format = "F2";
+        }
+
+        if (formatProvider == null)
+        {
+            formatProvider = CultureInfo.InvariantCulture.NumberFormat;
+        }
+
+        return string.Format(CultureInfo.InvariantCulture.NumberFormat, "(entity={0}, contacts={1})",
+            entity.tag,
+            string.Join(",",
+                          contacts.Select(x => x.ToString()).ToArray()));
+    }
 }
 
 public class PhysicsComponent : Component

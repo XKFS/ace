@@ -295,9 +295,6 @@ void script_system::unload_app_domain()
 
 void script_system::on_create_component(entt::registry& r, entt::entity e)
 {
-    // auto& comp = r.get<script_component>(e);
-    // comp.create();
-    // comp.start();
 }
 void script_system::on_destroy_component(entt::registry& r, entt::entity e)
 {
@@ -572,25 +569,117 @@ auto script_system::get_lib_compiled_key(const std::string& protocol) -> std::st
 
 void script_system::on_sensor_enter(entt::handle sensor, entt::handle other)
 {
+    if(!other || !sensor)
+    {
+        return;
+    }
     auto comp = sensor.try_get<script_component>();
     if(!comp)
     {
         return;
     }
 
-
+    try
+    {
+        comp->on_sensor_enter(other);
+    }
+    catch(const mono::mono_exception& e)
+    {
+        APPLOG_ERROR("{}", e.what());
+    }
 }
 
 void script_system::on_sensor_exit(entt::handle sensor, entt::handle other)
 {
+    if(!other || !sensor)
+    {
+        return;
+    }
+
+    auto comp = sensor.try_get<script_component>();
+    if(!comp)
+    {
+        return;
+    }
+
+    try
+    {
+        comp->on_sensor_exit(other);
+    }
+    catch(const mono::mono_exception& e)
+    {
+        APPLOG_ERROR("{}", e.what());
+    }
 }
 
 void script_system::on_collision_enter(entt::handle a, entt::handle b, const std::vector<manifold_point>& manifolds)
 {
+    if(!a || !b)
+    {
+        return;
+    }
+
+    try
+    {
+        {
+            auto comp = a.try_get<script_component>();
+            if(!comp)
+            {
+                return;
+            }
+
+            comp->on_collision_enter(b, manifolds, true);
+        }
+
+        {
+            auto comp = b.try_get<script_component>();
+            if(!comp)
+            {
+                return;
+            }
+
+            comp->on_collision_enter(a, manifolds, false);
+        }
+    }
+    catch(const mono::mono_exception& e)
+    {
+        APPLOG_ERROR("{}", e.what());
+    }
 }
 
 void script_system::on_collision_exit(entt::handle a, entt::handle b, const std::vector<manifold_point>& manifolds)
 {
+    if(!a || !b)
+    {
+        return;
+    }
+
+    try
+    {
+        {
+            auto comp = a.try_get<script_component>();
+            if(!comp)
+            {
+                return;
+            }
+
+            comp->on_collision_exit(b, manifolds, true);
+        }
+
+        {
+            auto comp = b.try_get<script_component>();
+            if(!comp)
+            {
+                return;
+            }
+
+            comp->on_collision_exit(a, manifolds, false);
+        }
+    }
+    catch(const mono::mono_exception& e)
+    {
+        APPLOG_ERROR("{}", e.what());
+    }
 }
 
 } // namespace ace

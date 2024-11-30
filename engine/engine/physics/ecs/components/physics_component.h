@@ -108,8 +108,8 @@ struct manifold_point
     math::vec3 b{};
     math::vec3 normal_on_a{};
     math::vec3 normal_on_b{};
-    float impulse{};
     float distance{};
+    float impulse{};
 };
 
 /**

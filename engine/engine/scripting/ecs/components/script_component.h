@@ -3,6 +3,8 @@
 
 #include <engine/assets/asset_handle.h>
 #include <engine/ecs/components/basic_component.h>
+#include <engine/physics/ecs/components/physics_component.h>
+
 #include <engine/scripting/script.h>
 #include <monort/monort.h>
 
@@ -51,8 +53,12 @@ public:
     auto add_native_component(const mono::mono_type& type) -> script_object;
 
     auto remove_script_component(const mono::mono_object& obj) -> bool;
-    auto remove_native_component(const mono::mono_object& obj) -> bool;
+    auto remove_script_component(const mono::mono_type& type) -> bool;
 
+    auto remove_native_component(const mono::mono_object& obj) -> bool;
+    auto remove_native_component(const mono::mono_type& type) -> bool;
+
+    auto get_script_components(const mono::mono_type& type) -> std::vector<mono::mono_object>;
     auto get_script_component(const mono::mono_type& type) -> script_object;
     auto get_native_component(const mono::mono_type& type) -> script_object;
 
@@ -63,6 +69,14 @@ public:
     void start();
     void destroy();
 
+
+
+    void on_sensor_enter(entt::handle other);
+    void on_sensor_exit(entt::handle other);
+
+    void on_collision_enter(entt::handle other, const std::vector<manifold_point>& manifolds, bool use_b);
+    void on_collision_exit(entt::handle other, const std::vector<manifold_point>& manifolds, bool use_b);
+
 private:
 
 
@@ -70,7 +84,11 @@ private:
     void start(const mono::mono_object& obj);
     void destroy(const mono::mono_object& obj);
     void set_entity(const mono::mono_object& obj, entt::handle e);
+    void on_sensor_enter(const mono::mono_object& obj, entt::handle other);
+    void on_sensor_exit(const mono::mono_object& obj, entt::handle other);
 
+    void on_collision_enter(const mono::mono_object& obj, entt::handle other, const std::vector<manifold_point>& manifolds, bool use_b);
+    void on_collision_exit(const mono::mono_object& obj, entt::handle other, const std::vector<manifold_point>& manifolds, bool use_b);
 
     script_components_t script_components_;
     script_components_t script_components_to_create_;

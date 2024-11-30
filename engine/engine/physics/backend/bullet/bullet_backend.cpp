@@ -865,41 +865,12 @@ void bullet_backend::apply_torque(physics_component& comp, const math::vec3& tor
     if(auto bbody = owner.try_get<bullet::rigidbody>())
     {
         auto vector = bullet::to_bullet(torque);
-        if(vector.fuzzyZero())
-        {
-            return;
-        }
         const auto& body = bbody->internal;
-        switch(mode)
+
+        if(add_torque(body.get(), vector, mode))
         {
-            case force_mode::force: // Continuous torque
-                body->applyTorque(vector);
-                break;
-
-            case force_mode::acceleration: // Angular acceleration
-            {
-                btVector3 inertia_tensor = body->getInvInertiaDiagLocal();
-                btVector3 angular_acceleration(
-                    inertia_tensor.getX() != 0 ? torque.x * (1.0f / inertia_tensor.getX()) : 0.0f,
-                    inertia_tensor.getY() != 0 ? torque.y * (1.0f / inertia_tensor.getY()) : 0.0f,
-                    inertia_tensor.getZ() != 0 ? torque.z * (1.0f / inertia_tensor.getZ()) : 0.0f);
-                body->applyTorque(angular_acceleration);
-            }
-            break;
-
-            case force_mode::impulse: // Angular impulse
-                body->applyTorqueImpulse(vector);
-                break;
-
-            case force_mode::velocity_change: // Direct angular velocity change
-            {
-                btVector3 new_velocity = body->getLinearVelocity() + vector; // Accumulate velocity
-                body->setAngularVelocity(new_velocity);
-                break;
-            }
+            wake_up(*bbody);
         }
-
-        wake_up(*bbody);
     }
 }
 

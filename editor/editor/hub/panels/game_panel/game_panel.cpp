@@ -2,6 +2,7 @@
 #include "../panels_defs.h"
 
 #include <engine/ecs/ecs.h>
+#include <engine/events.h>
 #include <engine/rendering/ecs/components/camera_component.h>
 #include <engine/rendering/ecs/systems/rendering_system.h>
 
@@ -40,18 +41,24 @@ void game_panel::on_frame_render(rtti::context& ctx, delta_t dt)
 
 void game_panel::on_frame_ui_render(rtti::context& ctx, const char* name)
 {
+    auto& ev = ctx.get_cached<events>();
     if(ImGui::Begin(name, nullptr, ImGuiWindowFlags_MenuBar))
     {
         // ImGui::WindowTimeBlock block(ImGui::GetFont(ImGui::Font::Mono));
+        ev.is_input_allowed = ImGui::IsWindowFocused();
 
         set_visible(true);
         draw_ui(ctx);
+
     }
     else
     {
+        ev.is_input_allowed = false;
         set_visible(false);
     }
     ImGui::End();
+
+
 }
 
 void game_panel::draw_ui(rtti::context& ctx)

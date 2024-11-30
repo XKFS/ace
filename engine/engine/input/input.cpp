@@ -1,4 +1,6 @@
 #include "input.h"
+#include <engine/engine.h>
+#include <engine/events.h>
 
 #include <logging/logging.h>
 
@@ -27,7 +29,6 @@ auto input_system::init(rtti::context& ctx) -> bool
     mapper.map("Submit", input::key_code::enter, 1.0f);
     mapper.map("Cancel", input::key_code::escape, 1.0f);
 
-
     // mapper.map("Test", input::key_code::r, {input::key_code::lctrl});
 
     return true;
@@ -44,9 +45,12 @@ auto input_system::get_analog_value(const input::action_id_t& action) const -> f
 {
     float analog = 0.0f;
 
-    for(const auto& device : manager.get_all_devices())
+    if(is_input_allowed())
     {
-        analog += mapper.get_analog_value(action, *device);
+        for(const auto& device : manager.get_all_devices())
+        {
+            analog += mapper.get_analog_value(action, *device);
+        }
     }
 
     return analog;
@@ -56,9 +60,12 @@ auto input_system::get_digital_value(const input::action_id_t& action) const -> 
 {
     bool digital = false;
 
-    for(const auto& device : manager.get_all_devices())
+    if(is_input_allowed())
     {
-        digital |= mapper.get_digital_value(action, *device);
+        for(const auto& device : manager.get_all_devices())
+        {
+            digital |= mapper.get_digital_value(action, *device);
+        }
     }
 
     return digital;
@@ -67,9 +74,12 @@ auto input_system::is_pressed(const input::action_id_t& action) const -> bool
 {
     bool pressed = false;
 
-    for(const auto& device : manager.get_all_devices())
+    if(is_input_allowed())
     {
-        pressed |= mapper.is_pressed(action, *device);
+        for(const auto& device : manager.get_all_devices())
+        {
+            pressed |= mapper.is_pressed(action, *device);
+        }
     }
 
     return pressed;
@@ -79,9 +89,12 @@ auto input_system::is_released(const input::action_id_t& action) const -> bool
 {
     bool released = false;
 
-    for(const auto& device : manager.get_all_devices())
+    if(is_input_allowed())
     {
-        released |= mapper.is_released(action, *device);
+        for(const auto& device : manager.get_all_devices())
+        {
+            released |= mapper.is_released(action, *device);
+        }
     }
 
     return released;
@@ -91,12 +104,22 @@ auto input_system::is_down(const input::action_id_t& action) const -> bool
 {
     bool down = false;
 
-    for(const auto& device : manager.get_all_devices())
+    if(is_input_allowed())
     {
-        down |= mapper.is_down(action, *device);
+        for(const auto& device : manager.get_all_devices())
+        {
+            down |= mapper.is_down(action, *device);
+        }
     }
 
     return down;
+}
+
+auto input_system::is_input_allowed() -> bool
+{
+    auto& ctx = engine::context();
+    auto& ev = ctx.get_cached<events>();
+    return ev.is_input_allowed;
 }
 
 } // namespace ace

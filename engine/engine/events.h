@@ -41,6 +41,8 @@ struct events
 
     bool is_playing{};
     bool is_paused{};
+
+    bool is_input_allowed{true};
 };
 
 struct deploy

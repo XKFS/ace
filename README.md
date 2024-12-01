@@ -4,6 +4,7 @@
 ![linux](https://github.com/volcoma/ace/actions/workflows/linux.yml/badge.svg)
 ![macos](https://github.com/volcoma/ace/actions/workflows/macos.yml/badge.svg)
 
+
 **Ace Engine** is a cutting-edge, cross-platform game engine and WYSIWYG (What You See Is What You Get) editor, crafted in modern C++20. It empowers developers to create high-performance, immersive games with ease.
 
 ## Features
@@ -25,6 +26,10 @@
     - Most 3D mesh formats (e.g., OBJ, FBX, GLTF).
     - Common audio formats (e.g., WAV, MP3, OGG).
   - **Graphics API Support**: Fully supports DirectX 11, DirectX 12, Vulkan, and OpenGL for maximum flexibility and performance.
+
+## Documentation
+Scripting documentation can be found here - [Script Api](https://volcoma.github.io/ace-script-api/html/index.html)
+
 
 
 ## Current Status

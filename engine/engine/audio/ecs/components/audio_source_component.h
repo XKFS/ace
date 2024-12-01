@@ -117,6 +117,7 @@ public:
      */
     auto get_playback_duration() const -> audio::duration_t;
 
+
     /**
      * @brief Starts playing the audio source.
      */
@@ -171,13 +172,13 @@ public:
      * @brief Sets the audio clip for the audio source.
      * @param sound The audio clip to set.
      */
-    void set_sound(asset_handle<audio_clip> sound);
+    void set_clip(const asset_handle<audio_clip>& clip);
 
     /**
      * @brief Gets the audio clip of the audio source.
      * @return The asset handle to the audio clip.
      */
-    auto get_sound() const -> asset_handle<audio_clip>;
+    auto get_clip() const -> const asset_handle<audio_clip>&;
 
     /**
      * @brief Checks if the audio source has a valid sound bound.
@@ -203,8 +204,8 @@ private:
      */
     auto create_source() -> bool;
 
-    bool auto_play_ = true;                 ///< Indicates if the audio source should autoplay.
-    bool loop_ = true;                      ///< Indicates if the audio source should loop.
+    bool auto_play_ = false;                ///< Indicates if the audio source should autoplay.
+    bool loop_ = false;                     ///< Indicates if the audio source should loop.
     bool muted_ = false;                    ///< Indicates if the audio source is muted.
     float volume_ = 1.0f;                   ///< The volume level of the audio source. Range: [0.0, 1.0].
     float pitch_ = 1.0f;                    ///< The pitch level of the audio source. Range: [0.5, 2.0].

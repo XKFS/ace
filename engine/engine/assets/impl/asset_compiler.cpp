@@ -564,6 +564,11 @@ auto compile<script_library>(asset_manager& am, const fs::path& key, const fs::p
 
     temp /= script_system::get_lib_name(protocol);
 
+    auto temp_xml = temp;
+    temp_xml.replace_extension(".xml");
+    auto output_xml = output;
+    output_xml.replace_extension(".xml");
+
     auto temp_mdb = temp;
     temp_mdb.concat(".mdb");
     auto output_mdb = output;
@@ -572,7 +577,7 @@ auto compile<script_library>(asset_manager& am, const fs::path& key, const fs::p
     std::string str_output = temp.string();
 
     params.output_name = str_output;
-
+    params.output_doc_name = temp_xml.string();
     if(params.files.empty())
     {
         fs::remove(output, err);
@@ -586,11 +591,7 @@ auto compile<script_library>(asset_manager& am, const fs::path& key, const fs::p
         return result;
     }
 
-#ifndef NDEBUG
-    params.debug = true;
-#else
-    params.debug = false;
-#endif
+    params.debug = script_system::get_script_debug_mode();
 
     std::string error;
     auto cmd = mono::create_compile_command_detailed(params);
@@ -608,8 +609,11 @@ auto compile<script_library>(asset_manager& am, const fs::path& key, const fs::p
         APPLOG_INFO("Successful compilation of {0}", output.string());
         fs::copy_file(temp, output, fs::copy_options::overwrite_existing, err);
         fs::copy_file(temp_mdb, output_mdb, fs::copy_options::overwrite_existing, err);
+        fs::copy_file(temp_xml, output_xml, fs::copy_options::overwrite_existing, err);
 
         fs::remove(temp_mdb, err);
+        fs::remove(temp_xml, err);
+
     }
     fs::remove(temp, err);
 

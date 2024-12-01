@@ -18,6 +18,8 @@ namespace ace
 struct script_system
 {
     static void set_needs_recompile(const std::string& protocol);
+    static auto get_script_debug_mode() -> bool;
+    static void set_script_debug_mode(bool debug);
     static auto get_lib_name(const std::string& protocol) -> std::string;
     static auto get_lib_data_key(const std::string& protocol) -> std::string;
     static auto get_lib_compiled_key(const std::string& protocol) -> std::string;

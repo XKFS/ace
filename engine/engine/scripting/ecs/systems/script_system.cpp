@@ -14,9 +14,10 @@
 #include <monopp/mono_property_invoker.h>
 
 #include <core/base/platform/config.hpp>
+#include <simulation/simulation.h>
 #include <filesystem/filesystem.h>
 #include <logging/logging.h>
-
+#include <tweeny/tweeny.h>
 namespace ace
 {
 namespace
@@ -27,6 +28,9 @@ std::atomic_bool initted{};
 std::atomic_bool needs_recompile{};
 std::mutex container_mutex;
 std::set<std::string> needs_to_recompile;
+
+std::atomic_bool debug_mode{true};
+
 
 auto print_assembly_info(const mono::mono_assembly& assembly)
 {
@@ -388,6 +392,8 @@ void script_system::on_play_end(rtti::context& ctx)
     auto& scn = ec.get_scene();
     auto& registry = *scn.registry;
 
+    tweeny::scope::stop_all("script");
+
     try
     {
         registry.view<script_component>().each(
@@ -451,13 +457,17 @@ void script_system::on_frame_update(rtti::context& ctx, delta_t dt)
         struct update_data
         {
             float delta_time{};
+            float time_scale{};
         };
 
         if(ev.is_playing && !ev.is_paused)
         {
+            auto& sim = ctx.get_cached<simulation>();
+            auto time_scale = sim.get_time_scale();
+
             update_data data;
             data.delta_time = dt.count();
-
+            data.time_scale = time_scale;
             auto method_thunk =
                 mono::make_method_invoker<void(update_data)>(cache_.update_manager_type, "internal_n2m_update");
             method_thunk(data);
@@ -549,6 +559,17 @@ void script_system::set_needs_recompile(const std::string& protocol)
     std::lock_guard<std::mutex> lock(container_mutex);
     needs_to_recompile.emplace(protocol);
 }
+
+auto script_system::get_script_debug_mode() -> bool
+{
+    return debug_mode;
+}
+
+void script_system::set_script_debug_mode(bool debug)
+{
+    debug_mode = debug;
+}
+
 
 auto script_system::get_lib_name(const std::string& protocol) -> std::string
 {

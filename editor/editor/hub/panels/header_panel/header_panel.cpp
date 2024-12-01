@@ -112,17 +112,17 @@ void header_panel::draw_play_toolbar(rtti::context& ctx, float headerSize)
 
     float width = ImGui::GetContentRegionAvail().x;
 
-    auto windowPos = ImGui::GetWindowPos();
-    auto windowSize = ImGui::GetWindowSize();
+    auto window_pos = ImGui::GetWindowPos();
+    auto window_size = ImGui::GetWindowSize();
     // Add a poly background for the logo.
-    const ImVec2 logoBounds = ImVec2(500, headerSize * 0.5f);
-    const ImVec2 logoPos = ImVec2(windowPos.x + windowSize.x * 0.5f - logoBounds.x * 0.5f, windowPos.y);
+    const ImVec2 logo_bounds = ImVec2(500, headerSize * 0.5f);
+    const ImVec2 logo_pos = ImVec2(window_pos.x + window_size.x * 0.5f - logo_bounds.x * 0.5f, window_pos.y);
 
-    ImVec2 points[5] = {ImVec2(logoPos.x, logoPos.y),
-                        ImVec2(logoPos.x + 20, logoPos.y + logoBounds.y + 4),
-                        ImVec2(logoPos.x + logoBounds.x - 20, logoPos.y + logoBounds.y + 4),
-                        ImVec2(logoPos.x + logoBounds.x, logoPos.y),
-                        ImVec2(logoPos.x, logoPos.y)};
+    ImVec2 points[5] = {ImVec2(logo_pos.x, logo_pos.y),
+                        ImVec2(logo_pos.x + 20, logo_pos.y + logo_bounds.y + 4),
+                        ImVec2(logo_pos.x + logo_bounds.x - 20, logo_pos.y + logo_bounds.y + 4),
+                        ImVec2(logo_pos.x + logo_bounds.x, logo_pos.y),
+                        ImVec2(logo_pos.x, logo_pos.y)};
 
     const ImU32 polyBackground = ImGui::GetColorU32(ImGuiCol_MenuBarBg);
     auto polyBackgroundBorderColor = polyBackground;
@@ -146,21 +146,21 @@ void header_panel::draw_play_toolbar(rtti::context& ctx, float headerSize)
     //                                                      polyBackgroundBorderColor);
 
     auto logo = fmt::format("Ace Editor <{}>", gfx::get_renderer_name(gfx::get_renderer_type()));
-    auto logoSize = ImGui::CalcTextSize(logo.c_str());
+    auto logo_size = ImGui::CalcTextSize(logo.c_str());
     // Add animated logo.
-    const ImVec2 logoMin =
-        ImVec2(logoPos.x + logoBounds.x * 0.5f - logoSize.x * 0.5f, logoPos.y + (logoBounds.y - logoSize.y) * 0.5f);
-    const ImVec2 logoMax = ImVec2(logoMin.x + logoSize.x, logoMin.y + logoSize.y);
-    auto logoBorderColor = ImGui::GetColorU32(ImGuiCol_Text);
-    ImGui::GetWindowDrawList()->AddText(logoMin, logoBorderColor, logo.c_str());
+    const ImVec2 logo_min =
+        ImVec2(logo_pos.x + logo_bounds.x * 0.5f - logo_size.x * 0.5f, logo_pos.y + (logo_bounds.y - logo_size.y) * 0.5f);
+    const ImVec2 logo_max = ImVec2(logo_min.x + logo_size.x, logo_min.y + logo_size.y);
+    auto logo_border_color = ImGui::GetColorU32(ImGuiCol_Text);
+    ImGui::GetWindowDrawList()->AddText(logo_min, logo_border_color, logo.c_str());
 
     const auto& style = ImGui::GetStyle();
-    auto framePadding = style.FramePadding;
-    auto itemSpacing = style.ItemSpacing;
+    auto frame_padding = style.FramePadding;
+    auto item_spacing = style.ItemSpacing;
     ImGui::AlignedItem(0.5f,
                        width,
                        ImGui::CalcTextSize(ICON_MDI_PLAY ICON_MDI_PAUSE ICON_MDI_SKIP_NEXT).x +
-                           style.FramePadding.x * 6 + itemSpacing.x * 2,
+                           frame_padding.x * 6 + item_spacing.x * 2,
                        [&]()
                        {
                            ImGui::BeginGroup();
@@ -209,21 +209,21 @@ void header_panel::draw_play_toolbar(rtti::context& ctx, float headerSize)
                        });
 }
 
-void header_panel::on_frame_ui_render(rtti::context& ctx, float headerSize)
+void header_panel::on_frame_ui_render(rtti::context& ctx, float header_size)
 {
-    ImGuiWindowFlags headerFlags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoBringToFrontOnFocus |
-                                   ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
-                                   ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoDecoration;
+    ImGuiWindowFlags header_flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoBringToFrontOnFocus |
+                                    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                                    ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoDecoration;
     ImGuiViewport* viewport = ImGui::GetMainViewport();
 
     ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x, viewport->WorkPos.y));
-    ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x, headerSize));
+    ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x, header_size));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.0f);
 
     ImGui::SetNextWindowViewport(viewport->ID);
 
-    bool open = ImGui::Begin("HEADER", nullptr, headerFlags);
+    bool open = ImGui::Begin("HEADER", nullptr, header_flags);
 
     ImGui::PopStyleVar();
     ImGui::PopStyleVar();
@@ -236,7 +236,7 @@ void header_panel::on_frame_ui_render(rtti::context& ctx, float headerSize)
         ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::GetColorU32(ImGuiCol_MenuBarBg));
         draw_menubar_child(ctx);
         ImGui::NewLine();
-        draw_play_toolbar(ctx, headerSize);
+        draw_play_toolbar(ctx, header_size);
         ImGui::PopStyleColor();
     }
 

@@ -36,8 +36,8 @@ REFLECT(audio_source_component)
                                                                rttr::metadata("max", 10.0f))
         .property("range", &audio_source_component::get_range, &audio_source_component::set_range)(
             rttr::metadata("pretty_name", "Range"))
-        .property("sound", &audio_source_component::get_sound, &audio_source_component::set_sound)(
-            rttr::metadata("pretty_name", "Sound"));
+        .property("clip", &audio_source_component::get_clip, &audio_source_component::set_clip)(
+            rttr::metadata("pretty_name", "Clip"));
     ;
 }
 
@@ -49,7 +49,7 @@ SAVE(audio_source_component)
     try_save(ar, ser20::make_nvp("pitch", obj.get_pitch()));
     try_save(ar, ser20::make_nvp("volume_rolloff", obj.get_volume_rolloff()));
     try_save(ar, ser20::make_nvp("range", obj.get_range()));
-    try_save(ar, ser20::make_nvp("sound", obj.get_sound()));
+    try_save(ar, ser20::make_nvp("clip", obj.get_clip()));
 }
 SAVE_INSTANTIATE(audio_source_component, ser20::oarchive_associative_t);
 SAVE_INSTANTIATE(audio_source_component, ser20::oarchive_binary_t);
@@ -92,10 +92,10 @@ LOAD(audio_source_component)
         obj.set_range(range);
     }
 
-    asset_handle<audio_clip> sound;
-    if(try_load(ar, ser20::make_nvp("sound", sound)))
+    asset_handle<audio_clip> clip;
+    if(try_load(ar, ser20::make_nvp("clip", clip)))
     {
-        obj.set_sound(sound);
+        obj.set_clip(clip);
     }
 }
 LOAD_INSTANTIATE(audio_source_component, ser20::iarchive_associative_t);

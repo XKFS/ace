@@ -36,7 +36,24 @@ public class Scene : Asset<Scene>
 	{
 		unsafe
 		{
-			internal_m2n_destroy_entity(entity);
+			float seconds = 0.0f;
+			internal_m2n_destroy_entity(entity, seconds);
+		}
+	}
+
+	public static void DestroyEntity(Entity entity, float seconds)
+	{
+		unsafe
+		{
+			internal_m2n_destroy_entity(entity, seconds);
+		}
+	}
+
+	public static void DestroyEntityImmediate(Entity entity)
+	{
+		unsafe
+		{
+			internal_m2n_destroy_entity_immediate(entity);
 		}
 	}
 
@@ -70,9 +87,12 @@ public class Scene : Asset<Scene>
 
 	[MethodImpl(MethodImplOptions.InternalCall)] 
 	private static extern Entity internal_m2n_clone_entity(Entity id);
-	
+
 	[MethodImpl(MethodImplOptions.InternalCall)] 
-	private static extern bool internal_m2n_destroy_entity(Entity id);
+	private static extern bool internal_m2n_destroy_entity(Entity id, float seconds);
+
+	[MethodImpl(MethodImplOptions.InternalCall)] 
+	private static extern bool internal_m2n_destroy_entity_immediate(Entity id);
 
 	[MethodImpl(MethodImplOptions.InternalCall)] 
 	private static extern bool internal_m2n_is_entity_valid(Entity id);

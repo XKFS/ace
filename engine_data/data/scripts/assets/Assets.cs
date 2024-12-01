@@ -58,6 +58,46 @@ public class PhysicsMaterial : Asset<PhysicsMaterial>
 
 public class AudioClip : Asset<AudioClip>
 {
+    //
+    // Summary:
+    //     The length of the audio clip in seconds. (Read Only)
+    public float length
+    {
+        get
+        {
+            return internal_m2n_audio_clip_get_length(uid);
+        }
+    }
+
+    //
+    // Summary:
+    //     The length of the audio clip in samples. (Read Only)
+    // public extern int samples
+    // {
+    //     [MethodImpl(MethodImplOptions.InternalCall)]
+    //     get;
+    // }
+
+    // //
+    // // Summary:
+    // //     The number of channels in the audio clip. (Read Only)
+    // public extern int channels
+    // {
+    //     [MethodImpl(MethodImplOptions.InternalCall)]
+    //     get;
+    // }
+
+    // //
+    // // Summary:
+    // //     The sample frequency of the clip in Hertz. (Read Only)
+    // public extern int frequency
+    // {
+    //     [MethodImpl(MethodImplOptions.InternalCall)]
+    //     get;
+    // }
+
+    [MethodImpl(MethodImplOptions.InternalCall)]
+    private static extern float internal_m2n_audio_clip_get_length(Guid uid);
 }
 
 }

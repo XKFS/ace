@@ -10,11 +10,13 @@ namespace Core
 public struct UpdateInfo
 {
     public float deltaTime;
+    public float timeScale;
 }
 
 public static class Time
 {
     public static float deltaTime;
+    public static float timeScale;
 }
 
 public static class SystemManager
@@ -24,6 +26,8 @@ public static class SystemManager
     public static void internal_n2m_update(UpdateInfo info)
     {
         Time.deltaTime = info.deltaTime;
+        Time.timeScale = info.timeScale;
+
         OnUpdate?.Invoke();
     }
 }

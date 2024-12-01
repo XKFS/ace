@@ -248,16 +248,16 @@ auto audio_source_component::is_looping() const -> bool
     return loop_;
 }
 
-void audio_source_component::set_sound(asset_handle<audio_clip> sound)
+void audio_source_component::set_clip(const asset_handle<audio_clip>& clip)
 {
     stop();
 
-    sound_ = std::move(sound);
+    sound_ = clip;
 
     apply_all();
 }
 
-auto audio_source_component::get_sound() const -> asset_handle<audio_clip>
+auto audio_source_component::get_clip() const -> const asset_handle<audio_clip>&
 {
     return sound_;
 }

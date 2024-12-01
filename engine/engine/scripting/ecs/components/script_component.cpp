@@ -64,8 +64,10 @@ void script_component::destroy()
 
 void script_component::on_sensor_enter(entt::handle other)
 {
-    for(auto& script : script_components_)
+    // IMPORTANT! Use index based loop, to allow inserting during iteration
+    for(size_t i = 0; i < script_components_.size(); ++i)
     {
+        auto& script = script_components_[i];
         auto& obj = script.scoped->object;
         on_sensor_enter(obj, other);
     }
@@ -73,8 +75,10 @@ void script_component::on_sensor_enter(entt::handle other)
 
 void script_component::on_sensor_exit(entt::handle other)
 {
-    for(auto& script : script_components_)
+    // IMPORTANT! Use index based loop, to allow inserting during iteration
+    for(size_t i = 0; i < script_components_.size(); ++i)
     {
+        auto& script = script_components_[i];
         auto& obj = script.scoped->object;
         on_sensor_exit(obj, other);
     }
@@ -82,8 +86,10 @@ void script_component::on_sensor_exit(entt::handle other)
 
 void script_component::on_collision_enter(entt::handle b, const std::vector<manifold_point>& manifolds, bool use_b)
 {
-    for(auto& script : script_components_)
+    // IMPORTANT! Use index based loop, to allow inserting during iteration
+    for(size_t i = 0; i < script_components_.size(); ++i)
     {
+        auto& script = script_components_[i];
         auto& obj = script.scoped->object;
         on_collision_enter(obj, b, manifolds, use_b);
     }
@@ -91,8 +97,10 @@ void script_component::on_collision_enter(entt::handle b, const std::vector<mani
 
 void script_component::on_collision_exit(entt::handle b, const std::vector<manifold_point>& manifolds, bool use_b)
 {
-    for(auto& script : script_components_)
+    // IMPORTANT! Use index based loop, to allow inserting during iteration
+    for(size_t i = 0; i < script_components_.size(); ++i)
     {
+        auto& script = script_components_[i];
         auto& obj = script.scoped->object;
         on_collision_exit(obj, b, manifolds, use_b);
     }

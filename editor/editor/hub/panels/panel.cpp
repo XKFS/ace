@@ -72,7 +72,7 @@ void imgui_panels::on_frame_render(rtti::context& ctx, delta_t dt)
 
 void imgui_panels::on_frame_ui_render(rtti::context& ctx)
 {
-    auto footer_size = ImGui::GetFrameHeightWithSpacing() * 1.3f;
+    auto footer_size = ImGui::GetFrameHeightWithSpacing();
     auto header_size = ImGui::GetFrameHeightWithSpacing() * 3;
 
     header_panel_->on_frame_ui_render(ctx, header_size);

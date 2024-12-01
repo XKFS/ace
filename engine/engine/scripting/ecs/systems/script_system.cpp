@@ -35,7 +35,7 @@ std::atomic_bool initted{};
 
 std::atomic<recompile_command> needs_recompile{};
 std::mutex container_mutex;
-std::set<std::string> needs_to_recompile;
+std::vector<std::string> needs_to_recompile;
 
 std::atomic_bool debug_mode{true};
 
@@ -109,6 +109,28 @@ void set_env(const std::string& var_name, const std::string& value)
 }
 
 } // namespace
+
+void script_system::copy_compiled_lib(const fs::path& from, const fs::path& to)
+{
+    auto from_debug_info = from;
+    from_debug_info.concat(".mdb");
+    auto from_comments_xml = from;
+    from_comments_xml.replace_extension(".xml");
+
+    auto to_debug_info = to;
+    to_debug_info.concat(".mdb");
+    auto to_comments_xml = to;
+    to_comments_xml.replace_extension(".xml");
+
+    fs::error_code er;
+    fs::copy_file(from, to, fs::copy_options::overwrite_existing, er);
+    fs::copy_file(from_debug_info, to_debug_info, fs::copy_options::overwrite_existing, er);
+    fs::copy_file(from_comments_xml, to_comments_xml, fs::copy_options::overwrite_existing, er);
+
+    fs::remove(from, er);
+    fs::remove(from_debug_info, er);
+    fs::remove(from_comments_xml, er);
+}
 
 auto script_system::find_mono(const rtti::context& ctx) -> mono::compiler_paths
 {
@@ -190,7 +212,7 @@ auto script_system::init(rtti::context& ctx) -> bool
 
         try
         {
-            if(!load_engine_domain(ctx))
+            if(!load_engine_domain(ctx, true))
             {
                 return false;
             }
@@ -220,11 +242,11 @@ auto script_system::deinit(rtti::context& ctx) -> bool
     return true;
 }
 
-auto script_system::load_engine_domain(rtti::context& ctx) -> bool
+auto script_system::load_engine_domain(rtti::context& ctx, bool recompile) -> bool
 {
     bool is_deploy_mode = ctx.has<deploy>();
 
-    if(!is_deploy_mode)
+    if(!is_deploy_mode && recompile)
     {
         if(!create_compilation_job(ctx, "engine").get())
         {
@@ -236,8 +258,11 @@ auto script_system::load_engine_domain(rtti::context& ctx) -> bool
     mono::mono_domain::set_current_domain(domain_.get());
 
     auto engine_script_lib = fs::resolve_protocol(get_lib_compiled_key("engine"));
+    auto engine_script_lib_temp = fs::resolve_protocol(get_lib_temp_compiled_key("engine"));
 
-    auto assembly = domain_->get_assembly(engine_script_lib.string(), true);
+    copy_compiled_lib(engine_script_lib_temp, engine_script_lib);
+
+    auto assembly = domain_->get_assembly(engine_script_lib.string());
     print_assembly_info(assembly);
 
     cache_.update_manager_type = assembly.get_type("Ace.Core", "SystemManager");
@@ -266,6 +291,9 @@ auto script_system::load_app_domain(rtti::context& ctx, bool recompile) -> bool
     mono::mono_domain::set_current_domain(app_domain_.get());
 
     auto app_script_lib = fs::resolve_protocol(get_lib_compiled_key("app"));
+    auto app_script_lib_temp = fs::resolve_protocol(get_lib_temp_compiled_key("app"));
+
+    copy_compiled_lib(app_script_lib_temp, app_script_lib);
 
     if(!is_deploy_mode)
     {
@@ -280,11 +308,11 @@ auto script_system::load_app_domain(rtti::context& ctx, bool recompile) -> bool
 
     try
     {
-        auto assembly = app_domain_->get_assembly(app_script_lib.string(), false);
+        auto assembly = app_domain_->get_assembly(app_script_lib.string());
         print_assembly_info(assembly);
 
         auto engine_script_lib = fs::resolve_protocol(get_lib_compiled_key("engine"));
-        auto engine_assembly = domain_->get_assembly(engine_script_lib.string(), true);
+        auto engine_assembly = domain_->get_assembly(engine_script_lib.string());
 
         auto system_type = engine_assembly.get_type("Ace.Core", "ScriptSystem");
         app_cache_.scriptable_system_types = assembly.get_types_derived_from(system_type);
@@ -554,7 +582,7 @@ auto script_system::create_compilation_job(rtti::context& ctx, const std::string
         [&am, protocol]()
         {
             auto key = get_lib_data_key(protocol);
-            auto output = get_lib_compiled_key(protocol);
+            auto output = get_lib_temp_compiled_key(protocol);
 
             return asset_compiler::compile<script_library>(am, key, fs::resolve_protocol(output));
         });
@@ -568,7 +596,11 @@ void script_system::set_needs_recompile(const std::string& protocol, bool now)
     needs_recompile = now ? recompile_command::compile_now : recompile_command::compile_at_schedule;
     {
         std::lock_guard<std::mutex> lock(container_mutex);
-        needs_to_recompile.emplace(protocol);
+        if(std::find(std::begin(needs_to_recompile), std::end(needs_to_recompile), protocol) ==
+           std::end(needs_to_recompile))
+        {
+            needs_to_recompile.emplace_back(protocol);
+        }
     }
 }
 
@@ -590,6 +622,12 @@ auto script_system::get_lib_name(const std::string& protocol) -> std::string
 auto script_system::get_lib_data_key(const std::string& protocol) -> std::string
 {
     std::string output = get_lib_name(protocol + ":/data/" + protocol);
+    return output;
+}
+
+auto script_system::get_lib_temp_compiled_key(const std::string& protocol) -> std::string
+{
+    std::string output = get_lib_name(protocol + ":/compiled/temp-" + protocol);
     return output;
 }
 

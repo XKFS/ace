@@ -22,12 +22,14 @@ struct script_system
     static void set_script_debug_mode(bool debug);
     static auto get_lib_name(const std::string& protocol) -> std::string;
     static auto get_lib_data_key(const std::string& protocol) -> std::string;
+    static auto get_lib_temp_compiled_key(const std::string& protocol) -> std::string;
     static auto get_lib_compiled_key(const std::string& protocol) -> std::string;
+    static void copy_compiled_lib(const fs::path& from, const fs::path& to);
     static auto find_mono(const rtti::context& ctx) -> mono::compiler_paths;
     auto init(rtti::context& ctx) -> bool;
     auto deinit(rtti::context& ctx) -> bool;
 
-    auto load_engine_domain(rtti::context& ctx) -> bool;
+    auto load_engine_domain(rtti::context& ctx, bool recompile) -> bool;
     void unload_engine_domain();
 
     auto load_app_domain(rtti::context& ctx, bool recompile) -> bool;

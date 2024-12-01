@@ -598,6 +598,10 @@ auto compile<script_library>(asset_manager& am, const fs::path& key, const fs::p
 
     APPLOG_TRACE("Script Compile : \n {0} {1}", cmd.cmd, cmd.args);
 
+    fs::remove(temp, err);
+    fs::remove(temp_mdb, err);
+    fs::remove(temp_xml, err);
+
     if(!run_process(cmd.cmd, cmd.args, true, error))
     {
         APPLOG_ERROR("Failed compilation of {0} with error: {1}", output.string(), error);
@@ -605,23 +609,16 @@ auto compile<script_library>(asset_manager& am, const fs::path& key, const fs::p
     }
     else
     {
-        fs::remove(output_mdb, err);
-        fs::remove(output_xml, err);
+        if(!params.debug)
+        {
+            fs::remove(output_mdb, err);
+        }
 
         fs::create_directories(output.parent_path(), err);
         APPLOG_INFO("Successful compilation of {0}", output.string());
-        fs::copy_file(temp, output, fs::copy_options::overwrite_existing, err);
-        if(params.debug)
-        {
-            fs::copy_file(temp_mdb, output_mdb, fs::copy_options::overwrite_existing, err);
-        }
 
-        fs::copy_file(temp_xml, output_xml, fs::copy_options::overwrite_existing, err);
-        fs::remove(temp_mdb, err);
-        fs::remove(temp_xml, err);
+        script_system::copy_compiled_lib(temp, output);
     }
-    fs::remove(temp, err);
-
 
     return result;
 }

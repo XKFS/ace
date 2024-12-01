@@ -39,6 +39,7 @@ void draw_debug_mode()
             if(!debug_mode)
             {
                 script_system::set_script_debug_mode(true);
+                script_system::set_needs_recompile("engine", false);
                 script_system::set_needs_recompile("app", true);
             }
         }
@@ -53,6 +54,7 @@ void draw_debug_mode()
             if(debug_mode)
             {
                 script_system::set_script_debug_mode(false);
+                script_system::set_needs_recompile("engine", false);
                 script_system::set_needs_recompile("app", true);
             }
         }

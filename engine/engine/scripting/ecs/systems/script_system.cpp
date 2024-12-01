@@ -179,7 +179,10 @@ auto script_system::init(rtti::context& ctx) -> bool
     set_env("MONO_THREADS_SUSPEND", "preemptive");
 #endif
 
-    if(mono::init(find_mono(ctx), true))
+    mono::debugging_config debug_config;
+    debug_config.enable_debugging = true;
+
+    if(mono::init(find_mono(ctx), debug_config))
     {
         bind_internal_calls(ctx);
 

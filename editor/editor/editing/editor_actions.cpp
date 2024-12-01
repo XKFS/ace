@@ -1037,6 +1037,7 @@ void editor_actions::generate_script_workspace(const std::string& project_name)
     auto source_path = fs::resolve_protocol("app:/data");
 
     auto engine_dep = fs::resolve_protocol(script_system::get_lib_compiled_key("engine"));
+
     auto output_path = fs::resolve_protocol("app:/");
 
     generate_csproj_legacy(source_path, {engine_dep}, output_path, project_name);

@@ -28,7 +28,8 @@
   - **Graphics API Support**: Fully supports DirectX 11, DirectX 12, Vulkan, and OpenGL for maximum flexibility and performance.
 
 ## Documentation
-Scripting documentation can be found here - [Script Api](https://volcoma.github.io/ace-script-api/html/index.html)
+Engine C++ documentation can be found here - [Script Api](https://volcoma.github.io/ace-engine-api/html/index.html)
+Scripting C# documentation can be found here - [Script Api](https://volcoma.github.io/ace-script-api/html/index.html)
 
 
 

@@ -14,23 +14,30 @@
 #include <monopp/mono_property_invoker.h>
 
 #include <core/base/platform/config.hpp>
-#include <simulation/simulation.h>
 #include <filesystem/filesystem.h>
 #include <logging/logging.h>
+#include <simulation/simulation.h>
 #include <tweeny/tweeny.h>
 namespace ace
 {
 namespace
 {
-std::chrono::seconds check_interval(2);
+
+enum class recompile_command : int
+{
+    none,
+    compile_at_schedule,
+    compile_now,
+};
+
+std::chrono::seconds check_interval(1);
 std::atomic_bool initted{};
 
-std::atomic_bool needs_recompile{};
+std::atomic<recompile_command> needs_recompile{};
 std::mutex container_mutex;
 std::set<std::string> needs_to_recompile;
 
 std::atomic_bool debug_mode{true};
-
 
 auto print_assembly_info(const mono::mono_assembly& assembly)
 {
@@ -130,8 +137,8 @@ auto script_system::find_mono(const rtti::context& ctx) -> mono::compiler_paths
 
             if(!found_library.empty())
             {
-                result.assembly_dir = library_path;
-                result.config_dir = config_path;
+                result.assembly_dir = fs::path(library_path).make_preferred().string();
+                result.config_dir = fs::path(config_path).make_preferred().string();
 
                 break;
             }
@@ -142,7 +149,7 @@ auto script_system::find_mono(const rtti::context& ctx) -> mono::compiler_paths
         const auto& names = mono::get_common_executable_names();
         const auto& paths = mono::get_common_executable_paths();
 
-        result.msc_executable = fs::find_program(names, paths).string();
+        result.msc_executable = fs::find_program(names, paths).make_preferred().string();
     }
 
     APPLOG_TRACE("MONO_PATHS:");
@@ -497,13 +504,13 @@ void script_system::check_for_recompile(rtti::context& ctx, delta_t dt)
 {
     time_since_last_check_ += dt;
 
-    if(time_since_last_check_ >= check_interval)
+    if(time_since_last_check_ >= check_interval || needs_recompile == recompile_command::compile_now)
     {
         time_since_last_check_ = {};
 
-        bool should_recompile = needs_recompile.exchange(false);
+        recompile_command should_recompile = needs_recompile.exchange(recompile_command::none);
 
-        if(should_recompile)
+        if(should_recompile != recompile_command::none)
         {
             auto container = []()
             {
@@ -549,15 +556,17 @@ auto script_system::create_compilation_job(rtti::context& ctx, const std::string
             return asset_compiler::compile<script_library>(am, key, fs::resolve_protocol(output));
         });
 }
-void script_system::set_needs_recompile(const std::string& protocol)
+void script_system::set_needs_recompile(const std::string& protocol, bool now)
 {
     if(!initted)
     {
         return;
     }
-    needs_recompile = true;
-    std::lock_guard<std::mutex> lock(container_mutex);
-    needs_to_recompile.emplace(protocol);
+    needs_recompile = now ? recompile_command::compile_now : recompile_command::compile_at_schedule;
+    {
+        std::lock_guard<std::mutex> lock(container_mutex);
+        needs_to_recompile.emplace(protocol);
+    }
 }
 
 auto script_system::get_script_debug_mode() -> bool
@@ -569,7 +578,6 @@ void script_system::set_script_debug_mode(bool debug)
 {
     debug_mode = debug;
 }
-
 
 auto script_system::get_lib_name(const std::string& protocol) -> std::string
 {

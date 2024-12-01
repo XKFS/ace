@@ -42,6 +42,7 @@ void draw_footer_child(rtti::context& ctx, float footerSize, const std::function
         ImGui::CalcTextSize(jobs_icon.c_str()).x,
         [&]()
         {
+            ImGui::AlignTextToFramePadding();
             ImGui::HelpMarker(
                 jobs_icon.c_str(),
                 false,

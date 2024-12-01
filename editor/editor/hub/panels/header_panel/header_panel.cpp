@@ -11,8 +11,8 @@
 #include <engine/events.h>
 #include <engine/meta/ecs/entity.hpp>
 #include <engine/rendering/renderer.h>
+#include <engine/scripting/ecs/systems/script_system.h>
 #include <engine/threading/threader.h>
-
 #include <simulation/simulation.h>
 
 #include <imgui/imgui.h>
@@ -20,6 +20,56 @@
 
 namespace ace
 {
+
+namespace
+{
+auto get_debug_mode_size() -> float
+{
+    return 100.0f;
+}
+void draw_debug_mode()
+{
+    bool debug_mode = script_system::get_script_debug_mode();
+    const char* debug_mode_preview = debug_mode ? "Debug" : "Release";
+    ImGui::SetNextItemWidth(get_debug_mode_size());
+    if(ImGui::BeginCombo("###DebugMode", debug_mode_preview))
+    {
+        if(ImGui::Selectable("Debug"))
+        {
+            if(!debug_mode)
+            {
+                script_system::set_script_debug_mode(true);
+                script_system::set_needs_recompile("app", true);
+            }
+        }
+        ImGui::SetItemTooltipCurrentViewport("%s",
+                                             "Debug mode enales C# debugging\n"
+                                             "but reduces C# performance.\n"
+                                             "Switching to Debug mode will recompile\n"
+                                             "and reload all scripts.");
+
+        if(ImGui::Selectable("Release"))
+        {
+            if(debug_mode)
+            {
+                script_system::set_script_debug_mode(false);
+                script_system::set_needs_recompile("app", true);
+            }
+        }
+        ImGui::SetItemTooltipCurrentViewport("%s",
+                                             "Release mode disables C# debugging\n"
+                                             "but improves C# performance.\n"
+                                             "Switching to Release mode will recompile\n"
+                                             "and reload all scripts.");
+
+        ImGui::EndCombo();
+    }
+
+    const char* debug_mode_tooltip = debug_mode ? "Debugger Enabled" : "Debugger Disabled";
+
+    ImGui::SetItemTooltipCurrentViewport("%s", debug_mode_tooltip);
+}
+} // namespace
 
 header_panel::header_panel(imgui_panels* parent) : parent_(parent)
 {
@@ -148,8 +198,8 @@ void header_panel::draw_play_toolbar(rtti::context& ctx, float headerSize)
     auto logo = fmt::format("Ace Editor <{}>", gfx::get_renderer_name(gfx::get_renderer_type()));
     auto logo_size = ImGui::CalcTextSize(logo.c_str());
     // Add animated logo.
-    const ImVec2 logo_min =
-        ImVec2(logo_pos.x + logo_bounds.x * 0.5f - logo_size.x * 0.5f, logo_pos.y + (logo_bounds.y - logo_size.y) * 0.5f);
+    const ImVec2 logo_min = ImVec2(logo_pos.x + logo_bounds.x * 0.5f - logo_size.x * 0.5f,
+                                   logo_pos.y + (logo_bounds.y - logo_size.y) * 0.5f);
     const ImVec2 logo_max = ImVec2(logo_min.x + logo_size.x, logo_min.y + logo_size.y);
     auto logo_border_color = ImGui::GetColorU32(ImGuiCol_Text);
     ImGui::GetWindowDrawList()->AddText(logo_min, logo_border_color, logo.c_str());
@@ -159,11 +209,12 @@ void header_panel::draw_play_toolbar(rtti::context& ctx, float headerSize)
     auto item_spacing = style.ItemSpacing;
     ImGui::AlignedItem(0.5f,
                        width,
-                       ImGui::CalcTextSize(ICON_MDI_PLAY ICON_MDI_PAUSE ICON_MDI_SKIP_NEXT).x +
-                           frame_padding.x * 6 + item_spacing.x * 2,
+                       ImGui::CalcTextSize(ICON_MDI_PLAY ICON_MDI_PAUSE ICON_MDI_SKIP_NEXT).x + frame_padding.x * 6 +
+                           item_spacing.x * 3,
                        [&]()
                        {
                            ImGui::BeginGroup();
+
                            if(ImGui::Button(ev.is_playing ? ICON_MDI_STOP : ICON_MDI_PLAY))
                            {
                                ev.toggle_play_mode(ctx);
@@ -173,8 +224,6 @@ void header_panel::draw_play_toolbar(rtti::context& ctx, float headerSize)
                            ImGui::SameLine();
                            if(ImGui::Button(ICON_MDI_PAUSE))
                            {
-                               auto& ev = ctx.get_cached<events>();
-
                                bool was_playing = ev.is_playing;
                                ev.toggle_pause(ctx);
                            }
@@ -182,10 +231,14 @@ void header_panel::draw_play_toolbar(rtti::context& ctx, float headerSize)
                            ImGui::PushItemFlag(ImGuiItemFlags_ButtonRepeat, true);
                            if(ImGui::Button(ICON_MDI_SKIP_NEXT))
                            {
-                               auto& ev = ctx.get_cached<events>();
                                ev.skip_next_frame(ctx);
                            }
                            ImGui::PopItemFlag();
+                           ImGui::SameLine();
+
+                           ImGui::BeginDisabled(ev.is_playing);
+                           draw_debug_mode();
+                           ImGui::EndDisabled();
                            ImGui::SameLine();
 
                            auto& sim = ctx.get_cached<simulation>();

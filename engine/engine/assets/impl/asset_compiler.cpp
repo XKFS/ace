@@ -608,7 +608,14 @@ auto compile<script_library>(asset_manager& am, const fs::path& key, const fs::p
         fs::create_directories(output.parent_path(), err);
         APPLOG_INFO("Successful compilation of {0}", output.string());
         fs::copy_file(temp, output, fs::copy_options::overwrite_existing, err);
-        fs::copy_file(temp_mdb, output_mdb, fs::copy_options::overwrite_existing, err);
+        if(params.debug)
+        {
+            fs::copy_file(temp_mdb, output_mdb, fs::copy_options::overwrite_existing, err);
+        }
+        else
+        {
+            fs::remove(output_mdb, err);
+        }
         fs::copy_file(temp_xml, output_xml, fs::copy_options::overwrite_existing, err);
 
         fs::remove(temp_mdb, err);

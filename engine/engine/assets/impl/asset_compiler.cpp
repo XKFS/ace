@@ -84,7 +84,7 @@ auto run_process(const std::string& process,
 } // namespace
 
 template<>
-auto compile<gfx::shader>(asset_manager& am, const fs::path& key, const fs::path& output) -> bool
+auto compile<gfx::shader>(asset_manager& am, const fs::path& key, const fs::path& output, uint32_t flags) -> bool
 {
     bool result = true;
 
@@ -230,7 +230,7 @@ auto compile<gfx::shader>(asset_manager& am, const fs::path& key, const fs::path
 }
 
 template<>
-auto compile<gfx::texture>(asset_manager& am, const fs::path& key, const fs::path& output) -> bool
+auto compile<gfx::texture>(asset_manager& am, const fs::path& key, const fs::path& output, uint32_t flags) -> bool
 {
     bool result = true;
     auto absolute_path = resolve_input_file(key);
@@ -278,7 +278,7 @@ auto compile<gfx::texture>(asset_manager& am, const fs::path& key, const fs::pat
 }
 
 template<>
-auto compile<material>(asset_manager& am, const fs::path& key, const fs::path& output) -> bool
+auto compile<material>(asset_manager& am, const fs::path& key, const fs::path& output, uint32_t flags) -> bool
 {
     auto absolute_path = resolve_input_file(key);
 
@@ -308,7 +308,7 @@ auto compile<material>(asset_manager& am, const fs::path& key, const fs::path& o
 }
 
 template<>
-auto compile<mesh>(asset_manager& am, const fs::path& key, const fs::path& output) -> bool
+auto compile<mesh>(asset_manager& am, const fs::path& key, const fs::path& output, uint32_t flags) -> bool
 {
     auto absolute_path = resolve_input_file(key);
 
@@ -396,7 +396,7 @@ auto compile<mesh>(asset_manager& am, const fs::path& key, const fs::path& outpu
 }
 
 template<>
-auto compile<animation_clip>(asset_manager& am, const fs::path& key, const fs::path& output) -> bool
+auto compile<animation_clip>(asset_manager& am, const fs::path& key, const fs::path& output, uint32_t flags) -> bool
 {
     auto absolute_path = resolve_input_file(key);
 
@@ -426,7 +426,7 @@ auto compile<animation_clip>(asset_manager& am, const fs::path& key, const fs::p
 }
 
 template<>
-auto compile<prefab>(asset_manager& am, const fs::path& key, const fs::path& output) -> bool
+auto compile<prefab>(asset_manager& am, const fs::path& key, const fs::path& output, uint32_t flags) -> bool
 {
     auto absolute_path = resolve_input_file(key);
     std::string str_input = absolute_path.string();
@@ -438,7 +438,7 @@ auto compile<prefab>(asset_manager& am, const fs::path& key, const fs::path& out
 }
 
 template<>
-auto compile<scene_prefab>(asset_manager& am, const fs::path& key, const fs::path& output) -> bool
+auto compile<scene_prefab>(asset_manager& am, const fs::path& key, const fs::path& output, uint32_t flags) -> bool
 {
     auto absolute_path = resolve_input_file(key);
     std::string str_input = absolute_path.string();
@@ -469,7 +469,7 @@ auto compile<scene_prefab>(asset_manager& am, const fs::path& key, const fs::pat
 }
 
 template<>
-auto compile<physics_material>(asset_manager& am, const fs::path& key, const fs::path& output) -> bool
+auto compile<physics_material>(asset_manager& am, const fs::path& key, const fs::path& output, uint32_t flags) -> bool
 {
     auto absolute_path = resolve_input_file(key);
 
@@ -498,7 +498,7 @@ auto compile<physics_material>(asset_manager& am, const fs::path& key, const fs:
 }
 
 template<>
-auto compile<audio_clip>(asset_manager& am, const fs::path& key, const fs::path& output) -> bool
+auto compile<audio_clip>(asset_manager& am, const fs::path& key, const fs::path& output, uint32_t flags) -> bool
 {
     auto absolute_path = resolve_input_file(key);
 
@@ -534,7 +534,7 @@ auto compile<audio_clip>(asset_manager& am, const fs::path& key, const fs::path&
 }
 
 template<>
-auto compile<script_library>(asset_manager& am, const fs::path& key, const fs::path& output) -> bool
+auto compile<script_library>(asset_manager& am, const fs::path& key, const fs::path& output, uint32_t flags) -> bool
 {
     bool result = true;
     fs::error_code err;
@@ -591,7 +591,7 @@ auto compile<script_library>(asset_manager& am, const fs::path& key, const fs::p
         return result;
     }
 
-    params.debug = script_system::get_script_debug_mode();
+    params.debug = flags & script_library::compilation_flags::debug;
 
     std::string error;
     auto cmd = mono::create_compile_command_detailed(params);
@@ -624,7 +624,7 @@ auto compile<script_library>(asset_manager& am, const fs::path& key, const fs::p
 }
 
 template<>
-auto compile<script>(asset_manager& am, const fs::path& key, const fs::path& output) -> bool
+auto compile<script>(asset_manager& am, const fs::path& key, const fs::path& output, uint32_t flags) -> bool
 {
     auto absolute_path = resolve_input_file(key);
 

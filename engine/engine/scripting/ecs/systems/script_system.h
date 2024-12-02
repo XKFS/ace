@@ -107,7 +107,7 @@ private:
 
     void check_for_recompile(rtti::context& ctx, delta_t dt);
 
-    auto create_compilation_job(rtti::context& ctx, const std::string& protocol) -> itc::job_future<bool>;
+    auto create_compilation_job(rtti::context& ctx, const std::string& protocol, bool debug) -> itc::job_future<bool>;
 
     ///< Sentinel value to manage shared resources.
     std::shared_ptr<int> sentinel_ = std::make_shared<int>(0);

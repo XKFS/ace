@@ -422,14 +422,15 @@ void wake_up(bullet::rigidbody& body)
 
 auto make_rigidbody_shape(physics_component& comp) -> std::shared_ptr<btCompoundShape>
 {
+    // use an ownning compound shape. When sharing is implemented we can go back to non owning
+    auto cp = std::make_shared<bullet::btCompoundShapeOwning>();
+
     auto compound_shapes = comp.get_shapes();
     if(compound_shapes.empty())
     {
-        return nullptr;
+        return cp;
     }
 
-    // use an ownning compound shape. When sharing is implemented we can go back to non owning
-    auto cp = std::make_shared<bullet::btCompoundShapeOwning>();
     for(const auto& s : compound_shapes)
     {
         if(hpp::holds_alternative<physics_box_shape>(s.shape))

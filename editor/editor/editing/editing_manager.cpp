@@ -59,14 +59,11 @@ void editing_manager::on_play_after_end(rtti::context& ctx)
 
 void editing_manager::on_script_recompile(rtti::context& ctx, const std::string& protocol)
 {
-    if(protocol != "app")
-    {
-        return;
-    }
-
     save_checkpoint(ctx);
     auto& scripting = ctx.get_cached<script_system>();
     scripting.unload_app_domain();
+    // scripting.unload_engine_domain();
+    // scripting.load_engine_domain(ctx, false);
     scripting.load_app_domain(ctx, false);
     load_checkpoint(ctx);
 }

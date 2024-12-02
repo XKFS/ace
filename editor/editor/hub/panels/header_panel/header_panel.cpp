@@ -25,21 +25,21 @@ namespace
 {
 auto get_debug_mode_size() -> float
 {
-    return 100.0f;
+    return 120.0f;
 }
 void draw_debug_mode()
 {
     bool debug_mode = script_system::get_script_debug_mode();
-    const char* debug_mode_preview = debug_mode ? "Debug" : "Release";
+    const char* modes[] = {ICON_MDI_BUG_CHECK " Debug", ICON_MDI_BUG " Release"};
+    const char* debug_mode_preview = modes[int(!debug_mode)];
     ImGui::SetNextItemWidth(get_debug_mode_size());
     if(ImGui::BeginCombo("###DebugMode", debug_mode_preview))
     {
-        if(ImGui::Selectable("Debug"))
+        if(ImGui::Selectable(modes[0]))
         {
             if(!debug_mode)
             {
                 script_system::set_script_debug_mode(true);
-                script_system::set_needs_recompile("engine", false);
                 script_system::set_needs_recompile("app", true);
             }
         }
@@ -49,12 +49,11 @@ void draw_debug_mode()
                                              "Switching to Debug mode will recompile\n"
                                              "and reload all scripts.");
 
-        if(ImGui::Selectable("Release"))
+        if(ImGui::Selectable(modes[1]))
         {
             if(debug_mode)
             {
                 script_system::set_script_debug_mode(false);
-                script_system::set_needs_recompile("engine", false);
                 script_system::set_needs_recompile("app", true);
             }
         }
@@ -79,11 +78,10 @@ header_panel::header_panel(imgui_panels* parent) : parent_(parent)
 
 void header_panel::draw_menubar_child(rtti::context& ctx)
 {
-    ImGuiWindowFlags headerFlags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar |
-                                   ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar |
-                                   ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_MenuBar;
-    const std::string childID = "HEADER_menubar";
-    ImGui::BeginChild(childID.c_str(), ImVec2(0, ImGui::GetFrameHeight() - 2), false, headerFlags);
+    ImGuiWindowFlags header_flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar |
+                                    ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar |
+                                    ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_MenuBar;
+    ImGui::BeginChild("HEADER_menubar", ImVec2(0, ImGui::GetFrameHeight()), false, header_flags);
 
     // Draw menu bar.
     if(ImGui::BeginMenuBar())
@@ -176,26 +174,26 @@ void header_panel::draw_play_toolbar(rtti::context& ctx, float headerSize)
                         ImVec2(logo_pos.x + logo_bounds.x, logo_pos.y),
                         ImVec2(logo_pos.x, logo_pos.y)};
 
-    const ImU32 polyBackground = ImGui::GetColorU32(ImGuiCol_MenuBarBg);
-    auto polyBackgroundBorderColor = polyBackground;
+    const ImU32 poly_background = ImGui::GetColorU32(ImGuiCol_MenuBarBg);
+    auto poly_background_border_color = poly_background;
 
     if(ev.is_playing)
     {
-        polyBackgroundBorderColor = ImGui::GetColorU32(ImVec4(0.0f, 0.5f, 0.0f, 0.5f));
+        poly_background_border_color = ImGui::GetColorU32(ImVec4(0.0f, 0.5f, 0.0f, 0.5f));
     }
     if(ev.is_paused)
     {
-        polyBackgroundBorderColor = ImGui::GetColorU32(ImVec4(0.6f, 0.3f, 0.0f, 0.5f));
+        poly_background_border_color = ImGui::GetColorU32(ImVec4(0.6f, 0.3f, 0.0f, 0.5f));
     }
 
-    ImGui::GetWindowDrawList()->AddConvexPolyFilled(&points[0], 5, polyBackgroundBorderColor);
-    // ImGui::GetWindowDrawList()->AddPolyline(&points[0], 4, polyBackgroundBorderColor, 0, 3);
-    //  ImGui::GetWindowDrawList()->AddRectFilledMultiColor(logoPos,
-    //                                                      logoPos + logoBounds,
-    //                                                      polyBackground,
-    //                                                      polyBackground,
-    //                                                      polyBackgroundBorderColor,
-    //                                                      polyBackgroundBorderColor);
+    ImGui::GetWindowDrawList()->AddConvexPolyFilled(&points[0], 5, poly_background_border_color);
+    // ImGui::GetWindowDrawList()->AddPolyline(&points[0], 4, poly_background_border_color, 0, 3);
+    // ImGui::GetWindowDrawList()->AddRectFilledMultiColor(logo_pos,
+    //                                                      logo_pos + logo_bounds,
+    //                                                      poly_background_border_color,
+    //                                                      poly_background_border_color,
+    //                                                      poly_background,
+    //                                                      poly_background);
 
     auto logo = fmt::format("Ace Editor <{}>", gfx::get_renderer_name(gfx::get_renderer_type()));
     auto logo_size = ImGui::CalcTextSize(logo.c_str());

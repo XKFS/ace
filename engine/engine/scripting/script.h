@@ -18,7 +18,11 @@ struct script
 
 struct script_library
 {
-
+    enum compilation_flags : uint32_t
+    {
+        optimized,
+        debug,
+    };
 };
 
 } // namespace ace

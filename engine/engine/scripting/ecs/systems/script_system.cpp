@@ -99,15 +99,6 @@ auto print_assembly_info(const mono::mono_assembly& assembly)
     APPLOG_TRACE("\n{}", ss.str());
 }
 
-void set_env(const std::string& var_name, const std::string& value)
-{
-#if ACE_PLATFORM_WINDOWS
-    _putenv_s(var_name.c_str(), value.c_str());
-#else
-    setenv(var_name.c_str(), value.c_str(), 1); // 1 means overwrite if it already exists
-#endif
-}
-
 } // namespace
 
 void script_system::copy_compiled_lib(const fs::path& from, const fs::path& to)
@@ -193,14 +184,6 @@ auto script_system::init(rtti::context& ctx) -> bool
     ev.on_resume.connect(sentinel_, -100, this, &script_system::on_resume);
     ev.on_skip_next_frame.connect(sentinel_, -100, this, &script_system::on_skip_next_frame);
 
-#if ACE_PLATFORM_LINUX
-    // Adjust GC threads suspending mode on Linux
-    set_env("MONO_THREADS_SUSPEND", "preemptive");
-#elif ACE_PLATFORM_OSX
-    // Adjust GC threads suspending mode on Macos
-    set_env("MONO_THREADS_SUSPEND", "preemptive");
-#endif
-
     mono::debugging_config debug_config;
     debug_config.enable_debugging = true;
 
@@ -248,7 +231,7 @@ auto script_system::load_engine_domain(rtti::context& ctx, bool recompile) -> bo
 
     if(!is_deploy_mode && recompile)
     {
-        if(!create_compilation_job(ctx, "engine").get())
+        if(!create_compilation_job(ctx, "engine", false).get())
         {
             return false;
         }
@@ -284,7 +267,7 @@ auto script_system::load_app_domain(rtti::context& ctx, bool recompile) -> bool
 
     if(!is_deploy_mode && recompile)
     {
-        result &= create_compilation_job(ctx, "app").get();
+        result &= create_compilation_job(ctx, {"app"}, get_script_debug_mode()).get();
     }
 
     app_domain_ = std::make_unique<mono::mono_domain>("Ace.App");
@@ -552,7 +535,7 @@ void script_system::check_for_recompile(rtti::context& ctx, delta_t dt)
 
             for(const auto& protocol : container)
             {
-                create_compilation_job(ctx, protocol)
+                create_compilation_job(ctx, protocol, get_script_debug_mode())
                     .then(itc::this_thread::get_id(),
                           [this, &ctx, protocol](auto f)
                           {
@@ -574,17 +557,24 @@ void script_system::check_for_recompile(rtti::context& ctx, delta_t dt)
     }
 }
 
-auto script_system::create_compilation_job(rtti::context& ctx, const std::string& protocol) -> itc::job_future<bool>
+auto script_system::create_compilation_job(rtti::context& ctx, const std::string& protocol, bool debug)
+    -> itc::job_future<bool>
 {
+    uint32_t flags = 0;
+    if(debug)
+    {
+        flags |= script_library::compilation_flags::debug;
+    }
+
     auto& thr = ctx.get_cached<threader>();
     auto& am = ctx.get_cached<asset_manager>();
     return thr.pool->schedule(
-        [&am, protocol]()
+        [&am, flags, protocol]()
         {
             auto key = get_lib_data_key(protocol);
             auto output = get_lib_temp_compiled_key(protocol);
 
-            return asset_compiler::compile<script_library>(am, key, fs::resolve_protocol(output));
+            return asset_compiler::compile<script_library>(am, key, fs::resolve_protocol(output), flags);
         });
 }
 void script_system::set_needs_recompile(const std::string& protocol, bool now)

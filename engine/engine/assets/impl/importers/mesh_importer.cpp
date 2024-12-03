@@ -1081,6 +1081,10 @@ void process_material(asset_manager& am,
                       pbr_material& mat,
                       std::vector<imported_texture>& textures)
 {
+    if(!material)
+    {
+        return;
+    }
     // log_materials(material);
 
     auto get_imported_texture = [&](const aiMaterial* material,
@@ -1096,17 +1100,18 @@ void process_material(asset_manager& am,
         aiTextureOp op{};
         aiTextureMapMode mapmode{};
         unsigned int flags{};
+
         // Call the function
         aiReturn result = aiGetMaterialTexture(material, // The material pointer
                                                type,     // The type of texture (e.g., diffuse)
                                                index,    // The texture index
-                                               &path,    // The path where the texture file path will be stored
-                                               &mapping, // The mapping method
-                                               &uvindex, // The UV index
-                                               &blend,   // The blend factor
-                                               &op,      // The texture operation
-                                               &mapmode, // The texture map mode
-                                               &flags    // Additional flags
+                                               &path     // The path where the texture file path will be stored
+                                               // &mapping, // The mapping method
+                                               // &uvindex, // The UV index
+                                               // &blend,   // The blend factor
+                                               // &op,      // The texture operation
+                                               // &mapmode, // The texture map mode
+                                               // &flags    // Additional flags
         );
 
         if(path.length > 0)

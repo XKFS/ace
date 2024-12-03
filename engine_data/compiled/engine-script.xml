@@ -1,0 +1,439 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>engine-script</name>
+    </assembly>
+    <members>
+        <member name="T:Ace.Core.ForceMode">
+             <summary>
+             Specifies how forces are applied to physics components.
+             </summary>
+            </member>
+        <member name="F:Ace.Core.ForceMode.Force">
+             <summary>
+             Interprets the input as torque (measured in Newton-metres), and changes the angular velocity by the value of 
+             torque * deltaTime / mass. The effect depends on the simulation step length and the mass of the body.
+             </summary>
+            </member>
+        <member name="F:Ace.Core.ForceMode.Acceleration">
+             <summary>
+             Interprets the parameter as angular acceleration (measured in degrees per second squared), and changes the
+             angular velocity by the value of torque * deltaTime. The effect depends on the simulation step length but
+             does not depend on the mass of the body.
+             </summary>
+            </member>
+        <member name="F:Ace.Core.ForceMode.Impulse">
+             <summary>
+             Interprets the parameter as angular momentum (measured in kilogram-meters-squared per second), and changes the
+             angular velocity by the value of torque / mass. The effect depends on the mass of the body but doesn't depend 
+             on the simulation step length.
+             </summary>
+            </member>
+        <member name="F:Ace.Core.ForceMode.VelocityChange">
+             <summary>
+             Interprets the parameter as a direct angular velocity change (measured in degrees per second), and changes the
+             angular velocity by the value of torque. The effect doesn't depend on the mass of the body or the simulation 
+             step length.
+             </summary>
+            </member>
+        <member name="T:Ace.Core.Collision">
+             <summary>
+             Represents a collision that occurs between two entities.
+             </summary>
+            </member>
+        <member name="F:Ace.Core.Collision.entity">
+             <summary>
+             Gets the entity involved in the collision.
+             </summary>
+            </member>
+        <member name="F:Ace.Core.Collision.contacts">
+             <summary>
+             Gets the array of contact points where the collision occurred.
+             </summary>
+            </member>
+        <member name="M:Ace.Core.Collision.ToString">
+             <summary>
+             Converts the collision to its string representation.
+             </summary>
+             <returns>A string that represents the collision.</returns>
+            </member>
+        <member name="M:Ace.Core.Collision.ToString(System.String)">
+             <summary>
+             Converts the collision to its string representation with a specified format.
+             </summary>
+             <param name="format">The format string.</param>
+             <returns>A string that represents the collision.</returns>
+            </member>
+        <member name="M:Ace.Core.Collision.ToString(System.String,System.IFormatProvider)">
+             <summary>
+             Converts the collision to its string representation with a specified format and format provider.
+             </summary>
+             <param name="format">The format string.</param>
+             <param name="formatProvider">An object that supplies culture-specific formatting information.</param>
+             <returns>A string that represents the collision.</returns>
+            </member>
+        <member name="T:Ace.Core.ContactPoint">
+             <summary>
+             Represents a contact point where a collision occurs.
+             </summary>
+            </member>
+        <member name="M:Ace.Core.ContactPoint.ToString">
+             <summary>
+             Converts the contact point to its string representation.
+             </summary>
+             <returns>A string that represents the contact point.</returns>
+            </member>
+        <member name="M:Ace.Core.ContactPoint.ToString(System.String)">
+             <summary>
+             Converts the contact point to its string representation with a specified format.
+             </summary>
+             <param name="format">The format string.</param>
+             <returns>A string that represents the contact point.</returns>
+            </member>
+        <member name="M:Ace.Core.ContactPoint.ToString(System.String,System.IFormatProvider)">
+             <summary>
+             Converts the contact point to its string representation with a specified format and format provider.
+             </summary>
+             <param name="format">The format string.</param>
+             <param name="formatProvider">An object that supplies culture-specific formatting information.</param>
+             <returns>A string that represents the contact point.</returns>
+            </member>
+        <member name="T:Ace.Core.AudioSourceComponent">
+             <summary>
+             Represents an audio source component that can play, pause, and control audio playback in a scene.
+             </summary>
+            </member>
+        <member name="P:Ace.Core.AudioSourceComponent.clip">
+             <summary>
+             Gets or sets the audio clip currently assigned to the audio source.
+             </summary>
+             <value>The currently assigned audio clip.</value>
+            </member>
+        <member name="P:Ace.Core.AudioSourceComponent.loop">
+             <summary>
+             Gets or sets a value indicating whether the audio source loops playback.
+             </summary>
+             <value><c>true</c> if the audio source is set to loop; otherwise, <c>false</c>.</value>
+            </member>
+        <member name="P:Ace.Core.AudioSourceComponent.volume">
+             <summary>
+             Gets or sets the volume of the audio source.
+             </summary>
+             <value>A float value representing the audio source volume, where 1.0 is the default level.</value>
+            </member>
+        <member name="P:Ace.Core.AudioSourceComponent.pitch">
+             <summary>
+             Gets or sets the pitch of the audio source.
+             </summary>
+             <value>A float value representing the pitch, where 1.0 is normal pitch.</value>
+            </member>
+        <member name="P:Ace.Core.AudioSourceComponent.volumeRolloff">
+             <summary>
+             Gets or sets the volume rolloff factor of the audio source.
+             </summary>
+             <value>A float value determining how the volume decreases with distance from the source.</value>
+            </member>
+        <member name="P:Ace.Core.AudioSourceComponent.minDistance">
+             <summary>
+             Gets or sets the minimum distance for the audio source.
+             </summary>
+             <value>The minimum distance within which the audio source plays at full volume.</value>
+            </member>
+        <member name="P:Ace.Core.AudioSourceComponent.maxDistance">
+             <summary>
+             Gets or sets the maximum distance for the audio source.
+             </summary>
+             <value>The maximum distance beyond which the audio source volume is effectively zero.</value>
+            </member>
+        <member name="P:Ace.Core.AudioSourceComponent.mute">
+             <summary>
+             Gets or sets a value indicating whether the audio source is muted.
+             </summary>
+             <value><c>true</c> if the audio source is muted; otherwise, <c>false</c>.</value>
+            </member>
+        <member name="P:Ace.Core.AudioSourceComponent.isPlaying">
+             <summary>
+             Gets a value indicating whether the audio source is currently playing.
+             </summary>
+             <value><c>true</c> if the audio source is playing; otherwise, <c>false</c>.</value>
+            </member>
+        <member name="P:Ace.Core.AudioSourceComponent.isPaused">
+             <summary>
+             Gets a value indicating whether the audio source is currently paused.
+             </summary>
+             <value><c>true</c> if the audio source is paused; otherwise, <c>false</c>.</value>
+            </member>
+        <member name="P:Ace.Core.AudioSourceComponent.time">
+             <summary>
+             Gets or sets the current playback time of the audio source.
+             </summary>
+             <value>The current playback time in seconds.</value>
+            </member>
+        <member name="M:Ace.Core.AudioSourceComponent.Play">
+             <summary>
+             Starts playing the audio source from the beginning.
+             </summary>
+            </member>
+        <member name="M:Ace.Core.AudioSourceComponent.Stop">
+             <summary>
+             Stops playback of the audio source.
+             </summary>
+            </member>
+        <member name="M:Ace.Core.AudioSourceComponent.Pause">
+             <summary>
+             Pauses playback of the audio source.
+             </summary>
+            </member>
+        <member name="M:Ace.Core.AudioSourceComponent.Resume">
+             <summary>
+             Resumes playback of the audio source.
+             </summary>
+            </member>
+        <member name="M:Ace.Core.AudioSourceComponent.PlayClipAtPoint(Ace.Core.AudioClip,Vector3,System.Single)">
+             <summary>
+             Plays a one-shot audio clip at the specified position with a specified volume.
+             </summary>
+             <param name="clip">The audio clip to play.</param>
+             <param name="position">The world position where the audio will be played.</param>
+             <param name="volume">The volume at which the audio will be played. Default is 1.0.</param>
+            </member>
+        <member name="T:Ace.Core.Entity">
+             <summary>
+             Represents an entity within a scene. Provides methods to manage components and query entity properties.
+             </summary>
+            </member>
+        <member name="F:Ace.Core.Entity.Id">
+             <summary>
+             Gets the unique identifier of the entity.
+             </summary>
+            </member>
+        <member name="P:Ace.Core.Entity.tag">
+             <summary>
+             Gets or sets the tag of the entity.
+             </summary>
+             <value>The tag associated with the entity.</value>
+            </member>
+        <member name="P:Ace.Core.Entity.transform">
+             <summary>
+             Gets the transform component of the entity.
+             </summary>
+             <value>The transform component of the entity.</value>
+            </member>
+        <member name="M:Ace.Core.Entity.Equals(System.Object)">
+             <inheritdoc />
+            </member>
+        <member name="M:Ace.Core.Entity.Equals(Ace.Core.Entity)">
+             <summary>
+             Determines whether the specified entity is equal to the current entity.
+             </summary>
+             <param name="other">The entity to compare with the current entity.</param>
+             <returns><c>true</c> if the specified entity is equal to the current entity; otherwise, <c>false</c>.</returns>
+            </member>
+        <member name="M:Ace.Core.Entity.op_Equality(Ace.Core.Entity,Ace.Core.Entity)">
+             <summary>
+             Compares two entities for equality.
+             </summary>
+             <param name="lhs">The first entity.</param>
+             <param name="rhs">The second entity.</param>
+             <returns><c>true</c> if both entities are equal; otherwise, <c>false</c>.</returns>
+            </member>
+        <member name="M:Ace.Core.Entity.op_Inequality(Ace.Core.Entity,Ace.Core.Entity)">
+             <summary>
+             Compares two entities for inequality.
+             </summary>
+             <param name="lhs">The first entity.</param>
+             <param name="rhs">The second entity.</param>
+             <returns><c>true</c> if both entities are not equal; otherwise, <c>false</c>.</returns>
+            </member>
+        <member name="M:Ace.Core.Entity.GetHashCode">
+             <inheritdoc />
+            </member>
+        <member name="M:Ace.Core.Entity.IsValid">
+             <summary>
+             Determines whether the entity is valid within the scene.
+             </summary>
+             <returns><c>true</c> if the entity is valid; otherwise, <c>false</c>.</returns>
+            </member>
+        <member name="M:Ace.Core.Entity.AddComponent``1">
+             <summary>
+             Adds a new component of the specified type to the entity.
+             </summary>
+             <typeparam name="T">The type of component to add.</typeparam>
+             <returns>The newly added component.</returns>
+            </member>
+        <member name="M:Ace.Core.Entity.HasComponent``1">
+             <summary>
+             Determines whether the entity has a component of the specified type.
+             </summary>
+             <typeparam name="T">The type of component to check for.</typeparam>
+             <returns><c>true</c> if the entity has the specified component; otherwise, <c>false</c>.</returns>
+            </member>
+        <member name="M:Ace.Core.Entity.HasComponent(System.Type)">
+             <summary>
+             Determines whether the entity has a component of the specified type.
+             </summary>
+             <param name="type">The type of component to check for.</param>
+             <returns><c>true</c> if the entity has the specified component; otherwise, <c>false</c>.</returns>
+            </member>
+        <member name="M:Ace.Core.Entity.GetComponent``1">
+             <summary>
+             Gets the component of the specified type from the entity.
+             </summary>
+             <typeparam name="T">The type of component to retrieve.</typeparam>
+             <returns>The component of the specified type.</returns>
+            </member>
+        <member name="M:Ace.Core.Entity.GetComponents(System.Type)">
+             <summary>
+             Gets all components of the specified type from the entity.
+             </summary>
+             <param name="type">The type of component to retrieve.</param>
+             <returns>An array of components of the specified type.</returns>
+            </member>
+        <member name="M:Ace.Core.Entity.GetComponents``1">
+             <summary>
+             Gets all components of the specified type from the entity.
+             </summary>
+             <typeparam name="T">The type of component to retrieve.</typeparam>
+             <returns>An array of components of the specified type.</returns>
+            </member>
+        <member name="M:Ace.Core.Entity.RemoveComponent(Ace.Core.Component)">
+             <summary>
+             Removes a specified component instance from the entity.
+             </summary>
+             <param name="component">The component instance to remove.</param>
+             <returns><c>true</c> if the component was successfully removed; otherwise, <c>false</c>.</returns>
+            </member>
+        <member name="M:Ace.Core.Entity.RemoveComponent``1">
+             <summary>
+             Removes a component of the specified type from the entity.
+             </summary>
+             <typeparam name="T">The type of component to remove.</typeparam>
+             <returns><c>true</c> if the component was successfully removed; otherwise, <c>false</c>.</returns>
+            </member>
+        <member name="M:Ace.Core.Entity.#ctor(System.UInt32)">
+             <summary>
+             Initializes a new instance of the <see cref="T:Ace.Core.Entity" /> struct with the specified identifier.
+             </summary>
+             <param name="id">The unique identifier of the entity.</param>
+            </member>
+        <member name="T:Ace.Core.PhysicsComponent">
+             <summary>
+             Provides physics functionality for an entity.
+             </summary>
+            </member>
+        <member name="M:Ace.Core.PhysicsComponent.ApplyExplosionForce(System.Single,Vector3,System.Single,System.Single,Ace.Core.ForceMode)">
+             <summary>
+             Applies an explosion force to the entity.
+             </summary>
+             <param name="explosionForce">The force of the explosion.</param>
+             <param name="explosionPosition">The center of the explosion.</param>
+             <param name="explosionRadius">The radius of the explosion.</param>
+             <param name="upwardsModifier">Adjusts the upward direction of the explosion force.</param>
+             <param name="mode">The force mode to apply.</param>
+            </member>
+        <member name="M:Ace.Core.PhysicsComponent.ApplyForce(Vector3,Ace.Core.ForceMode)">
+             <summary>
+             Applies a force to the entity.
+             </summary>
+             <param name="force">The force to apply.</param>
+             <param name="mode">The force mode to apply.</param>
+            </member>
+        <member name="M:Ace.Core.PhysicsComponent.ApplyTorque(Vector3,Ace.Core.ForceMode)">
+             <summary>
+             Applies a torque to the entity.
+             </summary>
+             <param name="torque">The torque to apply.</param>
+             <param name="mode">The force mode to apply.</param>
+            </member>
+        <member name="T:Ace.Core.ScriptComponent">
+             <summary>
+             Represents a script component that provides lifecycle hooks and event handling for an entity.
+             </summary>
+            </member>
+        <member name="M:Ace.Core.ScriptComponent.OnCreate">
+             <summary>
+             Called when the script is created. Override this method to initialize resources or data.
+             </summary>
+            </member>
+        <member name="M:Ace.Core.ScriptComponent.OnStart">
+             <summary>
+             Called when the script starts execution. Override this method to set up logic at the start.
+             </summary>
+            </member>
+        <member name="M:Ace.Core.ScriptComponent.OnDestroy">
+             <summary>
+             Called when the script is destroyed. Override this method to clean up resources or data.
+             </summary>
+            </member>
+        <member name="M:Ace.Core.ScriptComponent.OnSensorEnter(Ace.Core.Entity)">
+             <summary>
+             Called when another entity enters a sensor attached to this entity.
+             </summary>
+             <param name="e">The entity that entered the sensor.</param>
+            </member>
+        <member name="M:Ace.Core.ScriptComponent.OnSensorExit(Ace.Core.Entity)">
+             <summary>
+             Called when another entity exits a sensor attached to this entity.
+             </summary>
+             <param name="e">The entity that exited the sensor.</param>
+            </member>
+        <member name="M:Ace.Core.ScriptComponent.OnCollisionEnter(Ace.Core.Collision)">
+             <summary>
+             Called when this entity begins a collision with another entity.
+             </summary>
+             <param name="collision">Details of the collision, including the other entity and contact points.</param>
+            </member>
+        <member name="M:Ace.Core.ScriptComponent.OnCollisionExit(Ace.Core.Collision)">
+             <summary>
+             Called when this entity ends a collision with another entity.
+             </summary>
+             <param name="collision">Details of the collision, including the other entity and contact points.</param>
+            </member>
+        <member name="M:Ace.Core.ScriptComponent.OnUpdate">
+             <summary>
+             Called on every frame update. Override this method to implement frame-based logic.
+             </summary>
+            </member>
+        <member name="M:Ace.Core.ScriptComponent.internal_n2m_on_create">
+             <summary>
+             Internal method invoked when the script is created. Calls <see cref="M:Ace.Core.ScriptComponent.OnCreate" /> and subscribes <see cref="M:Ace.Core.ScriptComponent.OnUpdate" /> to the update system.
+             </summary>
+            </member>
+        <member name="M:Ace.Core.ScriptComponent.internal_n2m_on_start">
+             <summary>
+             Internal method invoked when the script starts. Calls <see cref="M:Ace.Core.ScriptComponent.OnStart" />.
+             </summary>
+            </member>
+        <member name="M:Ace.Core.ScriptComponent.internal_n2m_on_destroy">
+             <summary>
+             Internal method invoked when the script is destroyed. Calls <see cref="M:Ace.Core.ScriptComponent.OnDestroy" /> and unsubscribes <see cref="M:Ace.Core.ScriptComponent.OnUpdate" /> from the update system.
+             </summary>
+            </member>
+        <member name="M:Ace.Core.ScriptComponent.internal_n2m_on_sensor_enter(Ace.Core.Entity)">
+             <summary>
+             Internal method invoked when another entity enters a sensor attached to this entity. Calls <see cref="M:Ace.Core.ScriptComponent.OnSensorEnter(Ace.Core.Entity)" />.
+             </summary>
+             <param name="entity">The entity that entered the sensor.</param>
+            </member>
+        <member name="M:Ace.Core.ScriptComponent.internal_n2m_on_sensor_exit(Ace.Core.Entity)">
+             <summary>
+             Internal method invoked when another entity exits a sensor attached to this entity. Calls <see cref="M:Ace.Core.ScriptComponent.OnSensorExit(Ace.Core.Entity)" />.
+             </summary>
+             <param name="entity">The entity that exited the sensor.</param>
+            </member>
+        <member name="M:Ace.Core.ScriptComponent.internal_n2m_on_collision_enter(Ace.Core.Entity,System.Byte[])">
+             <summary>
+             Internal method invoked when this entity begins a collision. Converts contact data and calls <see cref="M:Ace.Core.ScriptComponent.OnCollisionEnter(Ace.Core.Collision)" />.
+             </summary>
+             <param name="entity">The other entity involved in the collision.</param>
+             <param name="contactData">The serialized contact data for the collision.</param>
+            </member>
+        <member name="M:Ace.Core.ScriptComponent.internal_n2m_on_collision_exit(Ace.Core.Entity,System.Byte[])">
+             <summary>
+             Internal method invoked when this entity ends a collision. Converts contact data and calls <see cref="M:Ace.Core.ScriptComponent.OnCollisionExit(Ace.Core.Collision)" />.
+             </summary>
+             <param name="entity">The other entity involved in the collision.</param>
+             <param name="contactData">The serialized contact data for the collision.</param>
+            </member>
+    </members>
+</doc>

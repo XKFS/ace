@@ -697,7 +697,7 @@ namespace IMGUIZMO_NAMESPACE
 
       int mActualID = -1;
       int mEditingID = -1;
-      OPERATION mOperation = OPERATION(-1);
+      OPERATION mOperation = OPERATION::TRANSLATE;
 
       bool mAllowAxisFlip = true;
       float mGizmoSizeClipSpace = 0.1f;

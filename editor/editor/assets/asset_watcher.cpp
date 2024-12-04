@@ -177,6 +177,11 @@ auto watch_assets(rtti::context& ctx, const fs::path& dir, const fs::path& wildc
                 {
                     auto old_key = get_asset_key(entry.last_path);
                     am.rename_asset<T>(old_key, key);
+
+                    if constexpr(std::is_same<T, script>::value)
+                    {
+                        script_system::set_needs_recompile(fs::extract_protocol(fs::convert_to_protocol(key)).string());
+                    }
                 }
                 else // created or modified
                 {

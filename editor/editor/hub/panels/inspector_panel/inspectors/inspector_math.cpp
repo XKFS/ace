@@ -128,6 +128,132 @@ bool DragVec4(math::vec4& data, const var_info& info, const math::vec4* reset = 
 
 } // namespace
 
+
+auto inspector_bvec2::inspect(rtti::context& ctx,
+                              rttr::variant& var,
+                              const var_info& info,
+                              const meta_getter& get_metadata) -> inspect_result
+{
+    auto data = var.get_value<math::bvec2>();
+    inspect_result result{};
+
+    enum bflags
+    {
+        none = 0,
+        x = 1 << 0,
+        y = 1 << 1,
+    };
+
+    int flags = 0;
+    flags |= data.x ? bflags::x : 0;
+    flags |= data.y ? bflags::y : 0;
+
+    bool mod = false;
+    mod |= ImGui::CheckboxFlags("X", &flags, bflags::x);
+    ImGui::SameLine();
+    mod |= ImGui::CheckboxFlags("Y", &flags, bflags::y);
+
+    if(mod)
+    {
+        data.x = flags & bflags::x;
+        data.y = flags & bflags::y;
+        var = data;
+        result.changed = true;
+    }
+    result.edit_finished = ImGui::IsItemDeactivatedAfterEdit();
+
+    return result;
+}
+
+auto inspector_bvec3::inspect(rtti::context& ctx,
+                              rttr::variant& var,
+                              const var_info& info,
+                              const meta_getter& get_metadata) -> inspect_result
+{
+    auto data = var.get_value<math::bvec3>();
+    inspect_result result{};
+
+    enum bflags
+    {
+        none = 0,
+        x = 1 << 0,
+        y = 1 << 1,
+        z = 1 << 2,
+    };
+
+    int flags = 0;
+    flags |= data.x ? bflags::x : 0;
+    flags |= data.y ? bflags::y : 0;
+    flags |= data.z ? bflags::z : 0;
+
+    bool mod = false;
+    mod |= ImGui::CheckboxFlags("X", &flags, bflags::x);
+    ImGui::SameLine();
+    mod |= ImGui::CheckboxFlags("Y", &flags, bflags::y);
+    ImGui::SameLine();
+    mod |= ImGui::CheckboxFlags("Z", &flags, bflags::z);
+
+    if(mod)
+    {
+        data.x = flags & bflags::x;
+        data.y = flags & bflags::y;
+        data.z = flags & bflags::z;
+        var = data;
+        result.changed = true;
+    }
+    result.edit_finished = ImGui::IsItemDeactivatedAfterEdit();
+
+    return result;
+}
+
+auto inspector_bvec4::inspect(rtti::context& ctx,
+                              rttr::variant& var,
+                              const var_info& info,
+                              const meta_getter& get_metadata) -> inspect_result
+{
+    auto data = var.get_value<math::bvec4>();
+    inspect_result result{};
+
+    enum bflags
+    {
+        none = 0,
+        x = 1 << 0,
+        y = 1 << 1,
+        z = 1 << 2,
+        w = 1 << 3,
+
+    };
+
+    int flags = 0;
+    flags |= data.x ? bflags::x : 0;
+    flags |= data.y ? bflags::y : 0;
+    flags |= data.z ? bflags::z : 0;
+    flags |= data.w ? bflags::w : 0;
+
+    bool mod = false;
+    mod |= ImGui::CheckboxFlags("X", &flags, bflags::x);
+    ImGui::SameLine();
+    mod |= ImGui::CheckboxFlags("Y", &flags, bflags::y);
+    ImGui::SameLine();
+    mod |= ImGui::CheckboxFlags("Z", &flags, bflags::z);
+    ImGui::SameLine();
+    mod |= ImGui::CheckboxFlags("W", &flags, bflags::w);
+
+    if(mod)
+    {
+        data.x = flags & bflags::x;
+        data.y = flags & bflags::y;
+        data.z = flags & bflags::z;
+        data.w = flags & bflags::w;
+
+        var = data;
+        result.changed = true;
+    }
+    result.edit_finished = ImGui::IsItemDeactivatedAfterEdit();
+
+    return result;
+}
+
 auto inspector_vec2::inspect(rtti::context& ctx,
                              rttr::variant& var,
                              const var_info& info,
@@ -275,7 +401,6 @@ auto inspector_transform::inspect(rtti::context& ctx,
                 result.changed |= true;
             }
             result.edit_finished |= ImGui::IsItemDeactivatedAfterEdit();
-
         }
         ImGui::PopItemWidth();
     }

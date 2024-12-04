@@ -192,6 +192,12 @@ REFLECT(physics_component)
             rttr::metadata("min", 0.0f),
             rttr::metadata("pretty_name", "Mass"),
             rttr::metadata("tooltip", "Mass for dynamic rigidbodies."))
+        .property("freeze_position", &physics_component::get_freeze_position, &physics_component::set_freeze_position)(
+            rttr::metadata("pretty_name", "Freeze Position"),
+            rttr::metadata("tooltip", "Freeze."))
+        .property("freeze_rotation", &physics_component::get_freeze_rotation, &physics_component::set_freeze_rotation)(
+            rttr::metadata("pretty_name", "Freeze Rotation"),
+            rttr::metadata("tooltip", "Freeze."))
         .property("material", &physics_component::get_material, &physics_component::set_material)(
             rttr::metadata("pretty_name", "Material"),
             rttr::metadata("tooltip", "Physics material for the rigidbody."))
@@ -206,6 +212,9 @@ SAVE(physics_component)
     try_save(ar, ser20::make_nvp("is_kinematic", obj.is_kinematic()));
     try_save(ar, ser20::make_nvp("is_sensor", obj.is_sensor()));
     try_save(ar, ser20::make_nvp("mass", obj.get_mass()));
+    try_save(ar, ser20::make_nvp("freeze_position", obj.get_freeze_position()));
+    try_save(ar, ser20::make_nvp("freeze_rotation", obj.get_freeze_rotation()));
+
     try_save(ar, ser20::make_nvp("material", obj.get_material()));
     try_save(ar, ser20::make_nvp("shapes", obj.get_shapes()));
 }
@@ -229,6 +238,14 @@ LOAD(physics_component)
     float mass{1};
     try_load(ar, ser20::make_nvp("mass", mass));
     obj.set_mass(mass);
+
+    math::bvec3 freeze_position{};
+    try_load(ar, ser20::make_nvp("freeze_position", freeze_position));
+    obj.set_freeze_position(freeze_position);
+
+    math::bvec3 freeze_rotation{};
+    try_load(ar, ser20::make_nvp("freeze_rotation", freeze_rotation));
+    obj.set_freeze_rotation(freeze_rotation);
 
     asset_handle<physics_material> material;
     try_load(ar, ser20::make_nvp("material", material));

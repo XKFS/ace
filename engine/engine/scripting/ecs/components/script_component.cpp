@@ -451,4 +451,26 @@ auto script_component::has_script_components() const -> bool
 {
     return !script_components_.empty();
 }
+
+auto script_component::get_script_source_location(const script_object& obj) const -> std::string
+{
+    if(!obj.scoped)
+    {
+        return {};
+    }
+
+    const auto& object = obj.scoped->object;
+    const auto& type = object.get_type();
+    try
+    {
+        auto prop = type.get_property("SourceFilePath");
+        auto invoker = mono::make_property_invoker<std::string>(prop);
+        return invoker.get_value(object);
+
+    }
+    catch(const mono::mono_exception& e)
+    {
+        return {};
+    }
+}
 } // namespace ace

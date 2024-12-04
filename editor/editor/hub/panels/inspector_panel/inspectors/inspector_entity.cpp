@@ -3,7 +3,7 @@
 
 #include <editor/imgui/imgui_interface.h>
 #include <editor/editing/editing_manager.h>
-
+#include <editor/system/project_manager.h>
 #include <engine/meta/ecs/components/all_components.h>
 #include <engine/scripting/ecs/systems/script_system.h>
 #include <hpp/type_name.hpp>
@@ -289,12 +289,44 @@ auto inspector_entity::inspect(rtti::context& ctx,
             {
                 ImGui::PushID(i);
                 const auto& script = comps[i];
-                auto type = script.scoped->object.get_type();
+                const auto& type = script.scoped->object.get_type();
+                fs::path source_loc = script_comp->get_script_source_location(script);
+
                 inspect_callbacks callbacks;
                 callbacks.on_inspect = [&]() -> inspect_result
                 {
+                    inspect_result inspect_res{};
+
+                    if(!source_loc.empty())
+                    {
+                        var_info field_info;
+                        field_info.is_property = true;
+                        field_info.read_only = true;
+                        ImGui::PushReadonly(field_info.read_only);
+
+                        std::string var = ICON_MDI_SCRIPT" " + source_loc.stem().string();
+                        {
+                            property_layout layout("Script");
+
+                            if(ImGui::Button(var.c_str(), ImVec2(-1.0f, ImGui::GetFrameHeight())))
+                            {
+                                auto& em = ctx.get_cached<editing_manager>();
+
+                                em.focus(source_loc);
+                                em.focus_path(source_loc.parent_path());
+                            }
+
+                            if(ImGui::IsItemDoubleClicked(ImGuiMouseButton_Left))
+                            {
+                                auto& pm = ctx.get_cached<project_manager>();
+                                editor_actions::open_workspace_on_file(pm.get_name(), source_loc);
+                            }
+                        }
+                        ImGui::PopReadonly();
+                    }
                     rttr::variant obj = static_cast<mono::mono_object&>(script.scoped->object);
-                    return ::ace::inspect_var(ctx, obj);
+                    inspect_res |= ::ace::inspect_var(ctx, obj);
+                    return inspect_res;
                 };
 
                 callbacks.on_add = [&]()

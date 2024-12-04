@@ -5,6 +5,28 @@
 
 namespace ace
 {
+
+struct inspector_bvec2 : public inspector
+{
+    REFLECTABLEV(inspector_bvec2, inspector)
+    inspect_result inspect(rtti::context& ctx, rttr::variant& var, const var_info& info, const meta_getter& get_metadata);
+};
+REFLECT_INSPECTOR_INLINE(inspector_bvec2, math::bvec2)
+
+struct inspector_bvec3 : public inspector
+{
+    REFLECTABLEV(inspector_bvec3, inspector)
+    inspect_result inspect(rtti::context& ctx, rttr::variant& var, const var_info& info, const meta_getter& get_metadata);
+};
+REFLECT_INSPECTOR_INLINE(inspector_bvec3, math::bvec3)
+
+struct inspector_bvec4 : public inspector
+{
+    REFLECTABLEV(inspector_bvec4, inspector)
+    inspect_result inspect(rtti::context& ctx, rttr::variant& var, const var_info& info, const meta_getter& get_metadata);
+};
+REFLECT_INSPECTOR_INLINE(inspector_bvec4, math::bvec4)
+
 struct inspector_vec2 : public inspector
 {
     REFLECTABLEV(inspector_vec2, inspector)

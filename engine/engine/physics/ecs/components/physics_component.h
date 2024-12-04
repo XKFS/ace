@@ -77,6 +77,7 @@ enum class physics_property : uint8_t
     material,
     shape,
     sensor,
+    constraints,
     count
 };
 
@@ -279,6 +280,14 @@ public:
      */
     void apply_torque(const math::vec3& torque, force_mode mode = force_mode::force);
 
+
+    void set_freeze_rotation(const math::bvec3& xyz);
+    void set_freeze_position(const math::bvec3& xyz);
+
+    auto get_freeze_rotation() const -> const math::bvec3&;
+    auto get_freeze_position() const -> const math::bvec3&;
+
+
     /**
      * @brief Clears kinematic velocities.
      */
@@ -319,6 +328,9 @@ private:
     bool is_using_gravity_{}; ///< Indicates if the component uses gravity.
     bool is_sensor_{};        ///< Indicates if the component is a sensor.
     float mass_{1};           ///< The mass of the component.
+
+    math::bvec3 freeze_position_xyz_{};
+    math::bvec3 freeze_rotation_xyz_{};
 
     asset_handle<physics_material> material_{};            ///< The material of the component.
     std::vector<physics_compound_shape> compound_shape_{}; ///< The vector of compound shapes.

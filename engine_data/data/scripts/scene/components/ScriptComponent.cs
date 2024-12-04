@@ -11,12 +11,11 @@ namespace Core
     /// </summary>
     public abstract class ScriptComponent : Component
     {
-        // public string SourceFilePath { get; }
-
-        // protected ScriptComponent([CallerFilePath] string file = "")
-        // {
-        //     SourceFilePath = file;
-        // }
+        private string SourceFilePath { get; }
+        protected ScriptComponent([CallerFilePath] string file = "")
+        {
+            SourceFilePath = file;
+        }
 
         /// <summary>
         /// Called when the script is created. Override this method to initialize resources or data.

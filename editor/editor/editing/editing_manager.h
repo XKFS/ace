@@ -119,6 +119,24 @@ struct editing_manager
         return focused.get_value<T>() == entry;
     }
 
+    template<typename T>
+    auto is_focused(const asset_handle<T>& entry) -> bool
+    {
+        const auto& focused = focused_data.object;
+
+        if(focused.is_type<asset_handle<T>>())
+        {
+            return focused.get_value<asset_handle<T>>() == entry;
+        }
+
+        if(!focused.is_type<fs::path>())
+        {
+            return false;
+        }
+
+        return focused.get_value<fs::path>() == fs::resolve_protocol(entry.id());
+    }
+
     void close_project();
 
     /// enable editor grid

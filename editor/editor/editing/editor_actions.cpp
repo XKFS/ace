@@ -198,6 +198,9 @@ auto get_vscode_executable() -> fs::path
         {
             // Check common installation directories
             std::vector<fs::path> possiblePaths = {
+                "/usr/bin/code",
+                "/bin/code",
+                "/sbin/code",
                 "/usr/share/code/bin/code",
                 "/usr/share/code-insiders/bin/code",
                 "/usr/local/share/code/bin/code",
@@ -1051,6 +1054,11 @@ void editor_actions::open_workspace_on_file(const std::string& project_name, con
             try
             {
                 auto external_tool = get_vscode_executable();
+                if(external_tool.empty())
+                {
+                    APPLOG_ERROR("Cannot locate external tool [vscode]");
+                    return;
+                }
                 auto workspace_key = fmt::format("app:/.vscode/{}-workspace.code-workspace", project_name);
                 auto workspace_path = fs::resolve_protocol(workspace_key);
 
@@ -1059,7 +1067,7 @@ void editor_actions::open_workspace_on_file(const std::string& project_name, con
             }
             catch(const std::exception& e)
             {
-                APPLOG_ERROR("Cannot open external tool for file {} with {}", file.string(), e.what());
+                APPLOG_ERROR("Cannot open external tool [vscode] for file {} with {}", file.string(), e.what());
             }
         });
 }

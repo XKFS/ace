@@ -65,6 +65,9 @@ public:
     auto get_script_components() const -> const script_components_t&;
     auto has_script_components() const -> bool;
 
+    auto get_script_source_location(const script_object& obj) const -> std::string;
+
+
     void create();
     void start();
     void destroy();

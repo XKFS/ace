@@ -206,9 +206,6 @@ void physics_component::apply_explosion_force(float explosion_force,
                                               float upwards_modifier,
                                               force_mode mode)
 {
-    auto owner = get_owner();
-    auto& registry = *owner.registry();
-
     physics_system::apply_explosion_force(*this,
                                           explosion_force,
                                           explosion_position,
@@ -219,25 +216,51 @@ void physics_component::apply_explosion_force(float explosion_force,
 
 void physics_component::apply_force(const math::vec3& force, force_mode mode)
 {
-    auto owner = get_owner();
-    auto& registry = *owner.registry();
-
     physics_system::apply_force(*this, force, mode);
 }
 
 void physics_component::apply_torque(const math::vec3& torque, force_mode mode)
 {
-    auto owner = get_owner();
-    auto& registry = *owner.registry();
-
     physics_system::apply_torque(*this, torque, mode);
 }
 
 void physics_component::clear_kinematic_velocities()
 {
-    auto owner = get_owner();
-    auto& registry = *owner.registry();
     physics_system::clear_kinematic_velocities(*this);
+}
+
+void physics_component::set_freeze_rotation(const math::bvec3& xyz)
+{
+    if(freeze_rotation_xyz_ == xyz)
+    {
+        return;
+    }
+
+    freeze_rotation_xyz_ = xyz;
+
+    dirty_.set();
+    set_property_dirty(physics_property::constraints, true);
+
+}
+void physics_component::set_freeze_position(const math::bvec3& xyz)
+{
+    if(freeze_position_xyz_ == xyz)
+    {
+        return;
+    }
+    freeze_position_xyz_ = xyz;
+
+    dirty_.set();
+    set_property_dirty(physics_property::constraints, true);
+}
+
+auto physics_component::get_freeze_rotation() const -> const math::bvec3&
+{
+    return freeze_rotation_xyz_;
+}
+auto physics_component::get_freeze_position() const -> const math::bvec3&
+{
+    return freeze_position_xyz_;
 }
 
 } // namespace ace

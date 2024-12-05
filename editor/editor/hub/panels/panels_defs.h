@@ -10,4 +10,6 @@
 #define INSPECTOR_VIEW  ICON_MDI_INFORMATION " Inspector"
 #define STATISTICS_VIEW ICON_MDI_CHART_BAR " Statistics"
 #define DEPLOY_VIEW     "Deploy Project"
+#define PROJECT_SETTINGS_VIEW     "Project Settings"
+
 #define ANIMATION_VIEW     " Animation"

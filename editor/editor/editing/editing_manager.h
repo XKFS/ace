@@ -107,6 +107,14 @@ struct editing_manager
     }
 
     template<typename T>
+    auto is_selected_type() -> bool
+    {
+        const auto& selected = selection_data.object;
+
+        return selected && selected.is_type<T>();
+    }
+
+    template<typename T>
     auto is_focused(const T& entry) -> bool
     {
         const auto& focused = focused_data.object;
@@ -159,7 +167,7 @@ struct editing_manager
 private:
     void on_script_recompile(rtti::context& ctx, const std::string& protocol);
     void save_checkpoint(rtti::context& ctx);
-    void load_checkpoint(rtti::context& ctx);
+    void load_checkpoint(rtti::context& ctx, bool recover_selection);
 
     std::shared_ptr<int> sentinel_ = std::make_shared<int>(0);
 

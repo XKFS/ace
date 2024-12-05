@@ -28,7 +28,9 @@ imgui_panels::imgui_panels()
     statistics_panel_ = std::make_unique<statistics_panel>();
     animation_panel_ = std::make_unique<animation_panel>(this);
 
+
     deploy_panel_ = std::make_unique<deploy_panel>(this);
+    project_settings_panel_ = std::make_unique<project_settings_panel>(this);
 }
 
 imgui_panels::~imgui_panels()
@@ -96,6 +98,8 @@ void imgui_panels::on_frame_ui_render(rtti::context& ctx)
     animation_panel_->on_frame_ui_render(ctx, ANIMATION_VIEW);
 
     deploy_panel_->on_frame_ui_render(ctx, DEPLOY_VIEW);
+
+    project_settings_panel_->on_frame_ui_render(ctx, PROJECT_SETTINGS_VIEW);
 
     footer_panel_->on_frame_ui_render(ctx,
                                       footer_size,

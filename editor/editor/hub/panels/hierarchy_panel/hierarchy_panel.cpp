@@ -226,6 +226,9 @@ void check_context_menu(graph_context& ctx, entt::handle entity)
                             object.get<transform_component>().set_parent(entity, false);
                         }
                         ctx.em.select(object);
+
+                        start_editing_label(ctx, object);
+
                     }
                 }
                 else
@@ -243,6 +246,8 @@ void check_context_menu(graph_context& ctx, entt::handle entity)
                                 }
 
                                 ctx.em.select(object);
+
+                                start_editing_label(ctx, object);
                             }
                         }
                         ImGui::EndMenu();
@@ -273,6 +278,8 @@ void check_context_menu(graph_context& ctx, entt::handle entity)
                             object.get<transform_component>().set_parent(entity, false);
                         }
                         ctx.em.select(object);
+
+                        start_editing_label(ctx, object);
                     }
                 }
                 ImGui::EndMenu();
@@ -296,6 +303,8 @@ void check_context_menu(graph_context& ctx, entt::handle entity)
                             object.get<transform_component>().set_parent(entity, false);
                         }
                         ctx.em.select(object);
+
+                        start_editing_label(ctx, object);
                     }
                 }
                 ImGui::EndMenu();
@@ -320,6 +329,8 @@ void check_context_menu(graph_context& ctx, entt::handle entity)
         {
             auto object = defaults::create_camera_entity(ctx.ctx, ctx.ec.get_scene(), "Camera");
             ctx.em.select(object);
+
+            start_editing_label(ctx, object);
         }
     };
 

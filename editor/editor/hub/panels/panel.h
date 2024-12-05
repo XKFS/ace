@@ -16,6 +16,7 @@
 #include "scene_panel/scene_panel.h"
 #include "statistics_panel/statistics_panel.h"
 #include "animation_panel/animation_panel.h"
+#include "project_settings_panel/project_settings_panel.h"
 
 namespace ace
 {
@@ -42,6 +43,11 @@ public:
         return *deploy_panel_;
     }
 
+    project_settings_panel& get_project_settings_panel()
+    {
+        return *project_settings_panel_;
+    }
+
     scene_panel& get_scene_panel()
     {
         return *scene_panel_;
@@ -57,6 +63,7 @@ private:
     std::unique_ptr<header_panel> header_panel_;
     std::unique_ptr<footer_panel> footer_panel_;
     std::unique_ptr<deploy_panel> deploy_panel_;
+    std::unique_ptr<project_settings_panel> project_settings_panel_;
     std::unique_ptr<animation_panel> animation_panel_;
 
     std::unique_ptr<dockspace> cenral_dockspace_;

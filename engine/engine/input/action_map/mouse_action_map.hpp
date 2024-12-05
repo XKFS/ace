@@ -18,8 +18,37 @@ enum class mouse_axis
     scroll,
 };
 
+inline auto to_string(mouse_axis axis) -> const std::string&
+{
+    switch(axis)
+    {
+        case mouse_axis::x:
+        {
+            static const std::string text = "x";
+            return text;
+        }
+        case mouse_axis::y:
+        {
+            static const std::string text = "y";
+            return text;
+        }
+        case mouse_axis::scroll:
+        {
+            static const std::string text = "scroll";
+            return text;
+        }
+        default:
+        {
+            static const std::string text = "unknown";
+            return text;
+        }
+    }
+}
+
 class mouse_action_map
 {
+public:
+
     struct mouse_entry
     {
         input_type type{};
@@ -29,7 +58,6 @@ class mouse_action_map
 
     std::map<action_id_t, std::vector<mouse_entry>> entries_by_action_id_;
 
-public:
     auto get_analog_value(const action_id_t& action, const mouse& device) const -> float;
     auto get_digital_value(const action_id_t& action, const mouse& device) const -> bool;
     auto is_pressed(const action_id_t& action, const mouse& device) const -> bool;

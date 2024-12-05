@@ -28,5 +28,10 @@ struct settings
         asset_handle<scene_prefab> startup_scene;
     } standalone;
 
+    struct input_settings
+    {
+
+    } input;
+
 };
 } // namespace ace

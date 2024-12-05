@@ -631,7 +631,7 @@ auto compile<script>(asset_manager& am, const fs::path& key, const fs::path& out
     fs::error_code er;
     fs::copy_file(absolute_path, output, fs::copy_options::overwrite_existing, er);
 
-    APPLOG_INFO("Successful copy to {0}", output.string());
+    // APPLOG_INFO("Successful copy to {0}", output.string());
 
     script_system::set_needs_recompile(fs::extract_protocol(fs::convert_to_protocol(key)).string());
 

@@ -77,8 +77,18 @@ struct defaults
     static auto create_prefab_at(rtti::context& ctx,
                                  scene& scn,
                                  const std::string& key,
-                                 math::vec3 pos = {0.0f, 0.0f, 0.0f}) -> entt::handle;
+                                 math::vec3 pos) -> entt::handle;
 
+    /**
+     * @brief Creates a prefab entity.
+     * @param ctx The context for creation.
+     * @param scn The scene to create the entity in.
+     * @param key The key of the prefab.
+     * @return A handle to the created entity.
+     */
+    static auto create_prefab_at(rtti::context& ctx,
+                                 scene& scn,
+                                 const std::string& key) -> entt::handle;
     /**
      * @brief Creates a mesh entity at a specified position.
      * @param ctx The context for creation.

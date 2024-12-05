@@ -10,6 +10,8 @@ namespace input
 {
 class keyboard_action_map
 {
+public:
+
     struct key_entry
     {
         key_code key{};
@@ -21,7 +23,6 @@ class keyboard_action_map
 
     std::map<action_id_t, std::vector<key_entry>> entries_by_action_id_;
 
-public:
     auto get_analog_value(const action_id_t& action, const keyboard& device) const -> float;
     auto get_digital_value(const action_id_t& action, const keyboard& device) const -> bool;
     auto is_pressed(const action_id_t& action, const keyboard& device) const -> bool;

@@ -115,6 +115,16 @@ void header_panel::draw_menubar_child(rtti::context& ctx)
             ImGui::EndMenu();
         }
 
+        if(ImGui::BeginMenu("Edit"))
+        {
+            if(ImGui::MenuItem("Project Settings..."))
+            {
+                parent_->get_project_settings_panel().show(true);
+            }
+
+            ImGui::EndMenu();
+        }
+
         if(ImGui::BeginMenu("Deploy"))
         {
             if(ImGui::MenuItem("Deploy Project"))
@@ -195,7 +205,8 @@ void header_panel::draw_play_toolbar(rtti::context& ctx, float headerSize)
     //                                                      poly_background,
     //                                                      poly_background);
 
-    auto logo = fmt::format("Ace Editor <{}>", gfx::get_renderer_name(gfx::get_renderer_type()));
+    auto& pm = ctx.get_cached<project_manager>();
+    auto logo = fmt::format("{}", pm.get_name());
     auto logo_size = ImGui::CalcTextSize(logo.c_str());
     // Add animated logo.
     const ImVec2 logo_min = ImVec2(logo_pos.x + logo_bounds.x * 0.5f - logo_size.x * 0.5f,

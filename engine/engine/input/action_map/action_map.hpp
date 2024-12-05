@@ -10,11 +10,11 @@ namespace input
 {
 class action_map
 {
+public:
     keyboard_action_map keyboard_action_map_;
     mouse_action_map mouse_action_map_;
-    gamepad_action_map gamepad_action_map_;
+    gamepad_action_map gamepad_action_map_;  
 
-public:
     auto get_analog_value(const action_id_t& action, const input_device& device) const -> float;
     auto get_digital_value(const action_id_t& action, const input_device& device) const -> bool;
     auto is_pressed(const action_id_t& action, const input_device& device) const -> bool;

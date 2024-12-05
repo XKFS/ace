@@ -13,6 +13,7 @@ namespace input
 {
 class gamepad_action_map
 {
+public:
     struct gamepad_entry
     {
         input_type type{};
@@ -24,7 +25,6 @@ class gamepad_action_map
 
     std::map<action_id_t, std::vector<gamepad_entry>> entries_by_action_id_;
 
-public:
     auto get_analog_value(const action_id_t& action, const gamepad& device) const -> float;
     auto get_digital_value(const action_id_t& action, const gamepad& device) const -> bool;
     auto is_pressed(const action_id_t& action, const gamepad& device) const -> bool;

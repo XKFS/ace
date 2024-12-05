@@ -3,8 +3,8 @@
 
 #include <editor/editing/editing_manager.h>
 #include <editor/editing/thumbnail_manager.h>
-#include <editor/system/project_manager.h>
 #include <editor/imgui/integration/fonts/icons/icons_material_design_icons.h>
+#include <editor/system/project_manager.h>
 #include <engine/animation/animation.h>
 #include <engine/assets/asset_manager.h>
 #include <engine/assets/impl/asset_extensions.h>
@@ -19,13 +19,13 @@
 
 #include <engine/audio/audio_clip.h>
 
-#include <subprocess/subprocess.hpp>
 #include <filedialog/filedialog.h>
 #include <filesystem/watcher.h>
 #include <hpp/utility.hpp>
 #include <imgui/imgui.h>
 #include <imgui/imgui_internal.h>
 #include <logging/logging.h>
+#include <subprocess/subprocess.hpp>
 
 namespace ace
 {
@@ -36,6 +36,7 @@ namespace
 ImGuiKey rename_key = ImGuiKey_F2;
 ImGuiKey delete_key = ImGuiKey_Delete;
 ImGuiKeyCombination duplicate_combination{ImGuiKey_LeftCtrl, ImGuiKey_D};
+fs::path pending_rename;
 
 auto get_new_file(const fs::path& path, const std::string& name, const std::string& ext = "") -> fs::path
 {
@@ -211,6 +212,12 @@ auto draw_item(const content_browser_item& item)
         }
     }
 
+    bool is_editing_label_after_create = pending_rename == absolute_path;
+    if(is_editing_label_after_create)
+    {
+        open_rename_menu = true;
+    }
+
     ImVec2 item_size = {item.size, item.size};
     ImVec2 texture_size = ImGui::GetSize(item.icon, item_size);
 
@@ -218,7 +225,6 @@ auto draw_item(const content_browser_item& item)
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
 
     auto file_type_font = ImGui::GetFont(ImGui::Font::Black);
-
 
     ImGui::ContentItem citem{};
     citem.texId = ImGui::ToId(item.icon);
@@ -237,16 +243,16 @@ auto draw_item(const content_browser_item& item)
 
     ImGui::PopStyleVar();
 
+    if(ImGui::IsItemDoubleClicked(ImGuiMouseButton_Left))
+    {
+        action = entry_action::double_clicked;
+    }
 
     if(ImGui::IsItemHovered())
     {
         if(item.on_double_click)
         {
             ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
-        }
-        if(ImGui::IsMouseDoubleClicked(0))
-        {
-            action = entry_action::double_clicked;
         }
     }
 
@@ -323,6 +329,12 @@ auto draw_item(const content_browser_item& item)
         {
             ImGui::ActivateItemByID(ImGui::GetItemID());
         }
+
+        if(is_editing_label_after_create && ImGui::IsItemKeyPressed(ImGuiKey_Escape))
+        {
+            action = entry_action::deleted;
+        }
+
         ImGui::PopItemWidth();
         ImGui::EndPopup();
     }
@@ -345,6 +357,7 @@ auto draw_item(const content_browser_item& item)
     {
         case entry_action::clicked:
         {
+            pending_rename.clear();
             if(item.on_click)
             {
                 item.on_click();
@@ -353,6 +366,8 @@ auto draw_item(const content_browser_item& item)
         break;
         case entry_action::double_clicked:
         {
+            pending_rename.clear();
+
             if(item.on_double_click)
             {
                 item.on_double_click();
@@ -361,6 +376,8 @@ auto draw_item(const content_browser_item& item)
         break;
         case entry_action::renamed:
         {
+            pending_rename.clear();
+
             const std::string new_name = std::string(input_buff.data());
             if(new_name != name && !new_name.empty())
             {
@@ -373,6 +390,8 @@ auto draw_item(const content_browser_item& item)
         break;
         case entry_action::deleted:
         {
+            pending_rename.clear();
+
             if(item.on_delete)
             {
                 item.on_delete();
@@ -382,6 +401,7 @@ auto draw_item(const content_browser_item& item)
 
         case entry_action::duplicate:
         {
+            pending_rename.clear();
             duplicate_entry();
         }
         break;
@@ -446,7 +466,9 @@ void content_browser_panel::draw(rtti::context& ctx)
         return;
     }
 
-    if(ImGui::BeginChild("DETAILS_AREA", avail * ImVec2(0.15f, 1.0f), ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX))
+    if(ImGui::BeginChild("DETAILS_AREA",
+                         avail * ImVec2(0.15f, 1.0f),
+                         ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX))
     {
         // ImGui::WindowTimeBlock block(ImGui::GetFont(ImGui::Font::Mono));
 
@@ -678,8 +700,6 @@ void content_browser_panel::draw_as_explorer(rtti::context& ctx, const fs::path&
                             {
                                 auto& pm = ctx.get_cached<project_manager>();
                                 editor_actions::open_workspace_on_file(pm.get_name(), absolute_path);
-
-
                             };
                         }
 
@@ -797,8 +817,13 @@ void content_browser_panel::context_create_menu(rtti::context& ctx)
         if(ImGui::MenuItem("Folder"))
         {
             const auto available = get_new_file(cache_.get_path(), "New Folder");
-            fs::error_code err;
-            fs::create_directory(available, err);
+            fs::error_code ec;
+            fs::create_directory(available, ec);
+
+            if(!ec)
+            {
+                pending_rename = available;
+            }
         }
 
         ImGui::Separator();
@@ -807,11 +832,18 @@ void content_browser_panel::context_create_menu(rtti::context& ctx)
         {
             auto& am = ctx.get_cached<asset_manager>();
 
-            const auto available = get_new_file_simple(cache_.get_path(), "NewScriptComponent", ex::get_format<script>());
+            const auto available =
+                get_new_file_simple(cache_.get_path(), "NewScriptComponent", ex::get_format<script>());
 
             fs::error_code ec;
-            auto new_script_template = fs::resolve_protocol("engine:/data/scripts/template/TemplateComponent" + ex::get_format<script>());
+            auto new_script_template =
+                fs::resolve_protocol("engine:/data/scripts/template/TemplateComponent" + ex::get_format<script>());
             fs::copy(new_script_template, available, ec);
+
+            if(!ec)
+            {
+                pending_rename = available;
+            }
         }
 
         if(ImGui::MenuItem("C# Script System"))
@@ -821,10 +853,15 @@ void content_browser_panel::context_create_menu(rtti::context& ctx)
             const auto available = get_new_file_simple(cache_.get_path(), "NewScriptSystem", ex::get_format<script>());
 
             fs::error_code ec;
-            auto new_script_template = fs::resolve_protocol("engine:/data/scripts/template/TemplateSystem" + ex::get_format<script>());
+            auto new_script_template =
+                fs::resolve_protocol("engine:/data/scripts/template/TemplateSystem" + ex::get_format<script>());
             fs::copy(new_script_template, available, ec);
-        }
 
+            if(!ec)
+            {
+                pending_rename = available;
+            }
+        }
 
         if(ImGui::MenuItem("Material"))
         {
@@ -835,6 +872,10 @@ void content_browser_panel::context_create_menu(rtti::context& ctx)
 
             auto new_mat_future = am.get_asset_from_instance<material>(key, std::make_shared<pbr_material>());
             asset_writer::save_to_file(new_mat_future.id(), new_mat_future);
+
+            {
+                pending_rename = available;
+            }
         }
 
         if(ImGui::MenuItem("Physics Material"))
@@ -848,6 +889,10 @@ void content_browser_panel::context_create_menu(rtti::context& ctx)
             auto new_mat_future =
                 am.get_asset_from_instance<physics_material>(key, std::make_shared<physics_material>());
             asset_writer::save_to_file(new_mat_future.id(), new_mat_future);
+
+            {
+                pending_rename = available;
+            }
         }
 
         ImGui::EndMenu();

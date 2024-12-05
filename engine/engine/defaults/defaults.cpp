@@ -209,6 +209,16 @@ auto defaults::create_embedded_mesh_entity(rtti::context& ctx, scene& scn, const
     return object;
 }
 
+auto defaults::create_prefab_at(rtti::context& ctx, scene& scn, const std::string& key) -> entt::handle
+{
+    auto& am = ctx.get_cached<asset_manager>();
+    auto asset = am.get_asset<prefab>(key);
+
+    auto object = scn.instantiate(asset);
+    return object;
+}
+
+
 auto defaults::create_prefab_at(rtti::context& ctx, scene& scn, const std::string& key, math::vec3 pos) -> entt::handle
 {
     auto& am = ctx.get_cached<asset_manager>();

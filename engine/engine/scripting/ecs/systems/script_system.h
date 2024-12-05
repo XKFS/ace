@@ -39,6 +39,7 @@ struct script_system
 
     auto is_create_called() const -> bool;
     auto is_start_called() const -> bool;
+    void wait_for_jobs_to_finish(rtti::context& ctx);
 
 
     void on_sensor_enter(entt::handle sensor, entt::handle other);
@@ -104,8 +105,7 @@ private:
     auto get_engine_assembly() const -> mono::mono_assembly;
     auto get_app_assembly() const -> mono::mono_assembly;
 
-
-    void check_for_recompile(rtti::context& ctx, delta_t dt);
+    void check_for_recompile(rtti::context& ctx, delta_t dt, bool emit_callback);
 
     auto create_compilation_job(rtti::context& ctx, const std::string& protocol, bool debug) -> itc::job_future<bool>;
 
@@ -147,5 +147,7 @@ private:
 
     call_progress create_call_{call_progress::not_called};
     call_progress start_call_{call_progress::not_called};
+
+    std::vector<itc::future<void>> compilation_jobs_;
 };
 } // namespace ace

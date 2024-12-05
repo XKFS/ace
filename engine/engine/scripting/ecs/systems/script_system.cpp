@@ -30,7 +30,7 @@ enum class recompile_command : int
     compile_now,
 };
 
-std::chrono::seconds check_interval(1);
+std::chrono::milliseconds check_interval(50);
 std::atomic_bool initted{};
 
 std::atomic<recompile_command> needs_recompile{};
@@ -455,7 +455,7 @@ void script_system::on_frame_update(rtti::context& ctx, delta_t dt)
     auto& ev = ctx.get_cached<events>();
     if(!ev.is_playing)
     {
-        check_for_recompile(ctx, dt);
+        check_for_recompile(ctx, dt, true);
     }
 
     try
@@ -514,7 +514,7 @@ auto script_system::is_start_called() const -> bool
     return start_call_ == call_progress::finished;
 }
 
-void script_system::check_for_recompile(rtti::context& ctx, delta_t dt)
+void script_system::check_for_recompile(rtti::context& ctx, delta_t dt, bool emit_callback)
 {
     time_since_last_check_ += dt;
 
@@ -533,27 +533,49 @@ void script_system::check_for_recompile(rtti::context& ctx, delta_t dt)
                 return result;
             }();
 
+            compilation_jobs_.clear();
+
             for(const auto& protocol : container)
             {
-                create_compilation_job(ctx, protocol, get_script_debug_mode())
-                    .then(itc::this_thread::get_id(),
-                          [this, &ctx, protocol](auto f)
-                          {
-                              auto& ev = ctx.get_cached<events>();
+                auto job = create_compilation_job(ctx, protocol, get_script_debug_mode())
+                               .then(itc::this_thread::get_id(),
+                                     [this, &ctx, protocol, emit_callback](auto f)
+                                     {
+                                         if(!emit_callback)
+                                         {
+                                             return;
+                                         }
+                                         auto& ev = ctx.get_cached<events>();
 
-                              if(ev.is_playing)
-                              {
-                                  return;
-                              }
+                                         if(ev.is_playing)
+                                         {
+                                             return;
+                                         }
 
-                              bool result = f.get();
-                              if(result)
-                              {
-                                  ev.on_script_recompile(ctx, protocol);
-                              }
-                          });
+                                         bool result = f.get();
+                                         if(result)
+                                         {
+                                             ev.on_script_recompile(ctx, protocol);
+                                         }
+                                     });
+
+                compilation_jobs_.emplace_back(std::move(job));
             }
         }
+    }
+}
+
+void script_system::wait_for_jobs_to_finish(rtti::context& ctx)
+{
+    APPLOG_INFO("Waiting for script compilation...");
+
+    check_for_recompile(ctx, 100s, false);
+
+    auto jobs = std::move(compilation_jobs_);
+
+    for(auto& job : jobs)
+    {
+        job.wait();
     }
 }
 

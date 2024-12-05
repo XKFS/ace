@@ -1,4 +1,5 @@
 #include "editing_manager.h"
+#include <engine/ecs/components/id_component.h>
 #include <engine/ecs/ecs.h>
 #include <engine/events.h>
 #include <engine/meta/ecs/entity.hpp>
@@ -34,27 +35,22 @@ void editing_manager::on_play_before_begin(rtti::context& ctx)
 {
     APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
 
-    unselect();
-    unfocus();
-
     save_checkpoint(ctx);
     auto& scripting = ctx.get_cached<script_system>();
     scripting.unload_app_domain();
+    scripting.wait_for_jobs_to_finish(ctx);
     scripting.load_app_domain(ctx, false);
-    load_checkpoint(ctx);
+    load_checkpoint(ctx, true);
 }
 
 void editing_manager::on_play_after_end(rtti::context& ctx)
 {
     APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
 
-    unselect();
-    unfocus();
-
     auto& scripting = ctx.get_cached<script_system>();
     scripting.unload_app_domain();
     scripting.load_app_domain(ctx, false);
-    load_checkpoint(ctx);
+    load_checkpoint(ctx, false);
 }
 
 void editing_manager::on_script_recompile(rtti::context& ctx, const std::string& protocol)
@@ -62,10 +58,8 @@ void editing_manager::on_script_recompile(rtti::context& ctx, const std::string&
     save_checkpoint(ctx);
     auto& scripting = ctx.get_cached<script_system>();
     scripting.unload_app_domain();
-    // scripting.unload_engine_domain();
-    // scripting.load_engine_domain(ctx, false);
     scripting.load_app_domain(ctx, false);
-    load_checkpoint(ctx);
+    load_checkpoint(ctx, true);
 }
 
 void editing_manager::save_checkpoint(rtti::context& ctx)
@@ -73,13 +67,23 @@ void editing_manager::save_checkpoint(rtti::context& ctx)
     auto& ec = ctx.get_cached<ecs>();
     auto& scn = ec.get_scene();
 
+    if(is_selected_type<entt::handle>())
+    {
+        auto sel = selection_data.object.get_value<entt::handle>();
+        auto& id_comp = sel.emplace_or_replace<id_component>();
+        if(id_comp.id.is_nil())
+        {
+            id_comp.id = generate_uuid();
+        }
+    }
+
     scene_cache_ = {};
     scene_cache_source_ = scn.source;
     // first save scene
     save_to_stream(scene_cache_, scn);
 }
 
-void editing_manager::load_checkpoint(rtti::context& ctx)
+void editing_manager::load_checkpoint(rtti::context& ctx, bool recover_selection)
 {
     auto& ec = ctx.get_cached<ecs>();
     auto& scn = ec.get_scene();
@@ -91,6 +95,23 @@ void editing_manager::load_checkpoint(rtti::context& ctx)
     load_from_stream(scene_cache_, scn);
 
     scn.source = scene_cache_source_;
+
+    entt::handle entity;
+    scn.registry->view<id_component>().each(
+        [&](auto e, auto&& comp)
+        {
+            entity = scn.create_entity(e);
+        });
+
+    if(entity)
+    {
+        entity.remove<id_component>();
+
+        if(recover_selection)
+        {
+            select(entity);
+        }
+    }
 }
 
 void editing_manager::on_frame_update(rtti::context& ctx, delta_t)

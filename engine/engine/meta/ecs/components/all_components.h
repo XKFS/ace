@@ -59,4 +59,18 @@ using all_inspectable_components = std::tuple<
     audio_listener_component
     >;
 
+using all_addable_components = std::tuple<
+    test_component,
+    model_component,
+    animation_component,
+    camera_component,
+    light_component,
+    skylight_component,
+    reflection_probe_component,
+    physics_component,
+    audio_source_component,
+    audio_listener_component
+    >;
+
+
 } // namespace ace

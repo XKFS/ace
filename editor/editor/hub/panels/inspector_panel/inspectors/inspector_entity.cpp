@@ -388,6 +388,12 @@ auto inspector_entity::inspect(rtti::context& ctx,
 
         if(ImGui::BeginPopup("COMPONENT_MENU"))
         {
+
+            if(ImGui::IsWindowAppearing())
+            {
+                ImGui::SetKeyboardFocusHere();
+            }
+
             ImGui::DrawFilterWithHint(filter_, ICON_MDI_SELECT_SEARCH " Search...", size.x);
             ImGui::DrawItemActivityOutline();
 
@@ -420,10 +426,10 @@ auto inspector_entity::inspect(rtti::context& ctx,
                 list_component(filter_, name, callbacks);
             }
 
-            hpp::for_each_tuple_type<ace::all_inspectable_components>(
+            hpp::for_each_tuple_type<ace::all_addable_components>(
                 [&](auto index)
                 {
-                    using ctype = std::tuple_element_t<decltype(index)::value, ace::all_inspectable_components>;
+                    using ctype = std::tuple_element_t<decltype(index)::value, ace::all_addable_components>;
 
                     auto name = rttr::get_pretty_name(rttr::type::get<ctype>());
 
@@ -441,8 +447,7 @@ auto inspector_entity::inspect(rtti::context& ctx,
 
                     callbacks.can_remove = []()
                     {
-                        return !std::is_same<ctype, id_component>::value && !std::is_same<ctype, tag_component>::value &&
-                               !std::is_same<ctype, transform_component>::value;
+                        return true;
                     };
 
                            // callbacks.icon = ICON_MDI_GRID;

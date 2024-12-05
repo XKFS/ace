@@ -14,9 +14,24 @@ namespace Core
     [StructLayout(LayoutKind.Sequential)]
     public struct ContactPoint : IFormattable
     {
+        /// <summary>
+        /// The point of contact in world space.
+        /// </summary>
         public Vector3 point;
+
+        /// <summary>
+        /// The normal vector at the contact point.
+        /// </summary>
         public Vector3 normal;
+
+        /// <summary>
+        /// The distance between the colliders at the contact point.
+        /// </summary>
         public float distance;
+
+        /// <summary>
+        /// The impulse applied to resolve the collision at the contact point.
+        /// </summary>
         public float impulse;
 
         /// <summary>

@@ -502,20 +502,20 @@ void update_rigidbody_kind(bullet::rigidbody& body, physics_component& comp)
 
 void update_rigidbody_constraints(bullet::rigidbody& body, physics_component& comp)
 {
-    auto freeze_position = comp.get_freeze_position();
-    btVector3 linear_factor(float(freeze_position.x), float(freeze_position.y), float(freeze_position.z));
+    // auto freeze_position = comp.get_freeze_position();
+    // btVector3 linear_factor(float(freeze_position.x), float(freeze_position.y), float(freeze_position.z));
 
-    body.internal->setLinearFactor(linear_factor);
+    // body.internal->setLinearFactor(linear_factor);
 
-    auto freeze_rotation = comp.get_freeze_rotation();
-    btVector3 angular_factor(float(freeze_rotation.x), float(freeze_rotation.y), float(freeze_rotation.z));
+    // auto freeze_rotation = comp.get_freeze_rotation();
+    // btVector3 angular_factor(float(freeze_rotation.x), float(freeze_rotation.y), float(freeze_rotation.z));
 
-    body.internal->setAngularFactor(angular_factor);
+    // body.internal->setAngularFactor(angular_factor);
 
-    body.internal->clearForces();
-    body.internal->applyGravity();
+    // body.internal->clearForces();
+    // body.internal->applyGravity();
 
-    wake_up(body);
+    // wake_up(body);
 }
 
 void update_rigidbody_mass_and_inertia(bullet::rigidbody& body, physics_component& comp)

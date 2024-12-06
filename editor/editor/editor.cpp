@@ -25,7 +25,9 @@ RTTR_REGISTRATION
         .method("init", &editor::init)
         .method("deinit", &editor::deinit)
         .method("destroy", &editor::destroy)
-        .method("process", &editor::process);
+        .method("process", &editor::process)
+        .method("interrupt", &editor::interrupt);
+
 }
 
 auto editor::create(rtti::context& ctx, cmd_line::parser& parser) -> bool
@@ -182,11 +184,11 @@ auto editor::destroy() -> bool
 
 auto editor::process() -> bool
 {
-    if(!engine::process())
-    {
-        return false;
-    }
-
-    return true;
+    return engine::process();
 }
+auto editor::interrupt() -> bool
+{
+    return engine::interrupt();
+}
+
 } // namespace ace

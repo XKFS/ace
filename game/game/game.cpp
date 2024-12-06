@@ -23,7 +23,9 @@ RTTR_REGISTRATION
         .method("init", &game::init)
         .method("deinit", &game::deinit)
         .method("destroy", &game::destroy)
-        .method("process", &game::process);
+        .method("process", &game::process)
+        .method("interrupt", &game::interrupt);
+
 }
 
 auto game::create(rtti::context& ctx, cmd_line::parser& parser) -> bool
@@ -171,11 +173,11 @@ auto game::destroy() -> bool
 
 auto game::process() -> bool
 {
-    if(!engine::process())
-    {
-        return false;
-    }
+    return engine::process();
+}
 
-    return true;
+auto game::interrupt() -> bool
+{
+    return engine::interrupt();
 }
 } // namespace ace

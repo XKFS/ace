@@ -27,7 +27,7 @@ struct renderer
         -> const std::unique_ptr<render_window>&;
     auto set_main_window(os::window&& window) -> const std::unique_ptr<render_window>&;
     auto get_main_window() const -> const std::unique_ptr<render_window>&;
-
+    void close_main_window();
     void request_screenshot(const std::string& file);
 
     auto get_vsync() const -> bool;

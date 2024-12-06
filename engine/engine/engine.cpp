@@ -336,5 +336,12 @@ auto engine::process() -> bool
 
     return true;
 }
+auto engine::interrupt() -> bool
+{
+    auto& ctx = engine::context();
+    auto& rend = ctx.get_cached<renderer>();
+    rend.close_main_window();
+    return true;
+}
 
 } // namespace ace

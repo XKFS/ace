@@ -13,6 +13,7 @@ struct editor
     static auto deinit() -> bool;
     static auto destroy() -> bool;
     static auto process() -> bool;
+    static auto interrupt() -> bool;
 
     static auto init_window(rtti::context& ctx) -> bool;
 };

@@ -1,6 +1,8 @@
 #include "service.h"
 #include <chrono>
 #include <iostream>
+#include <csignal>
+
 
 using namespace std::chrono_literals;
 
@@ -130,6 +132,26 @@ auto service::init() -> bool
     return true;
 }
 
+auto service::interrupt() -> bool
+{
+    //    std::cout << "service::" << __func__ << std::endl;
+    bool processed = false;
+    for(const auto& module : modules_)
+    {
+        auto type = rttr::type::get_by_name(module.desc.type_name);
+
+        if(!type.invoke("interrupt", {}, {}).to_bool())
+        {
+            return false;
+        }
+
+        processed = true;
+    }
+
+    return processed;
+}
+
+
 auto service::process() -> bool
 {
     //    std::cout << "service::" << __func__ << std::endl;
@@ -159,7 +181,6 @@ int service_main(const char* name, int argc, char* argv[])
     std::vector<module_desc> modules{{name, name}};
 
     service app(argc, argv);
-
     // for(int i = 0; i < 3; ++i)
     {
         if(!app.load(modules))
@@ -179,5 +200,6 @@ int service_main(const char* name, int argc, char* argv[])
             return -1;
         }
     }
+
     return 0;
 }

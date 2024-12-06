@@ -129,7 +129,7 @@ void renderer::on_os_event(rtti::context& ctx, const os::event& e)
             {
                 if(render_window_->get_window().get_id() == window_id)
                 {
-                    render_window_.reset();
+                    close_main_window();
                 }
             }
         }
@@ -220,6 +220,11 @@ renderer::~renderer()
 auto renderer::get_main_window() const -> const std::unique_ptr<render_window>&
 {
     return render_window_;
+}
+
+void renderer::close_main_window()
+{
+    render_window_.reset();
 }
 
 void renderer::request_screenshot(const std::string& file)

@@ -27,6 +27,7 @@ struct service
 
     auto init() -> bool;
     auto process() -> bool;
+    auto interrupt() -> bool;
 
     auto get_cmd_line_parser() -> cmd_line::parser&;
 

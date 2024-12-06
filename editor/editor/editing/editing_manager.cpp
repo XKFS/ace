@@ -70,11 +70,16 @@ void editing_manager::save_checkpoint(rtti::context& ctx)
     if(is_selected_type<entt::handle>())
     {
         auto sel = selection_data.object.get_value<entt::handle>();
-        auto& id_comp = sel.emplace_or_replace<id_component>();
-        if(id_comp.id.is_nil())
+        if(sel)
         {
-            id_comp.id = generate_uuid();
+            auto& id_comp = sel.get_or_emplace<id_component>();
+            if(id_comp.id.is_nil())
+            {
+                id_comp.id = generate_uuid();
+            }
         }
+        
+        unselect();
     }
 
     scene_cache_ = {};

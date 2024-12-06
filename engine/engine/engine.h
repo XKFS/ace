@@ -14,6 +14,8 @@ struct engine
     static auto init_core(const cmd_line::parser& parser) -> bool;
     static auto init_systems(const cmd_line::parser& parser) -> bool;
 
+    static auto interrupt() -> bool;
+
     static auto deinit() -> bool;
     static auto destroy() -> bool;
     static auto process() -> bool;

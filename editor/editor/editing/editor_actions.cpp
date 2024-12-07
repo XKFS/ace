@@ -741,6 +741,11 @@ auto save_scene_as_impl(rtti::context& ctx, fs::path& path) -> bool
 
 auto editor_actions::new_scene(rtti::context& ctx) -> bool
 {
+    auto& ev = ctx.get_cached<events>();
+    if(ev.is_playing)
+    {
+        return false;
+    }
     auto& em = ctx.get_cached<editing_manager>();
     em.close_project();
 
@@ -752,6 +757,11 @@ auto editor_actions::new_scene(rtti::context& ctx) -> bool
 }
 auto editor_actions::open_scene(rtti::context& ctx) -> bool
 {
+    auto& ev = ctx.get_cached<events>();
+    if(ev.is_playing)
+    {
+        return false;
+    }
     std::string picked;
     if(native::open_file_dialog(picked,
                                 ex::get_suported_formats_with_wildcard<scene_prefab>(),
@@ -779,6 +789,11 @@ auto editor_actions::open_scene(rtti::context& ctx) -> bool
 }
 auto editor_actions::save_scene(rtti::context& ctx) -> bool
 {
+    auto& ev = ctx.get_cached<events>();
+    if(ev.is_playing)
+    {
+        return false;
+    }
     auto& ec = ctx.get_cached<ecs>();
     auto& scene = ec.get_scene();
 
@@ -809,6 +824,12 @@ auto editor_actions::save_scene_as(rtti::context& ctx) -> bool
 }
 auto editor_actions::close_project(rtti::context& ctx) -> bool
 {
+    auto& ev = ctx.get_cached<events>();
+    if(ev.is_playing)
+    {
+        return false;
+    }
+
     auto& pm = ctx.get_cached<project_manager>();
     pm.close_project(ctx);
     return true;

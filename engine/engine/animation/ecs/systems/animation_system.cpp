@@ -95,28 +95,10 @@ void animation_system::on_play_end(rtti::context& ctx)
 
 void animation_system::on_pause(rtti::context& ctx)
 {
-    auto& ec = ctx.get_cached<ecs>();
-    auto& scn = ec.get_scene();
-
-    scn.registry->view<animation_component>().each(
-        [&](auto e, auto&& animation_comp)
-        {
-            auto& player = animation_comp.get_player();
-            player.pause();
-        });
 }
 
 void animation_system::on_resume(rtti::context& ctx)
 {
-    auto& ec = ctx.get_cached<ecs>();
-    auto& scn = ec.get_scene();
-
-    scn.registry->view<animation_component>().each(
-        [&](auto e, auto&& animation_comp)
-        {
-            auto& player = animation_comp.get_player();
-            player.resume();
-        });
 }
 
 void animation_system::on_skip_next_frame(rtti::context& ctx)

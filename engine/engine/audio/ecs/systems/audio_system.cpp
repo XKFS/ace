@@ -134,15 +134,13 @@ void audio_system::on_resume(rtti::context& ctx)
 
 void audio_system::on_skip_next_frame(rtti::context& ctx)
 {
+    delta_t step(1.0f / 60.0f);
+    on_frame_update(ctx, step);
 }
 
 void audio_system::on_frame_update(rtti::context& ctx, delta_t dt)
 {
     auto& ev = ctx.get_cached<events>();
-
-    if(ev.is_playing && !ev.is_paused)
-    {
-    }
 
     auto& ec = ctx.get_cached<ecs>();
     auto& scn = ec.get_scene();

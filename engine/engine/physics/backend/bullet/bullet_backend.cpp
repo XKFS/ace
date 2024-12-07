@@ -1263,23 +1263,27 @@ void bullet_backend::on_frame_update(rtti::context& ctx, delta_t dt)
 
     world.process_pending_actions();
 
-    // update phyiscs spatial properties from transform
-    registry.view<transform_component, physics_component>().each(
-        [&](auto e, auto&& transform, auto&& rigidbody)
-        {
-            to_physics(world, transform, rigidbody);
-        });
+    if(dt > delta_t::zero())
+    {
+        // update phyiscs spatial properties from transform
+        registry.view<transform_component, physics_component>().each(
+            [&](auto e, auto&& transform, auto&& rigidbody)
+            {
+                to_physics(world, transform, rigidbody);
+            });
 
-    // update physics
-    world.simulate(dt);
-    // update transform from phyiscs interpolated spatial properties
-    registry.view<transform_component, physics_component>().each(
-        [&](auto e, auto&& transform, auto&& rigidbody)
-        {
-            from_physics(world, transform, rigidbody);
-        });
+               // update physics
+        world.simulate(dt);
+        // update transform from phyiscs interpolated spatial properties
+        registry.view<transform_component, physics_component>().each(
+            [&](auto e, auto&& transform, auto&& rigidbody)
+            {
+                from_physics(world, transform, rigidbody);
+            });
 
-    world.process_pending_actions();
+        world.process_pending_actions();
+    }
+
 }
 
 void bullet_backend::draw_system_gizmos(rtti::context& ctx, const camera& cam, gfx::dd_raii& dd)

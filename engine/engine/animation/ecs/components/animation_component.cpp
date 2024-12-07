@@ -355,7 +355,7 @@ void animation_player::stop()
 auto animation_player::update_time(seconds_t delta_time, bool force)
     -> bool
 {
-    if((!current_layer_.is_valid() && !target_layer_.is_valid()) || (!force && !is_playing()))
+    if((!current_layer_.is_valid() && !target_layer_.is_valid()) || !is_playing())
     {
         return false;
     }

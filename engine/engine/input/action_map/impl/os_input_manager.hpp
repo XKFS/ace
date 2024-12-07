@@ -15,11 +15,11 @@ namespace input
 {
 struct zone
 {
-    float x{};
-    float y{};
+    int x{};
+    int y{};
 
-    float w{};
-    float h{};
+    int w{};
+    int h{};
 };
 
 class os_input_manager : public input_manager

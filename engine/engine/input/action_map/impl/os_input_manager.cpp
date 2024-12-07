@@ -202,8 +202,8 @@ auto os_input_manager::remap_to_work_zone(coord global_pos) -> coord
     const auto& work_zone = *calc_zone;
 
     coord remapped_pos{};
-    remapped_pos.x = int(global_pos.x - int(work_zone.x));
-    remapped_pos.y = int(global_pos.y - int(work_zone.y));
+    remapped_pos.x = global_pos.x - work_zone.x;
+    remapped_pos.y = global_pos.y - work_zone.y;
 
     return remapped_pos;
 }

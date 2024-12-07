@@ -449,6 +449,8 @@ void script_system::on_resume(rtti::context& ctx)
 
 void script_system::on_skip_next_frame(rtti::context& ctx)
 {
+    delta_t step(1.0f / 60.0f);
+    on_frame_update(ctx, step);
 }
 void script_system::on_frame_update(rtti::context& ctx, delta_t dt)
 {
@@ -481,7 +483,7 @@ void script_system::on_frame_update(rtti::context& ctx, delta_t dt)
             float time_scale{};
         };
 
-        if(ev.is_playing && !ev.is_paused)
+        if(ev.is_playing && dt > delta_t::zero())
         {
             auto& sim = ctx.get_cached<simulation>();
             auto time_scale = sim.get_time_scale();

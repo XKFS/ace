@@ -119,11 +119,9 @@ auto input_system::is_down(const input::action_id_t& action) const -> bool
     return down;
 }
 
-auto input_system::is_input_allowed() -> bool
+auto input_system::is_input_allowed() const -> bool
 {
-    auto& ctx = engine::context();
-    auto& ev = ctx.get_cached<events>();
-    return ev.is_input_allowed;
+    return manager.is_input_allowed();
 }
 
 } // namespace ace

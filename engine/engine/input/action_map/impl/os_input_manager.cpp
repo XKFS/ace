@@ -1,6 +1,6 @@
 #include "os_input_manager.hpp"
-#include "os_key_map.hpp"
 #include "../bimap.hpp"
+#include "os_key_map.hpp"
 #include <cassert>
 
 namespace input
@@ -71,6 +71,10 @@ void os_input_manager::before_events_update()
     keyboard_->update();
 
     mouse_->update();
+
+    auto pos = os::mouse::get_position();
+    mouse_->set_position(remap_to_work_zone({pos.x, pos.y}));
+
 }
 
 void os_input_manager::after_events_update()
@@ -81,6 +85,15 @@ void os_input_manager::after_events_update()
         auto& gamepad = kvp.second;
         gamepad->update();
     }
+}
+void os_input_manager::set_window_zone(const zone& window_zone)
+{
+    window_input_zone_ = window_zone;
+}
+
+void os_input_manager::set_work_zone(const zone& work_zone)
+{
+    work_input_zone_ = work_zone;
 }
 
 void os_input_manager::on_os_event(const os::event& e)
@@ -123,7 +136,7 @@ void os_input_manager::on_os_event(const os::event& e)
                     break;
             }
 
-            mouse_button mouse_button {mouse_button::left_button};
+            mouse_button mouse_button{mouse_button::left_button};
             switch(e.button.button)
             {
                 case os::mouse::button::left:
@@ -157,14 +170,11 @@ void os_input_manager::on_os_event(const os::event& e)
             }
 
             state_map.set_state(static_cast<uint32_t>(mouse_button), state);
-
-            mouse_->set_position({e.button.x, e.button.y});
             break;
         }
 
         case os::events::mouse_motion:
         {
-            mouse_->set_position({e.motion.x, e.motion.y});
             break;
         }
 
@@ -176,9 +186,35 @@ void os_input_manager::on_os_event(const os::event& e)
 
         default:
             break;
-
     }
 
-
 }
-} // namespace InputLib
+
+auto os_input_manager::remap_to_work_zone(coord global_pos) -> coord
+{
+    auto calc_zone = work_input_zone_ ? work_input_zone_ : window_input_zone_;
+    // Ensure both zones are defined
+    if(!calc_zone)
+    {
+        return global_pos;
+    }
+
+    const auto& work_zone = *calc_zone;
+
+    coord remapped_pos{};
+    remapped_pos.x = int(global_pos.x - int(work_zone.x));
+    remapped_pos.y = int(global_pos.y - int(work_zone.y));
+
+    return remapped_pos;
+}
+
+void os_input_manager::set_is_input_allowed(bool allowed)
+{
+    is_input_allowed_ = allowed;
+}
+
+auto os_input_manager::is_input_allowed() const -> bool
+{
+    return is_input_allowed_;
+}
+} // namespace input

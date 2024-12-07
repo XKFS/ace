@@ -22,10 +22,11 @@ struct input_system
     auto is_pressed(const input::action_id_t& action) const -> bool;
     auto is_released(const input::action_id_t& action) const -> bool;
     auto is_down(const input::action_id_t& action) const -> bool;
-    static auto is_input_allowed() -> bool;
+    auto is_input_allowed() const -> bool;
 
     input::action_map mapper;
     input::os_input_manager manager;
+
 };
 
 } // namespace ace

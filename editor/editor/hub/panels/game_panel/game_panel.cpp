@@ -5,6 +5,7 @@
 #include <engine/events.h>
 #include <engine/rendering/ecs/components/camera_component.h>
 #include <engine/rendering/ecs/systems/rendering_system.h>
+#include <engine/input/input.h>
 
 namespace ace
 {
@@ -41,19 +42,30 @@ void game_panel::on_frame_render(rtti::context& ctx, delta_t dt)
 
 void game_panel::on_frame_ui_render(rtti::context& ctx, const char* name)
 {
-    auto& ev = ctx.get_cached<events>();
+    auto& input = ctx.get_cached<input_system>();
+
     if(ImGui::Begin(name, nullptr, ImGuiWindowFlags_MenuBar))
     {
         // ImGui::WindowTimeBlock block(ImGui::GetFont(ImGui::Font::Mono));
-        ev.is_input_allowed = ImGui::IsWindowFocused();
 
         set_visible(true);
         draw_ui(ctx);
 
+        auto item_min = ImGui::GetItemRectMin();
+        auto item_max = ImGui::GetItemRectMax();
+
+        input::zone work_zone{};
+        work_zone.x = item_min.x;
+        work_zone.y = item_min.y;
+        work_zone.w = work_zone.x + item_max.x;
+        work_zone.h = work_zone.y + item_max.y;
+
+        input.manager.set_work_zone(work_zone);
+        input.manager.set_is_input_allowed(ImGui::IsWindowFocused());
     }
     else
     {
-        ev.is_input_allowed = false;
+        input.manager.set_is_input_allowed(false);
         set_visible(false);
     }
     ImGui::End();
@@ -63,6 +75,7 @@ void game_panel::on_frame_ui_render(rtti::context& ctx, const char* name)
 
 void game_panel::draw_ui(rtti::context& ctx)
 {
+
     draw_menubar(ctx);
 
     auto& ec = ctx.get_cached<ecs>();
@@ -101,6 +114,7 @@ void game_panel::draw_ui(rtti::context& ctx)
                                });
         }
     }
+
 }
 
 void game_panel::draw_menubar(rtti::context& ctx)

@@ -7,11 +7,21 @@
 #include "os_mouse.hpp"
 
 #include <ospp/event.h>
+#include <hpp/optional.hpp>
 
 struct GLFWwindow;
 
 namespace input
 {
+struct zone
+{
+    float x{};
+    float y{};
+
+    float w{};
+    float h{};
+};
+
 class os_input_manager : public input_manager
 {
     os_keyboard* keyboard_{};
@@ -19,7 +29,15 @@ class os_input_manager : public input_manager
     std::map<uint32_t, os_gamepad*> gamepads_{};
 
     std::vector<std::shared_ptr<input_device>> devices_;
+
+    hpp::optional<zone> window_input_zone_;
+    hpp::optional<zone> work_input_zone_;
+
+    bool is_input_allowed_{};
+
+
 public:
+
     os_input_manager();
 
     auto get_all_devices() const -> const std::vector<std::shared_ptr<input_device>>&;
@@ -34,6 +52,14 @@ public:
     void after_events_update() override;
 
     void on_os_event(const os::event& e);
+
+    void set_window_zone(const zone& window_zone);
+    void set_work_zone(const zone& work_zone);
+
+    auto remap_to_work_zone(coord global_pos) -> coord;
+    void set_is_input_allowed(bool allowed);
+    auto is_input_allowed() const -> bool;
+
 };
 
-} // namespace InputLib
+} // namespace input

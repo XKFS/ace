@@ -302,6 +302,20 @@ auto engine::process() -> bool
 
     auto dt = sim.get_delta_time();
 
+    const auto& window = rend.get_main_window();
+
+    if(window)
+    {
+        auto main_pos = window->get_window().get_position();
+        auto main_size = window->get_window().get_size();
+        input::zone window_zone{};
+        window_zone.x = main_pos.x;
+        window_zone.y = main_pos.y;
+        window_zone.w = main_size.w;
+        window_zone.h = main_size.h;
+        input.manager.set_window_zone(window_zone);
+    }
+
     input.manager.before_events_update();
 
     os::event e{};
@@ -312,7 +326,6 @@ auto engine::process() -> bool
     }
     input.manager.after_events_update();
 
-    const auto& window = rend.get_main_window();
 
     bool should_quit = window == nullptr;
 
@@ -321,6 +334,7 @@ auto engine::process() -> bool
         ev.set_play_mode(ctx, false);
         return false;
     }
+
 
     ev.on_frame_begin(ctx, dt);
 

@@ -691,6 +691,42 @@ void internal_m2n_log_error(const std::string& message, const std::string& func,
 
 */
 //-------------------------------------------------------------------------
+auto internal_m2n_get_children(entt::entity id) -> std::vector<entt::entity>
+{
+    if(auto comp = safe_get_component<transform_component>(id))
+    {
+        const auto& children = comp->get_children();
+        std::vector<entt::entity> children_id;
+        children_id.reserve(children.size());
+        for(const auto& child : children)
+        {
+            children_id.emplace_back(child.entity());
+        }
+        return children_id;
+    }
+
+    return {};
+}
+
+auto internal_m2n_get_parent(entt::entity id) -> entt::entity
+{
+    if(auto comp = safe_get_component<transform_component>(id))
+    {
+        return comp->get_parent().entity();
+    }
+
+    return {};
+}
+
+void internal_m2n_set_parent(entt::entity id, entt::entity new_parent, bool global_stays)
+{
+    if(auto comp = safe_get_component<transform_component>(id))
+    {
+        auto parent = get_entity_from_id(new_parent);
+        comp->set_parent(parent, global_stays);
+    }
+}
+
 auto internal_m2n_get_position_global(entt::entity id) -> math::vec3
 {
     if(auto comp = safe_get_component<transform_component>(id))
@@ -1506,6 +1542,9 @@ auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
 
     {
         auto reg = mono::internal_call_registry("Ace.Core.TransformComponent");
+        reg.add_internal_call("internal_m2n_get_children", internal_call(internal_m2n_get_children));
+        reg.add_internal_call("internal_m2n_get_parent", internal_call(internal_m2n_get_parent));
+
         reg.add_internal_call("internal_m2n_get_position_global", internal_call(internal_m2n_get_position_global));
         reg.add_internal_call("internal_m2n_set_position_global", internal_call(internal_m2n_set_position_global));
         reg.add_internal_call("internal_m2n_move_by_global", internal_call(internal_m2n_move_by_global));

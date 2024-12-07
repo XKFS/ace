@@ -8,6 +8,30 @@ namespace Ace.Core
     /// </summary>
     public class TransformComponent : Component
     {
+        public Entity[] children
+        {
+            get
+            {
+                return internal_m2n_get_children(owner).ToStructArray<Entity>();
+            }
+        }
+
+        public Entity parent
+        {
+            get
+            {
+                return internal_m2n_get_parent(owner);
+            }
+            set
+            {
+                internal_m2n_set_parent(owner, value, true);
+            }
+        }
+
+        public void SetParent(Entity parent, bool globalPositionStays)
+        {
+            internal_m2n_set_parent(owner, parent, globalPositionStays);
+        }
         /// <summary>
         /// Gets or sets the world space position of the Transform.
         /// </summary>
@@ -435,6 +459,15 @@ namespace Ace.Core
         {
             position = Vector3.MoveTowards(position, target.transform.position, maxDistanceDelta);
         }
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern byte[] internal_m2n_get_children(Entity eid);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern Entity internal_m2n_get_parent(Entity eid);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern void internal_m2n_set_parent(Entity eid, Entity newParent, bool globalStays);
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern Vector3 internal_m2n_get_position_global(Entity eid);

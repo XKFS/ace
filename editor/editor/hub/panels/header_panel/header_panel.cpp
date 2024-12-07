@@ -224,20 +224,27 @@ void header_panel::draw_play_toolbar(rtti::context& ctx, float headerSize)
                            item_spacing.x * 3,
                        [&]()
                        {
+                           ImGuiKeyChord key_chord = ev.is_playing ? ImGuiKey_F5 | ImGuiMod_Shift : ImGuiKey_F5;
+                           bool play_pressed = ImGui::IsKeyChordPressed(key_chord);
+
                            ImGui::BeginGroup();
 
-                           if(ImGui::Button(ev.is_playing ? ICON_MDI_STOP : ICON_MDI_PLAY))
+                           play_pressed |= ImGui::Button(ev.is_playing ? ICON_MDI_STOP : ICON_MDI_PLAY);
+
+                           ImGui::SetItemTooltipCurrentViewport("%s", ImGui::GetKeyChordName(key_chord));
+                           if(play_pressed)
                            {
                                ev.toggle_play_mode(ctx);
-
                                ImGui::FocusWindow(ImGui::FindWindowByName(ev.is_playing ? GAME_VIEW : SCENE_VIEW));
                            }
+
                            ImGui::SameLine();
                            if(ImGui::Button(ICON_MDI_PAUSE))
                            {
                                bool was_playing = ev.is_playing;
                                ev.toggle_pause(ctx);
                            }
+
                            ImGui::SameLine();
                            ImGui::PushItemFlag(ImGuiItemFlags_ButtonRepeat, true);
                            if(ImGui::Button(ICON_MDI_SKIP_NEXT))

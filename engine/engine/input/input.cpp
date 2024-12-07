@@ -11,6 +11,10 @@ auto input_system::init(rtti::context& ctx) -> bool
     APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
 
     // default mapping
+    mapper.map("Mouse Left", input::mouse_button::left_button);
+    mapper.map("Mouse Right", input::mouse_button::right_button);
+    mapper.map("Mouse Middle", input::mouse_button::middle_button);
+
     mapper.map("Mouse X", input::mouse_axis::x);
     mapper.map("Mouse Y", input::mouse_axis::y);
     mapper.map("Mouse ScrollWheel", input::mouse_axis::scroll);

@@ -66,6 +66,18 @@ public:
      */
     static void clear_kinematic_velocities(physics_component& comp);
 
+    auto ray_cast(const math::vec3& origin,
+                  const math::vec3& direction,
+                  float max_distance,
+                  int layer_mask,
+                  bool query_sensors) const -> hpp::optional<raycast_hit>;
+
+    auto ray_cast_all(const math::vec3& origin,
+                      const math::vec3& direction,
+                      float max_distance,
+                      int layer_mask,
+                      bool query_sensors) const -> std::vector<raycast_hit>;
+
 private:
     /**
      * @brief Updates the physics system for each frame.

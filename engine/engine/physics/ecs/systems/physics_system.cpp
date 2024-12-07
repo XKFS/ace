@@ -104,7 +104,12 @@ void physics_system::apply_explosion_force(physics_component& comp,
                                            float upwards_modifier,
                                            force_mode mode)
 {
-    backend_type::apply_explosion_force(comp, explosion_force, explosion_position, explosion_radius, upwards_modifier, mode);
+    backend_type::apply_explosion_force(comp,
+                                        explosion_force,
+                                        explosion_position,
+                                        explosion_radius,
+                                        upwards_modifier,
+                                        mode);
 }
 
 void physics_system::apply_force(physics_component& comp, const math::vec3& force, force_mode mode)
@@ -120,6 +125,24 @@ void physics_system::apply_torque(physics_component& comp, const math::vec3& tor
 void physics_system::clear_kinematic_velocities(physics_component& comp)
 {
     backend_type::clear_kinematic_velocities(comp);
+}
+
+auto physics_system::ray_cast(const math::vec3& origin,
+                              const math::vec3& direction,
+                              float max_distance,
+                              int layer_mask,
+                              bool query_sensors) const -> hpp::optional<raycast_hit>
+{
+    return backend_type::ray_cast(origin, direction, max_distance, layer_mask, query_sensors);
+}
+
+auto physics_system::ray_cast_all(const math::vec3& origin,
+                                  const math::vec3& direction,
+                                  float max_distance,
+                                  int layer_mask,
+                                  bool query_sensors) const -> std::vector<raycast_hit>
+{
+    return backend_type::ray_cast_all(origin, direction, max_distance, layer_mask, query_sensors);
 }
 
 } // namespace ace

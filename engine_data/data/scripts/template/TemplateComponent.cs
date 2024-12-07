@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using Ace.Core;
+
 class NewComponentTemplate : ScriptComponent
 {
 	public override void OnCreate()
@@ -14,10 +15,4 @@ class NewComponentTemplate : ScriptComponent
 	public override void OnUpdate()
 	{
 	}
-
-	public override void OnDestroy()
-	{
-
-	}
-
 }

@@ -99,6 +99,7 @@ void os_input_manager::on_os_event(const os::event& e)
             auto& state_map = keyboard_->get_key_state_map();
             key_code key = get_key_map().get_key(e.key.code, key_code::unknown);
             state_map.set_state(key, key_state::released);
+            break;
         }
 
         case os::events::mouse_button:

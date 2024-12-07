@@ -18,7 +18,7 @@ public:
     virtual auto get_left_button_state() const -> button_state = 0;
     virtual auto get_middle_button_state() const -> button_state = 0;
     virtual auto get_right_button_state() const -> button_state = 0;
-    virtual auto get_position() -> coord = 0;
+    virtual auto get_position() const -> coord = 0;
     virtual auto get_scroll() const -> float = 0;
     virtual auto is_down(uint32_t button) const -> bool= 0;
     virtual auto is_pressed(uint32_t button) const -> bool= 0;

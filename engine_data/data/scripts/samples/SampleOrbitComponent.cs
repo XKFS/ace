@@ -3,7 +3,7 @@ using Ace.Core;
 
 
 
-class SampleOrbitComponent : ScriptComponent
+public class SampleOrbitComponent : ScriptComponent
 {
     public float minimumDistance = 5f;  // Minimum distance to maintain
     public float orbitSpeed = 30f;  // Base speed of rotation around the target

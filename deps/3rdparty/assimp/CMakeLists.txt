@@ -153,17 +153,25 @@ set( ASSIMP_INJECT_DEBUG_POSTFIX OFF CACHE BOOL
 
 
 if(MSVC)
+    # Suppress warning 4702 for MSVC
     add_compile_options(/wd4702)
 
-    #Currently assimp crashes in full release build
+    # Currently, Assimp crashes in full release build for MSVC
+    # Adjust the optimization level for the Release mode
+    string(REPLACE "/O2" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+    string(REPLACE "/O2" "" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O1")  # Optimize for size
+    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /O1")
 
-    # Remove the /O2 optimization flag from the default Release flags
-    # string(REPLACE "/O2" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
-    # string(REPLACE "/O2" "" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
-    # # Set lower optimization level for Release mode (for MSVC)
-    # set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O1")  # Optimize for size (lower optimization than /O2)
-    # set(CMAKE_C_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O1")
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    # Suppress unused variable warnings for GCC/Clang
+    add_compile_options(-Wno-unused-variable)
 
+    # Adjust the optimization level for the Release mode for GCC/Clang
+    string(REPLACE "-O3" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+    string(REPLACE "-O3" "" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")  # Optimize for size
+    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O2")
 endif()
 
 add_subdirectory( assimp )

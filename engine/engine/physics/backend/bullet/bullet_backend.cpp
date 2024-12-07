@@ -8,9 +8,12 @@
 #include <engine/ecs/components/transform_component.h>
 #include <engine/ecs/ecs.h>
 #include <engine/engine.h>
+#include <engine/scripting/ecs/components/script_component.h>
 #include <engine/scripting/ecs/systems/script_system.h>
 
 #define BT_USE_SSE_IN_API
+#include <BulletCollision/NarrowPhaseCollision/btRaycastCallback.h>
+#include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>
 
 #include <logging/logging.h>
@@ -20,6 +23,29 @@ namespace bullet
 namespace
 {
 bool enable_logging = false;
+
+enum class manifold_type
+{
+    collision,
+    sensor
+};
+
+enum class event_type
+{
+    enter,
+    exit
+};
+
+struct contact_manifold
+{
+    manifold_type type{};
+    event_type event{};
+    entt::handle a{};
+    entt::handle b{};
+
+    std::vector<ace::manifold_point> contacts;
+};
+
 const btVector3 gravity_sun(btScalar(0), btScalar(-274), btScalar(0));
 const btVector3 gravity_mercury(btScalar(0), btScalar(-3.7), btScalar(0));
 const btVector3 gravity_venus(btScalar(0), btScalar(-8.87), btScalar(0));
@@ -79,68 +105,68 @@ auto to_bx_color(const btVector3& in) -> uint32_t
 
 class debugdraw : public btIDebugDraw
 {
-    int m_debugMode = /*btIDebugDraw::DBG_DrawWireframe | */ btIDebugDraw::DBG_DrawContactPoints;
-    DefaultColors m_ourColors;
-    gfx::dd_raii& m_dd;
-    std::unique_ptr<DebugDrawEncoderScopePush> m_scope;
+    int debug_mode_ = /*btIDebugDraw::DBG_DrawWireframe | */ btIDebugDraw::DBG_DrawContactPoints;
+    DefaultColors our_colors_;
+    gfx::dd_raii& dd_;
+    std::unique_ptr<DebugDrawEncoderScopePush> scope_;
 
 public:
-    debugdraw(gfx::dd_raii& dd) : m_dd(dd)
+    debugdraw(gfx::dd_raii& dd) : dd_(dd)
     {
     }
 
     void startLines()
     {
-        if(!m_scope)
+        if(!scope_)
         {
-            m_scope = std::make_unique<DebugDrawEncoderScopePush>(m_dd.encoder);
+            scope_ = std::make_unique<DebugDrawEncoderScopePush>(dd_.encoder);
         }
     }
 
     auto getDefaultColors() const -> DefaultColors override
     {
-        return m_ourColors;
+        return our_colors_;
     }
     /// the default implementation for setDefaultColors has no effect. A derived class can implement it and store the
     /// colors.
     void setDefaultColors(const DefaultColors& colors) override
     {
-        m_ourColors = colors;
+        our_colors_ = colors;
     }
 
     void drawLine(const btVector3& from1, const btVector3& to1, const btVector3& color1) override
     {
         startLines();
 
-        m_dd.encoder.setColor(to_bx_color(color1));
-        m_dd.encoder.moveTo(to_bx(from1));
-        m_dd.encoder.lineTo(to_bx(to1));
+        dd_.encoder.setColor(to_bx_color(color1));
+        dd_.encoder.moveTo(to_bx(from1));
+        dd_.encoder.lineTo(to_bx(to1));
     }
 
-    void drawContactPoint(const btVector3& PointOnB,
-                          const btVector3& normalOnB,
+    void drawContactPoint(const btVector3& point_on_b,
+                          const btVector3& normal_on_b,
                           btScalar distance,
-                          int lifeTime,
+                          int life_time,
                           const btVector3& color) override
     {
-        drawLine(PointOnB, PointOnB + normalOnB * distance, color);
+        drawLine(point_on_b, point_on_b + normal_on_b * distance, color);
         btVector3 ncolor(0, 0, 0);
-        drawLine(PointOnB, PointOnB + normalOnB * 0.1, ncolor);
+        drawLine(point_on_b, point_on_b + normal_on_b * 0.1, ncolor);
     }
 
     void setDebugMode(int debugMode) override
     {
-        m_debugMode = debugMode;
+        debug_mode_ = debugMode;
     }
 
-    int getDebugMode() const override
+    auto getDebugMode() const -> int override
     {
-        return m_debugMode;
+        return debug_mode_;
     }
 
     void flushLines() override
     {
-        m_scope.reset();
+        scope_.reset();
     }
 
     void reportErrorWarning(const char* warningString) override
@@ -152,20 +178,275 @@ public:
     }
 };
 
-auto get_entity_from_user_pointer(void* pointer) -> entt::handle
+auto get_entity_from_user_index(int index) -> entt::handle
 {
     auto& ctx = ace::engine::context();
     auto& ec = ctx.get_cached<ace::ecs>();
-    auto id = static_cast<entt::entity>(uintptr_t(pointer));
+    auto id = static_cast<entt::entity>(index);
 
     return ec.get_scene().create_entity(id);
 }
 
-auto get_entity_tag_from_user_pointer(void* pointer) -> const std::string&
+auto get_entity_id_from_user_index(int index) -> entt::entity
 {
-    auto e = get_entity_from_user_pointer(pointer);
+    auto& ctx = ace::engine::context();
+    auto& ec = ctx.get_cached<ace::ecs>();
+    auto id = static_cast<entt::entity>(index);
+
+    return id;
+}
+
+auto get_entity_tag_from_user_index(int index) -> const std::string&
+{
+    auto e = get_entity_from_user_index(index);
 
     return e.get<ace::tag_component>().tag;
+}
+
+template<typename Callback>
+class filter_ray_callback : public Callback
+{
+public:
+    int layer_mask;
+    bool query_sensors;
+
+    filter_ray_callback(const btVector3& from, const btVector3& to, int mask, bool sensors)
+        : Callback(from, to)
+        , layer_mask(mask)
+        , query_sensors(sensors)
+    {
+    }
+
+    // Override needsCollision to apply custom filtering
+    auto needsCollision(btBroadphaseProxy* proxy0) const -> bool override
+    {
+        if(!Callback::needsCollision(proxy0))
+        {
+            return false;
+        }
+
+        const auto* collision_object = static_cast<const btCollisionObject*>(proxy0->m_clientObject);
+        if(!query_sensors && (collision_object->getCollisionFlags() & btCollisionObject::CF_NO_CONTACT_RESPONSE))
+        {
+            // Ignore sensors if querySensors is false
+            return false;
+        }
+
+        // Apply layer mask filtering
+        if((proxy0->m_collisionFilterGroup & layer_mask) == 0 && (proxy0->m_collisionFilterMask & layer_mask) == 0)
+        {
+            return false;
+        }
+
+        return true;
+    }
+};
+
+using filter_closest_ray_callback = filter_ray_callback<btCollisionWorld::ClosestRayResultCallback>;
+using filter_all_hits_ray_callback = filter_ray_callback<btCollisionWorld::AllHitsRayResultCallback>;
+
+struct rigidbody
+{
+    std::shared_ptr<btRigidBody> internal{};
+    std::shared_ptr<btCollisionShape> internal_shape{};
+};
+
+struct world
+{
+    std::shared_ptr<btBroadphaseInterface> broadphase;
+    std::shared_ptr<btCollisionDispatcher> dispatcher;
+    std::shared_ptr<btConstraintSolver> solver;
+    std::shared_ptr<btDefaultCollisionConfiguration> collision_config;
+    std::shared_ptr<btDiscreteDynamicsWorld> dynamics_world;
+
+    bool in_simulate{};
+    std::vector<contact_manifold> pending_manifolds;
+
+    void add_rigidbody(const rigidbody& body)
+    {
+        dynamics_world->addRigidBody(body.internal.get());
+    }
+
+    void remove_rigidbody(const rigidbody& body)
+    {
+        dynamics_world->removeRigidBody(body.internal.get());
+    }
+
+    void process_pending_actions()
+    {
+        if(pending_manifolds.empty())
+        {
+            return;
+        }
+
+        auto& ctx = ace::engine::context();
+        auto& scripting = ctx.get_cached<ace::script_system>();
+
+        for(const auto& manifold : pending_manifolds)
+        {
+            switch(manifold.type)
+            {
+                case manifold_type::sensor:
+                {
+                    if(manifold.event == event_type::enter)
+                    {
+                        scripting.on_sensor_enter(manifold.a, manifold.b);
+                    }
+                    else
+                    {
+                        scripting.on_sensor_exit(manifold.a, manifold.b);
+                    }
+
+                    break;
+                }
+
+                case manifold_type::collision:
+                {
+                    if(manifold.event == event_type::enter)
+                    {
+                        scripting.on_collision_enter(manifold.a, manifold.b, manifold.contacts);
+                    }
+                    else
+                    {
+                        scripting.on_collision_exit(manifold.a, manifold.b, manifold.contacts);
+                    }
+                    break;
+                }
+
+                default:
+                {
+                    break;
+                }
+            }
+        }
+
+        pending_manifolds.clear();
+    }
+    void simulate(delta_t dt)
+    {
+        in_simulate = true;
+        dynamics_world->stepSimulation(dt.count());
+        in_simulate = false;
+    }
+
+    auto ray_cast_closest(const math::vec3& origin,
+                          const math::vec3& direction,
+                          float max_distance,
+                          int layer_mask,
+                          bool query_sensors) -> hpp::optional<ace::raycast_hit>
+    {
+        if(!dynamics_world)
+        {
+            return {};
+        }
+
+        auto ray_origin = to_bullet(origin);
+        auto ray_end = to_bullet(origin + direction * max_distance);
+
+        filter_closest_ray_callback ray_callback(ray_origin, ray_end, layer_mask, query_sensors);
+
+        ray_callback.m_flags |= btTriangleRaycastCallback::kF_UseGjkConvexCastRaytest;
+        dynamics_world->rayTest(ray_origin, ray_end, ray_callback);
+        if(ray_callback.hasHit())
+        {
+            const btRigidBody* body = btRigidBody::upcast(ray_callback.m_collisionObject);
+            if(body)
+            {
+                ace::raycast_hit hit;
+                hit.entity = get_entity_id_from_user_index(body->getUserIndex());
+                hit.point = from_bullet(ray_callback.m_hitPointWorld);
+                hit.normal = from_bullet(ray_callback.m_hitNormalWorld);
+                hit.distance = math::distance(origin, hit.point);
+
+                return hit;
+            }
+        }
+        return {};
+    }
+
+    auto ray_cast_all(const math::vec3& origin,
+                      const math::vec3& direction,
+                      float max_distance,
+                      int layer_mask,
+                      bool query_sensors) -> std::vector<ace::raycast_hit>
+    {
+        if(!dynamics_world)
+        {
+            return {};
+        }
+
+        auto ray_origin = to_bullet(origin);
+        auto ray_end = to_bullet(origin + direction * max_distance);
+
+        filter_all_hits_ray_callback ray_callback(ray_origin, ray_end, layer_mask, query_sensors);
+
+        ray_callback.m_flags |= btTriangleRaycastCallback::kF_UseGjkConvexCastRaytest;
+        dynamics_world->rayTest(ray_origin, ray_end, ray_callback);
+
+        if(!ray_callback.hasHit())
+        {
+            return {};
+        }
+
+        std::vector<ace::raycast_hit> hits;
+
+        // Collect all hits
+        hits.reserve(ray_callback.m_hitPointWorld.size());
+        for(int i = 0; i < ray_callback.m_hitPointWorld.size(); ++i)
+        {
+            const btCollisionObject* collision_object = ray_callback.m_collisionObjects[i];
+            const btRigidBody* body = btRigidBody::upcast(collision_object);
+
+            if(body)
+            {
+                ace::raycast_hit hit;
+                hit.entity = get_entity_id_from_user_index(body->getUserIndex());
+                hit.point = from_bullet(ray_callback.m_hitPointWorld[i]);
+                hit.normal = from_bullet(ray_callback.m_hitNormalWorld[i]);
+                hit.distance = math::distance(origin, hit.point);
+
+                hits.push_back(hit);
+            }
+        }
+        return hits;
+    }
+};
+
+auto get_world_from_user_pointer(void* pointer) -> world&
+{
+    auto world = reinterpret_cast<bullet::world*>(pointer);
+    return *world;
+}
+
+auto has_scripting(entt::handle a) -> bool
+{
+    auto a_scirpt_comp = a.try_get<ace::script_component>();
+    bool a_has_scripting = a_scirpt_comp && a_scirpt_comp->has_script_components();
+    return a_has_scripting;
+}
+
+auto should_record_collision_event(entt::handle a, entt::handle b) -> bool
+{
+    if(has_scripting(a))
+    {
+        return true;
+    }
+    if(has_scripting(b))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+auto should_record_sensor_event(entt::handle a, entt::handle b) -> bool
+{
+    if(has_scripting(a))
+    {
+        return true;
+    }
+
+    return false;
 }
 
 void handle_regular_collision(btPersistentManifold* manifold,
@@ -179,28 +460,37 @@ void handle_regular_collision(btPersistentManifold* manifold,
         return;
     }
 
-    auto& ctx = ace::engine::context();
-    auto& scripting = ctx.get_cached<ace::script_system>();
+    auto a_entity = get_entity_from_user_index(obj_a->getUserIndex());
+    auto b_entity = get_entity_from_user_index(obj_b->getUserIndex());
 
-    auto a_entity = get_entity_from_user_pointer(obj_a->getUserPointer());
-    auto b_entity = get_entity_from_user_pointer(obj_b->getUserPointer());
+    if(!should_record_collision_event(a_entity, b_entity))
+    {
+        return;
+    }
 
     // Log regular collision
     if(enable_logging)
     {
         APPLOG_INFO("Collision {} between entities {} and {}",
                     enter ? "enter" : "exit",
-                    get_entity_tag_from_user_pointer(obj_a->getUserPointer()),
-                    get_entity_tag_from_user_pointer(obj_b->getUserPointer()));
+                    get_entity_tag_from_user_index(obj_a->getUserIndex()),
+                    get_entity_tag_from_user_index(obj_b->getUserIndex()));
     }
 
-    std::vector<ace::manifold_point> contacts;
-    contacts.reserve(num_contacts);
+    auto& world = get_world_from_user_pointer(obj_a->getUserPointer());
+    auto& new_manifold = world.pending_manifolds.emplace_back();
+
+    new_manifold.a = a_entity;
+    new_manifold.b = b_entity;
+    new_manifold.type = manifold_type::collision;
+    new_manifold.event = enter ? event_type::enter : event_type::exit;
+    new_manifold.contacts.reserve(num_contacts);
+
     for(int i = 0; i < num_contacts; i++)
     {
         const btManifoldPoint& contact_point = manifold->getContactPoint(i);
 
-        auto& point = contacts.emplace_back();
+        auto& point = new_manifold.contacts.emplace_back();
         point.b = from_bullet(contact_point.getPositionWorldOnB());
         point.a = from_bullet(contact_point.getPositionWorldOnA());
         point.normal_on_b = from_bullet(contact_point.m_normalWorldOnB);
@@ -220,15 +510,6 @@ void handle_regular_collision(btPersistentManifold* manifold,
             APPLOG_INFO("Distance: {}", point.distance);
         }
     }
-
-    if(enter)
-    {
-        scripting.on_collision_enter(a_entity, b_entity, contacts);
-    }
-    else
-    {
-        scripting.on_collision_exit(a_entity, b_entity, contacts);
-    }
 }
 
 void contact_callback(btPersistentManifold* const& manifold, bool enter)
@@ -246,29 +527,29 @@ void contact_callback(btPersistentManifold* const& manifold, bool enter)
         const btCollisionObject* sensor = is_sensor_a ? obj_a : obj_b;
         const btCollisionObject* other = is_sensor_a ? obj_b : obj_a;
 
+        auto sensor_entity = get_entity_from_user_index(sensor->getUserIndex());
+        auto other_entity = get_entity_from_user_index(other->getUserIndex());
+
+        if(!should_record_collision_event(sensor_entity, other_entity))
+        {
+            return;
+        }
+
         // Log or handle sensor "enter/exit" event
         if(enable_logging)
         {
             APPLOG_INFO("Sensor {} {} by {}",
                         enter ? "entered" : "exited",
-                        get_entity_tag_from_user_pointer(sensor->getUserPointer()),
-                        get_entity_tag_from_user_pointer(other->getUserPointer()));
+                        get_entity_tag_from_user_index(sensor->getUserIndex()),
+                        get_entity_tag_from_user_index(other->getUserIndex()));
         }
 
-        auto& ctx = ace::engine::context();
-        auto& scripting = ctx.get_cached<ace::script_system>();
-
-        auto sensor_entity = get_entity_from_user_pointer(sensor->getUserPointer());
-        auto other_entity = get_entity_from_user_pointer(other->getUserPointer());
-
-        if(enter)
-        {
-            scripting.on_sensor_enter(sensor_entity, other_entity);
-        }
-        else
-        {
-            scripting.on_sensor_exit(sensor_entity, other_entity);
-        }
+        auto& world = get_world_from_user_pointer(sensor->getUserPointer());
+        auto& new_manifold = world.pending_manifolds.emplace_back();
+        new_manifold.a = sensor_entity;
+        new_manifold.b = other_entity;
+        new_manifold.type = manifold_type::sensor;
+        new_manifold.event = enter ? event_type::enter : event_type::exit;
     }
     else
     {
@@ -290,72 +571,6 @@ auto contact_processed_callback(btManifoldPoint& cp, void* body0, void* body1) -
 {
     return true;
 }
-
-struct rigidbody
-{
-    std::shared_ptr<btRigidBody> internal{};
-    std::shared_ptr<btCollisionShape> internal_shape{};
-};
-
-struct world
-{
-    std::shared_ptr<btBroadphaseInterface> broadphase;
-    std::shared_ptr<btCollisionDispatcher> dispatcher;
-    std::shared_ptr<btConstraintSolver> solver;
-    std::shared_ptr<btDefaultCollisionConfiguration> collision_config;
-    std::shared_ptr<btDiscreteDynamicsWorld> dynamics_world;
-
-    bool in_simulate{};
-    std::vector<std::pair<rigidbody, bool>> bodies_for_processing;
-
-    void add_rigidbody(const rigidbody& body)
-    {
-        if(in_simulate)
-        {
-            bodies_for_processing.emplace_back(body, true);
-        }
-        else
-        {
-            dynamics_world->addRigidBody(body.internal.get());
-        }
-    }
-
-    void remove_rigidbody(const rigidbody& body)
-    {
-        if(in_simulate)
-        {
-            bodies_for_processing.emplace_back(body, false);
-        }
-        else
-        {
-            dynamics_world->removeRigidBody(body.internal.get());
-        }
-    }
-
-    void process_pending_actions()
-    {
-        auto pending = std::move(bodies_for_processing);
-        for(auto& kvp : pending)
-        {
-            auto body = kvp.first;
-            auto add = kvp.second;
-            if(add)
-            {
-                dynamics_world->addRigidBody(body.internal.get());
-            }
-            else
-            {
-                dynamics_world->removeRigidBody(body.internal.get());
-            }
-        }
-    }
-    void simulate(delta_t dt)
-    {
-        in_simulate = true;
-        dynamics_world->stepSimulation(dt.count());
-        in_simulate = false;
-    }
-};
 
 auto create_dynamics_world() -> bullet::world
 {
@@ -577,7 +792,8 @@ void make_rigidbody(bullet::world& world, entt::handle entity, physics_component
 
     body.internal = std::make_shared<btRigidBody>(comp.get_mass(), nullptr, nullptr);
     body.internal->setFlags(BT_DISABLE_WORLD_GRAVITY);
-    body.internal->setUserPointer((void*)uintptr_t(entity.entity()));
+    body.internal->setUserIndex(int(entity.entity()));
+    body.internal->setUserPointer(&world);
     update_rigidbody_kind(body, comp);
     update_rigidbody_shape(body, comp);
     update_rigidbody_mass_and_inertia(body, comp);
@@ -822,6 +1038,14 @@ auto add_torque(btRigidBody* body, const btVector3& torque, force_mode mode) -> 
 
 void bullet_backend::on_create_component(entt::registry& r, entt::entity e)
 {
+    // this function will be called for both physics_component and bullet::rigidbody
+    auto world = r.ctx().find<bullet::world>();
+    if(world)
+    {
+        entt::handle entity(r, e);
+        auto& phisics = entity.get<physics_component>();
+        recreate_phyisics_body(*world, phisics, true);
+    }
 }
 
 void bullet_backend::on_destroy_component(entt::registry& r, entt::entity e)
@@ -950,6 +1174,36 @@ void bullet_backend::clear_kinematic_velocities(physics_component& comp)
             wake_up(*bbody);
         }
     }
+}
+
+auto bullet_backend::ray_cast(const math::vec3& origin,
+                              const math::vec3& direction,
+                              float max_distance,
+                              int layer_mask,
+                              bool query_sensors) -> hpp::optional<raycast_hit>
+{
+    auto& ctx = engine::context();
+    auto& ec = ctx.get_cached<ecs>();
+    auto& registry = *ec.get_scene().registry;
+
+    auto& world = registry.ctx().get<bullet::world>();
+
+    return world.ray_cast_closest(origin, direction, max_distance, layer_mask, query_sensors);
+}
+
+auto bullet_backend::ray_cast_all(const math::vec3& origin,
+                                  const math::vec3& direction,
+                                  float max_distance,
+                                  int layer_mask,
+                                  bool query_sensors) -> std::vector<raycast_hit>
+{
+    auto& ctx = engine::context();
+    auto& ec = ctx.get_cached<ecs>();
+    auto& registry = *ec.get_scene().registry;
+
+    auto& world = registry.ctx().get<bullet::world>();
+
+    return world.ray_cast_all(origin, direction, max_distance, layer_mask, query_sensors);
 }
 
 void bullet_backend::on_play_begin(rtti::context& ctx)

@@ -286,7 +286,7 @@ public:
      * @param rayDirectionOut The output ray direction.
      * @return true if the conversion is successful, false otherwise.
      */
-    auto viewport_to_ray(const math::vec2& point, math::vec3& rayOriginOut, math::vec3& rayDirectionOut) const -> bool;
+    auto viewport_to_ray(const math::vec2& point, math::vec3& vec_ray_start, math::vec3& vec_ray_dir) const -> bool;
 
     /**
      * @brief Converts a screen position into a world space position on the specified plane.

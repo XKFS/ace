@@ -8,6 +8,13 @@ namespace Ace.Core
     /// </summary>
     public static class Input
     {
+        public static Vector2 mousePosition
+        {
+            get
+            {
+                return internal_m2n_input_get_mouse_position();
+            }
+        }
         /// <summary>
         /// Gets the analog value of an input axis.
         /// </summary>
@@ -112,5 +119,8 @@ namespace Ace.Core
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern bool internal_m2n_input_is_down(string action);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern Vector2 internal_m2n_input_get_mouse_position();
     }
 }

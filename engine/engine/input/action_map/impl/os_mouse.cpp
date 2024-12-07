@@ -46,7 +46,7 @@ auto os_mouse::get_name() const -> const std::string&
 }
 
 //  ----------------------------------------------------------------------------
-auto os_mouse::get_position() -> coord
+auto os_mouse::get_position() const -> coord
 {
     return position_;
 }
@@ -85,7 +85,7 @@ auto os_mouse::is_released(uint32_t button) const -> bool
 void os_mouse::set_position(coord  pos)
 {
     axis_map_[int(mouse_axis::x)] = float(pos.x - position_.x);
-    axis_map_[int(mouse_axis::y)] = float(pos.y - position_.y);
+    axis_map_[int(mouse_axis::y)] = float(position_.y - pos.y);
 
     position_ = pos;
 }

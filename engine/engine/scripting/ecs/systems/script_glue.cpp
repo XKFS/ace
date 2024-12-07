@@ -13,6 +13,7 @@
 #include <engine/audio/ecs/components/audio_source_component.h>
 #include <engine/input/input.h>
 #include <engine/meta/ecs/components/all_components.h>
+#include <engine/physics/ecs/systems/physics_system.h>
 #include <engine/scripting/ecs/components/script_component.h>
 
 #include <filesystem/filesystem.h>
@@ -96,6 +97,20 @@ inline auto converter::convert(const quaternion& q) -> math::quat
 {
     return math::quat::wxyz(q.w, q.x, q.y, q.z);
 }
+
+struct raycast_hit
+{
+    entt::entity entity{};
+    vector3 point{};
+    vector3 normal{};
+    float distance{};
+};
+
+struct ray
+{
+    vector3 origin{};
+    vector3 direction{};
+};
 
 } // namespace managed_interface
 
@@ -1016,6 +1031,29 @@ void internal_m2n_animation_stop(entt::entity id)
 }
 
 //------------------------------
+auto internal_m2n_camera_viewport_to_ray(entt::entity id,
+                                         const math::vec2& origin,
+                                         mono::managed_interface::ray* managed_ray) -> bool
+{
+    if(auto comp = safe_get_component<camera_component>(id))
+    {
+        math::vec3 ray_origin{};
+        math::vec3 ray_dir{};
+        bool result = comp->get_camera().viewport_to_ray(origin, ray_origin, ray_dir);
+        if(result)
+        {
+            using converter = mono::managed_interface::converter;
+            managed_ray->origin = converter::convert<math::vec3, mono::managed_interface::vector3>(ray_origin);
+            managed_ray->direction = converter::convert<math::vec3, mono::managed_interface::vector3>(ray_dir);
+        }
+        return result;
+    }
+
+    return false;
+}
+
+//------------------------------
+
 auto internal_m2n_from_euler_rad(const math::vec3& euler) -> math::quat
 {
     return {euler};
@@ -1128,10 +1166,72 @@ auto internal_m2n_input_is_down(const std::string& name) -> bool
 {
     auto& ctx = engine::context();
     auto& input = ctx.get_cached<input_system>();
-    return input.is_released(name);
+    return input.is_down(name);
+}
+
+auto internal_m2n_input_get_mouse_position() -> math::vec2
+{
+    auto& ctx = engine::context();
+    auto& input = ctx.get_cached<input_system>();
+    auto coord = input.manager.get_mouse().get_position();
+    return {coord.x, coord.y};
 }
 
 //-------------------------------------------------
+
+auto internal_m2n_physics_raycast(mono::managed_interface::raycast_hit* hit,
+                                  const math::vec3& origin,
+                                  const math::vec3& direction,
+                                  float max_distance,
+                                  int layer_mask,
+                                  bool query_sensors) -> bool
+{
+    auto& ctx = engine::context();
+    auto& physics = ctx.get_cached<physics_system>();
+
+    auto ray_hit = physics.ray_cast(origin, direction, max_distance, layer_mask, query_sensors);
+
+    using converter = mono::managed_interface::converter;
+
+    if(ray_hit)
+    {
+        hit->entity = ray_hit->entity;
+        hit->point = converter::convert<math::vec3, mono::managed_interface::vector3>(ray_hit->point);
+        hit->normal = converter::convert<math::vec3, mono::managed_interface::vector3>(ray_hit->normal);
+        hit->distance = ray_hit->distance;
+    }
+
+    return ray_hit.has_value();
+}
+
+auto internal_m2n_physics_raycast_all(const math::vec3& origin,
+                                      const math::vec3& direction,
+                                      float max_distance,
+                                      int layer_mask,
+                                      bool query_sensors) -> std::vector<mono::managed_interface::raycast_hit>
+{
+    auto& ctx = engine::context();
+    auto& physics = ctx.get_cached<physics_system>();
+
+    auto ray_hits = physics.ray_cast_all(origin, direction, max_distance, layer_mask, query_sensors);
+
+    std::vector<mono::managed_interface::raycast_hit> hits;
+
+    using converter = mono::managed_interface::converter;
+    for(const auto& ray_hit : ray_hits)
+    {
+        auto& hit = hits.emplace_back();
+        hit.entity = ray_hit.entity;
+        hit.point = converter::convert<math::vec3, mono::managed_interface::vector3>(ray_hit.point);
+        hit.normal = converter::convert<math::vec3, mono::managed_interface::vector3>(ray_hit.normal);
+        hit.distance = ray_hit.distance;
+    }
+
+    return hits;
+}
+
+//-------------------------------------------------
+
 auto internal_m2n_audio_source_get_loop(entt::entity id) -> bool
 {
     if(auto comp = safe_get_component<audio_source_component>(id))
@@ -1474,6 +1574,12 @@ auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
     }
 
     {
+        auto reg = mono::internal_call_registry("Ace.Core.CameraComponent");
+        reg.add_internal_call("internal_m2n_camera_viewport_to_ray",
+                              internal_call(internal_m2n_camera_viewport_to_ray));
+    }
+
+    {
         auto reg = mono::internal_call_registry("Ace.Core.Assets");
         reg.add_internal_call("internal_m2n_get_asset_by_uuid", internal_call(internal_m2n_get_asset_by_uuid));
         reg.add_internal_call("internal_m2n_get_asset_by_key", internal_call(internal_m2n_get_asset_by_key));
@@ -1507,6 +1613,14 @@ auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
         reg.add_internal_call("internal_m2n_input_is_pressed", internal_call(internal_m2n_input_is_pressed));
         reg.add_internal_call("internal_m2n_input_is_released", internal_call(internal_m2n_input_is_released));
         reg.add_internal_call("internal_m2n_input_is_down", internal_call(internal_m2n_input_is_down));
+        reg.add_internal_call("internal_m2n_input_get_mouse_position",
+                              internal_call(internal_m2n_input_get_mouse_position));
+    }
+
+    {
+        auto reg = mono::internal_call_registry("Ace.Core.Physics");
+        reg.add_internal_call("internal_m2n_physics_raycast", internal_call(internal_m2n_physics_raycast));
+        reg.add_internal_call("internal_m2n_physics_raycast_all", internal_call(internal_m2n_physics_raycast_all));
     }
     {
         auto reg = mono::internal_call_registry("Ace.Core.AudioSourceComponent");

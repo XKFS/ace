@@ -113,6 +113,15 @@ struct manifold_point
     float impulse{};
 };
 
+
+struct raycast_hit
+{
+    entt::entity entity{};
+    math::vec3 point{};
+    math::vec3 normal{};
+    float distance{};
+};
+
 /**
  * @class physics_component
  * @brief Component that handles physics properties and behaviors.

@@ -437,30 +437,29 @@ auto camera::viewport_to_ray(const math::vec2& point, math::vec3& vec_ray_start,
     math::transform mtx_view = get_view();
     math::transform mtx_inv_view = math::inverse(mtx_view);
 
-    // Transform the pick position from view port space into camera space
-    math::vec3 cursor;
-    cursor.x = (((2.0f * (point.x - viewport_pos_.x)) / float(viewport_size_.width)) - 1.0f) / mtx_proj[0][0];
-    cursor.y = -(((2.0f * (point.y - viewport_pos_.y)) / float(viewport_size_.height)) - 1.0f) / mtx_proj[1][1];
-    cursor.z = 1.0f;
+    // Transform pick position from viewport to normalized device coordinates (NDC)
+    float ndc_x = 2.0f * (point.x - viewport_pos_.x) / float(viewport_size_.width) - 1.0f;
+    float ndc_y = 2.0f * (point.y - viewport_pos_.y) / float(viewport_size_.height) - 1.0f;
 
-    // Transform the camera space pick ray into 3D space
-    if(get_projection_mode() == projection_mode::orthographic)
+           // Ensure projection matrix values are valid
+    if (math::abs(mtx_proj[0][0]) < math::epsilon<float>() || math::abs(mtx_proj[1][1]) < math::epsilon<float>())
     {
-        // Obtain the ray from the cursor position
-        vec_ray_start = mtx_inv_view.transform_coord(cursor);
-        vec_ray_dir = mtx_inv_view[2];
+        return false;
+    }
 
-    } // End If IsOrthohraphic
+    math::vec3 cursor(ndc_x / mtx_proj[0][0], -ndc_y / mtx_proj[1][1], 1.0f);
+
+    if (get_projection_mode() == projection_mode::orthographic)
+    {
+        vec_ray_start = mtx_inv_view.transform_coord(cursor);
+        vec_ray_dir = math::normalize(mtx_inv_view[2]); // Z-axis direction
+    }
     else
     {
-        // Obtain the ray from the cursor position
         vec_ray_start = mtx_inv_view.get_position();
-        vec_ray_dir.x = cursor.x * mtx_inv_view[0][0] + cursor.y * mtx_inv_view[1][0] + cursor.z * mtx_inv_view[2][0];
-        vec_ray_dir.y = cursor.x * mtx_inv_view[0][1] + cursor.y * mtx_inv_view[1][1] + cursor.z * mtx_inv_view[2][1];
-        vec_ray_dir.z = cursor.x * mtx_inv_view[0][2] + cursor.y * mtx_inv_view[1][2] + cursor.z * mtx_inv_view[2][2];
+        vec_ray_dir = math::normalize(mtx_inv_view.transform_normal(cursor));
+    }
 
-    } // End If !IsOrthohraphic
-    // Success!
     return true;
 }
 

@@ -23,11 +23,11 @@
 
 #include <engine/scripting/ecs/systems/script_system.h>
 
-#include <monopp/mono_jit.h>
-#include <subprocess/subprocess.hpp>
-
 #include <array>
 #include <fstream>
+#include <monopp/mono_jit.h>
+#include <regex>
+#include <subprocess/subprocess.hpp>
 
 namespace ace::asset_compiler
 {
@@ -532,6 +532,36 @@ auto compile<audio_clip>(asset_manager& am, const fs::path& key, const fs::path&
 
     return true;
 }
+// Struct to hold the parsed error details
+struct script_compilation_error
+{
+    std::string file{};  // Path to the file
+    int line{};          // Line number of the error
+    std::string error{}; // Full error line
+};
+
+// Function to parse the error log and extract details
+auto parse_compilation_error(const std::string& log) -> std::optional<script_compilation_error>
+{
+    // Regular expression to extract the error details
+    std::regex error_regex(R"((.*)\((\d+),\d+\): error .*)");
+    std::smatch match;
+
+    // Search for the first error line
+    if(std::regex_search(log, match, error_regex))
+    {
+        if(match.size() >= 3)
+        {
+            script_compilation_error error;
+            error.file = match[1].str();            // Extract file path
+            error.line = std::stoi(match[2].str()); // Extract line number
+            error.error = match[0].str();           // Extract full error line
+            return error;
+        }
+    }
+
+    return std::nullopt; // No match found
+}
 
 template<>
 auto compile<script_library>(asset_manager& am, const fs::path& key, const fs::path& output, uint32_t flags) -> bool
@@ -604,7 +634,16 @@ auto compile<script_library>(asset_manager& am, const fs::path& key, const fs::p
 
     if(!run_process(cmd.cmd, cmd.args, true, error))
     {
-        APPLOG_ERROR("Failed compilation of {0} with error: {1}", output.string(), error);
+        auto parsed_error = parse_compilation_error(error);
+
+        if(parsed_error)
+        {
+            APPLOG_ERROR_LOC(parsed_error->file.c_str(), parsed_error->line, "", parsed_error->error);
+        }
+        else
+        {
+            APPLOG_ERROR("Failed compilation of {0} with error: {1}", output.string(), error);
+        }
         result = false;
     }
     else

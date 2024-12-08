@@ -28,6 +28,11 @@ public:
     static void on_destroy_component(entt::registry& r, entt::entity e);
 
     /**
+     * @brief Sets whether the model is enabled.
+     * @param enabled True if the model is enabled, false otherwise.
+     */
+    void set_enabled(bool enabled);
+    /**
      * @brief Sets whether the model casts shadows.
      * @param cast_shadow True if the model casts shadows, false otherwise.
      */
@@ -44,6 +49,12 @@ public:
      * @param is_static True if the model is static, false otherwise.
      */
     void set_static(bool is_static);
+
+    /**
+     * @brief Checks if the model is enabled.
+     * @return True if the model is enabled, false otherwise.
+     */
+    auto is_enabled() const -> bool;
 
     /**
      * @brief Checks if the model casts shadows.
@@ -126,6 +137,11 @@ public:
     auto is_skinned() const -> bool;
 private:
     auto create_armature() -> bool;
+
+    /**
+     * @brief Indicates if the model is enabled.
+     */
+    bool enabled_ = true;
 
     /**
      * @brief Indicates if the model is static.

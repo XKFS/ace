@@ -23,7 +23,6 @@
 
 #include <engine/scripting/ecs/systems/script_system.h>
 
-#include <array>
 #include <fstream>
 #include <monopp/mono_jit.h>
 #include <regex>

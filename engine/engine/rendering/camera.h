@@ -112,14 +112,14 @@ public:
      *
      * @return The zoom factor.
      */
-    float get_zoom_factor() const;
+    auto get_zoom_factor() const -> float;
 
     /**
      * @brief Retrieves the pixels per unit (PPU).
      *
      * @return The PPU value.
      */
-    float get_ppu() const;
+    auto get_ppu() const -> float;
 
     /**
      * @brief Sets the size of the viewport.
@@ -169,7 +169,7 @@ public:
      *
      * @return true if the aspect ratio is locked, false otherwise.
      */
-    bool is_aspect_locked() const;
+    auto is_aspect_locked() const -> bool;
 
     /**
      * @brief Checks if the frustum is currently locked.
@@ -293,51 +293,51 @@ public:
      *
      * @param point The screen position.
      * @param plane The plane to intersect.
-     * @param positionOut The output world space position.
+     * @param position_out The output world space position.
      * @param clip Whether to clip the result.
      * @return true if the conversion is successful, false otherwise.
      */
-    auto viewport_to_world(const math::vec2& point, const math::plane& plane, math::vec3& positionOut, bool clip) const
+    auto viewport_to_world(const math::vec2& point, const math::plane& plane, math::vec3& position_out, bool clip) const
         -> bool;
 
     /**
      * @brief Converts a screen position into a world space intersection point on a major axis plane.
      *
      * @param point The screen position.
-     * @param axisOrigin The origin of the axis.
-     * @param positionOut The output world space position.
-     * @param majorAxisOut The output major axis.
+     * @param axis_origin The origin of the axis.
+     * @param position_out The output world space position.
+     * @param major_axis_out The output major axis.
      * @return true if the conversion is successful, false otherwise.
      */
     auto viewport_to_major_axis(const math::vec2& point,
-                                const math::vec3& axisOrigin,
-                                math::vec3& positionOut,
-                                math::vec3& majorAxisOut) const -> bool;
+                                const math::vec3& axis_origin,
+                                math::vec3& position_out,
+                                math::vec3& major_axis_out) const -> bool;
 
     /**
      * @brief Converts a screen position into a world space intersection point on a major axis plane.
      *
      * @param point The screen position.
-     * @param axisOrigin The origin of the axis.
-     * @param alignNormal The alignment normal.
-     * @param positionOut The output world space position.
-     * @param majorAxisOut The output major axis.
+     * @param axis_origin The origin of the axis.
+     * @param align_normal The alignment normal.
+     * @param position_out The output world space position.
+     * @param major_axis_out The output major axis.
      * @return true if the conversion is successful, false otherwise.
      */
     auto viewport_to_major_axis(const math::vec2& point,
-                                const math::vec3& axisOrigin,
-                                const math::vec3& alignNormal,
-                                math::vec3& positionOut,
-                                math::vec3& majorAxisOut) const -> bool;
+                                const math::vec3& axis_origin,
+                                const math::vec3& align_normal,
+                                math::vec3& position_out,
+                                math::vec3& major_axis_out) const -> bool;
 
     /**
      * @brief Converts a screen position into a camera space position at the near plane.
      *
      * @param point The screen position.
-     * @param positionOut The output camera space position.
+     * @param position_out The output camera space position.
      * @return true if the conversion is successful, false otherwise.
      */
-    auto viewport_to_camera(const math::vec3& point, math::vec3& positionOut) const -> bool;
+    auto viewport_to_camera(const math::vec3& point, math::vec3& position_out) const -> bool;
 
     /**
      * @brief Transforms a point from world space into screen space.
@@ -367,48 +367,48 @@ public:
      * @brief Estimates the zoom factor based on the specified plane, constrained by a maximum value.
      *
      * @param plane The reference plane.
-     * @param maximumValue The maximum zoom factor value.
+     * @param maximum_value The maximum zoom factor value.
      * @return The estimated zoom factor.
      */
-    auto estimate_zoom_factor(const math::plane& plane, float maximumValue) const -> float;
+    auto estimate_zoom_factor(const math::plane& plane, float maximum_value) const -> float;
 
     /**
      * @brief Estimates the zoom factor based on the specified position, constrained by a maximum value.
      *
      * @param position The reference position.
-     * @param maximumValue The maximum zoom factor value.
+     * @param maximum_value The maximum zoom factor value.
      * @return The estimated zoom factor.
      */
-    auto estimate_zoom_factor(const math::vec3& position, float maximumValue) const -> float;
+    auto estimate_zoom_factor(const math::vec3& position, float maximum_value) const -> float;
 
     /**
      * @brief Estimates the pick tolerance based on the pixel tolerance and reference position.
      *
-     * @param pixelTolerance The pixel tolerance.
-     * @param referencePosition The reference position.
-     * @param objectTransform The transformation to apply to the object.
+     * @param pixel_tolerance The pixel tolerance.
+     * @param reference_position The reference position.
+     * @param object_transform The transformation to apply to the object.
      * @return The estimated pick tolerance.
      */
-    auto estimate_pick_tolerance(float pixelTolerance,
-                                 const math::vec3& referencePosition,
-                                 const math::transform& objectTransform) const -> math::vec3;
+    auto estimate_pick_tolerance(float pixel_tolerance,
+                                 const math::vec3& reference_position,
+                                 const math::transform& object_transform) const -> math::vec3;
 
     /**
      * @brief Sets the camera to look at a specified target.
      *
-     * @param vEye The eye position.
-     * @param vAt The target position.
+     * @param eye The eye position.
+     * @param at The target position.
      */
-    void look_at(const math::vec3& vEye, const math::vec3& vAt);
+    void look_at(const math::vec3& eye, const math::vec3& at);
 
     /**
      * @brief Sets the camera to look at a specified target with an up vector.
      *
-     * @param vEye The eye position.
-     * @param vAt The target position.
+     * @param eye The eye position.
+     * @param at The target position.
      * @param vUp The up vector.
      */
-    void look_at(const math::vec3& vEye, const math::vec3& vAt, const math::vec3& vUp);
+    void look_at(const math::vec3& eye, const math::vec3& at, const math::vec3& vUp);
 
     /**
      * @brief Retrieves the current position of the camera.

@@ -17,6 +17,8 @@ REFLECT(model_component)
     rttr::registration::class_<model_component>("model_component")(rttr::metadata("category", "RENDERING"),
                                                                    rttr::metadata("pretty_name", "Model"))
         .constructor<>()
+        .property("enabled", &model_component::is_enabled, &model_component::set_enabled)(
+            rttr::metadata("pretty_name", "Enabled"))
         .property("static", &model_component::is_static, &model_component::set_static)(
             rttr::metadata("pretty_name", "Static"))
         .property("casts_shadow", &model_component::casts_shadow, &model_component::set_casts_shadow)(
@@ -29,17 +31,21 @@ REFLECT(model_component)
 
 SAVE(model_component)
 {
+    try_save(ar, ser20::make_nvp("enabled", obj.is_enabled()));
     try_save(ar, ser20::make_nvp("static", obj.is_static()));
     try_save(ar, ser20::make_nvp("casts_shadow", obj.casts_shadow()));
     try_save(ar, ser20::make_nvp("casts_reflection", obj.casts_reflection()));
     try_save(ar, ser20::make_nvp("model", obj.get_model()));
-
 }
 SAVE_INSTANTIATE(model_component, ser20::oarchive_associative_t);
 SAVE_INSTANTIATE(model_component, ser20::oarchive_binary_t);
 
 LOAD(model_component)
 {
+    bool is_enabled{true};
+    try_load(ar, ser20::make_nvp("is_enabled", is_enabled));
+    obj.set_static(is_enabled);
+
     bool is_static{};
     try_load(ar, ser20::make_nvp("static", is_static));
     obj.set_static(is_static);
@@ -58,7 +64,6 @@ LOAD(model_component)
 }
 LOAD_INSTANTIATE(model_component, ser20::iarchive_associative_t);
 LOAD_INSTANTIATE(model_component, ser20::iarchive_binary_t);
-
 
 REFLECT(bone_component)
 {
@@ -87,18 +92,16 @@ LOAD_INSTANTIATE(bone_component, ser20::iarchive_binary_t);
 REFLECT(submesh_component)
 {
     rttr::registration::class_<submesh_component>("submesh_component")(rttr::metadata("category", "RENDERING"),
-                                                                    rttr::metadata("pretty_name", "Submesh"))
+                                                                       rttr::metadata("pretty_name", "Submesh"))
         .constructor<>()
         .property_readonly("submeshes", &submesh_component::submeshes)(
             rttr::metadata("pretty_name", "Submeshes"),
-            rttr::metadata("tooltip", "Submeshes affected by this node."))
-        ;
+            rttr::metadata("tooltip", "Submeshes affected by this node."));
 }
 
 SAVE(submesh_component)
 {
     try_save(ar, ser20::make_nvp("submeshes", obj.submeshes));
-
 }
 SAVE_INSTANTIATE(submesh_component, ser20::oarchive_associative_t);
 SAVE_INSTANTIATE(submesh_component, ser20::oarchive_binary_t);
@@ -109,6 +112,5 @@ LOAD(submesh_component)
 }
 LOAD_INSTANTIATE(submesh_component, ser20::iarchive_associative_t);
 LOAD_INSTANTIATE(submesh_component, ser20::iarchive_binary_t);
-
 
 } // namespace ace

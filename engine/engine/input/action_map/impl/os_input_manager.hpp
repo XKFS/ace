@@ -33,7 +33,7 @@ class os_input_manager : public input_manager
     hpp::optional<zone> window_input_zone_;
     hpp::optional<zone> work_input_zone_;
 
-    bool is_input_allowed_{};
+    bool is_input_allowed_{true};
 
 
 public:

@@ -322,6 +322,18 @@ void model_component::on_destroy_component(entt::registry& r, entt::entity e)
     entt::handle entity(r, e);
 }
 
+void model_component::set_enabled(bool enabled)
+{
+    if(enabled_ == enabled)
+    {
+        return;
+    }
+
+    touch();
+
+    enabled_ = enabled;
+}
+
 void model_component::set_casts_shadow(bool cast_shadow)
 {
     if(casts_shadow_ == cast_shadow)
@@ -358,6 +370,11 @@ void model_component::set_casts_reflection(bool casts_reflection)
     casts_reflection_ = casts_reflection;
 }
 
+auto model_component::is_enabled() const -> bool
+{
+    return enabled_;
+}
+
 auto model_component::casts_shadow() const -> bool
 {
     return casts_shadow_;
@@ -384,7 +401,6 @@ auto model_component::casts_reflection() const -> bool
 {
     return casts_reflection_;
 }
-
 
 auto model_component::get_bone_transforms() const -> const pose_mat4&
 {

@@ -128,15 +128,14 @@ namespace
 
 struct mono_asset
 {
-    virtual auto get_asset_uuid(const hpp::uuid& uid) const  -> hpp::uuid = 0;
-    virtual auto get_asset_uuid(const std::string& key) const  -> hpp::uuid = 0;
+    virtual auto get_asset_uuid(const hpp::uuid& uid) const -> hpp::uuid = 0;
+    virtual auto get_asset_uuid(const std::string& key) const -> hpp::uuid = 0;
 };
-
 
 template<typename T>
 struct mono_asset_impl : mono_asset
 {
-    auto get_asset_uuid(const hpp::uuid& uid) const  -> hpp::uuid override
+    auto get_asset_uuid(const hpp::uuid& uid) const -> hpp::uuid override
     {
         auto& ctx = engine::context();
         auto& am = ctx.get_cached<asset_manager>();
@@ -178,7 +177,6 @@ auto get_mono_asset(const std::string& type_name) -> const mono_asset*
     static const mono_asset* empty{};
     return empty;
 };
-
 
 auto get_entity_from_id(entt::entity id) -> entt::handle
 {
@@ -1121,9 +1119,9 @@ void internal_m2n_animation_stop(entt::entity id)
 }
 
 //------------------------------
-auto internal_m2n_camera_viewport_to_ray(entt::entity id,
-                                         const math::vec2& origin,
-                                         mono::managed_interface::ray* managed_ray) -> bool
+auto internal_m2n_camera_screen_point_to_ray(entt::entity id,
+                                             const math::vec2& origin,
+                                             mono::managed_interface::ray* managed_ray) -> bool
 {
     if(auto comp = safe_get_component<camera_component>(id))
     {
@@ -1140,6 +1138,48 @@ auto internal_m2n_camera_viewport_to_ray(entt::entity id,
     }
 
     return false;
+}
+//------------------------------
+auto internal_m2n_model_get_enabled(entt::entity id) -> bool
+{
+    if(auto comp = safe_get_component<model_component>(id))
+    {
+        return comp->is_enabled();
+    }
+
+    return false;
+}
+
+void internal_m2n_model_set_enabled(entt::entity id, bool enabled)
+{
+    if(auto comp = safe_get_component<model_component>(id))
+    {
+        comp->set_enabled(enabled);
+    }
+}
+
+auto internal_m2n_model_get_material(entt::entity id, uint32_t index) -> hpp::uuid
+{
+    if(auto comp = safe_get_component<model_component>(id))
+    {
+        return comp->get_model().get_material_for_group(index).uid();
+    }
+
+    return {};
+}
+
+void internal_m2n_model_set_material(entt::entity id, const hpp::uuid& uid, uint32_t index)
+{
+    if(auto comp = safe_get_component<model_component>(id))
+    {
+        auto& ctx = engine::context();
+        auto& am = ctx.get_cached<asset_manager>();
+        auto asset = am.get_asset<material>(uid);
+
+        auto model = comp->get_model();
+        model.set_material(asset, index);
+        comp->set_model(model);
+    }
 }
 
 //------------------------------
@@ -1660,8 +1700,16 @@ auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
 
     {
         auto reg = mono::internal_call_registry("Ace.Core.CameraComponent");
-        reg.add_internal_call("internal_m2n_camera_viewport_to_ray",
-                              internal_call(internal_m2n_camera_viewport_to_ray));
+        reg.add_internal_call("internal_m2n_camera_screen_point_to_ray",
+                              internal_call(internal_m2n_camera_screen_point_to_ray));
+    }
+
+    {
+        auto reg = mono::internal_call_registry("Ace.Core.ModelComponent");
+        reg.add_internal_call("internal_m2n_model_get_enabled", internal_call(internal_m2n_model_get_enabled));
+        reg.add_internal_call("internal_m2n_model_set_enabled", internal_call(internal_m2n_model_set_enabled));
+        reg.add_internal_call("internal_m2n_model_get_material", internal_call(internal_m2n_model_get_material));
+        reg.add_internal_call("internal_m2n_model_set_material", internal_call(internal_m2n_model_set_material));
     }
 
     {

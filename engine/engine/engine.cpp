@@ -35,6 +35,25 @@ auto context_ptr() -> rtti::context*&
     static rtti::context* ctx{};
     return ctx;
 }
+
+void update_input_zone(const renderer& rend, input_system& input)
+{
+    const auto& window = rend.get_main_window();
+    if(window)
+    {
+        auto main_pos = window->get_window().get_position();
+        auto main_size = window->get_window().get_size();
+
+        input::zone window_zone{};
+        window_zone.x = main_pos.x;
+        window_zone.y = main_pos.y;
+        window_zone.w = int(main_size.w);
+        window_zone.h = int(main_size.h);
+
+        input.manager.set_window_zone(window_zone);
+    }
+}
+
 } // namespace
 
 auto engine::context() -> rtti::context&
@@ -307,20 +326,7 @@ auto engine::process() -> bool
         dt = {};
     }
 
-    const auto& window = rend.get_main_window();
-
-    if(window)
-    {
-        auto main_pos = window->get_window().get_position();
-        auto main_size = window->get_window().get_size();
-
-        input::zone window_zone{};
-        window_zone.x = main_pos.x;
-        window_zone.y = main_pos.y;
-        window_zone.w = main_size.w;
-        window_zone.h = main_size.h;
-        input.manager.set_window_zone(window_zone);
-    }
+    update_input_zone(rend, input);
 
     input.manager.before_events_update();
 
@@ -332,6 +338,7 @@ auto engine::process() -> bool
     }
     input.manager.after_events_update();
 
+    const auto& window = rend.get_main_window();
     bool should_quit = window == nullptr;
 
     if(should_quit)

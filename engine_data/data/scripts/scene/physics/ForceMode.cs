@@ -14,32 +14,45 @@ namespace Core
     public enum ForceMode : byte
     {
         /// <summary>
-        /// Interprets the input as torque (measured in Newton-metres), and changes the angular velocity by the value of 
-        /// torque * deltaTime / mass. The effect depends on the simulation step length and the mass of the body.
+        /// Add a continuous force to the rigidbody, using its mass.
+        ///
+        /// Apply the force in each FixedUpdate over a duration of time. This mode depends on the mass of the rigidbody,
+        /// so more force must be applied to push or twist higher-mass objects the same amount as lower-mass objects. 
+        /// This mode is useful for setting up realistic physics where it takes more force to move heavier objects.
+        /// In this mode, the unit of the force parameter is applied to the rigidbody as mass * distance / time^2.
         /// </summary>
         Force,
 
         /// <summary>
-        /// Interprets the parameter as angular acceleration (measured in degrees per second squared), and changes the
-        /// angular velocity by the value of torque * deltaTime. The effect depends on the simulation step length but
-        /// does not depend on the mass of the body.
+        /// Add a continuous acceleration to the rigidbody, ignoring its mass.
+        ///
+        /// Apply the acceleration in each FixedUpdate over a duration of time. In contrast to <see cref="ForceMode.Force"/>, 
+        /// Acceleration will move every rigidbody the same way regardless of differences in mass. This mode is useful 
+        /// if you just want to control the acceleration of an object directly.
+        /// In this mode, the unit of the force parameter is applied to the rigidbody as distance / time^2.
         /// </summary>
         Acceleration,
 
         /// <summary>
-        /// Interprets the parameter as angular momentum (measured in kilogram-meters-squared per second), and changes the
-        /// angular velocity by the value of torque / mass. The effect depends on the mass of the body but doesn't depend 
-        /// on the simulation step length.
+        /// Add an instant force impulse to the rigidbody, using its mass.
+        ///
+        /// Apply the impulse force instantly with a single function call. This mode depends on the mass of the rigidbody, 
+        /// so more force must be applied to push or twist higher-mass objects the same amount as lower-mass objects. 
+        /// This mode is useful for applying forces that happen instantly, such as forces from explosions or collisions.
+        /// In this mode, the unit of the force parameter is applied to the rigidbody as mass * distance / time.
         /// </summary>
         Impulse,
 
         /// <summary>
-        /// Interprets the parameter as a direct angular velocity change (measured in degrees per second), and changes the
-        /// angular velocity by the value of torque. The effect doesn't depend on the mass of the body or the simulation 
-        /// step length.
+        /// Add an instant velocity change to the rigidbody, ignoring its mass.
+        ///
+        /// Apply the velocity change instantly with a single function call. In contrast to <see cref="ForceMode.Impulse"/>, 
+        /// VelocityChange will change the velocity of every rigidbody the same way regardless of differences in mass. 
+        /// This mode is useful for something like a fleet of differently-sized spaceships that you want to control 
+        /// without accounting for differences in mass.
+        /// In this mode, the unit of the force parameter is applied to the rigidbody as distance / time.
         /// </summary>
         VelocityChange
     }
-
 }
 }

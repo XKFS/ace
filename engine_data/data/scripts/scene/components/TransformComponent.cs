@@ -8,14 +8,11 @@ namespace Ace.Core
     /// </summary>
     public class TransformComponent : Component
     {
-        public Entity[] children
-        {
-            get
-            {
-                return internal_m2n_get_children(owner).ToStructArray<Entity>();
-            }
-        }
-
+        
+        /// <summary>
+        /// Gets or sets the parent entity of the current entity.
+        /// </summary>
+        /// <value>The <see cref="Entity"/> object representing the parent entity.</value>  
         public Entity parent
         {
             get
@@ -28,6 +25,27 @@ namespace Ace.Core
             }
         }
 
+        /// <summary>
+        /// Gets the child entities of the current entity.
+        /// </summary>
+        /// <value>An array of <see cref="Entity"/> objects representing the child entities.</value>
+        public Entity[] children
+        {
+            get
+            {
+                return internal_m2n_get_children(owner).ToStructArray<Entity>();
+            }
+        }
+
+        /// <summary>
+        /// Sets the parent entity of the current entity.
+        /// </summary>
+        /// <param name="parent">The <see cref="Entity"/> to set as the parent.</param>
+        /// <param name="globalPositionStays">
+        /// A boolean value indicating whether the entity should retain its global position when reparented.
+        /// If <c>true</c>, the entity's global position will not change. If <c>false</c>, the entity's global position
+        /// will be adjusted relative to the new parent.
+        /// </param>
         public void SetParent(Entity parent, bool globalPositionStays)
         {
             internal_m2n_set_parent(owner, parent, globalPositionStays);

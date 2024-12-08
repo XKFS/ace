@@ -15,6 +15,10 @@ auto pipeline::gather_visible_models(scene& scn, const math::frustum* frustum, v
     scn.registry->view<transform_component, model_component>().each(
         [&](auto e, auto&& transform_comp, auto&& model_comp)
         {
+            if(!model_comp.is_enabled())
+            {
+                return;
+            }
             auto entity = scn.create_entity(e);
 
             if((query & visibility_query::is_static) && !model_comp.is_static())

@@ -2,7 +2,7 @@
 #include "../bimap.hpp"
 #include "os_key_map.hpp"
 #include <cassert>
-
+#include <logging/logging.h>
 namespace input
 {
 

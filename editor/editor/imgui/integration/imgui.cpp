@@ -256,7 +256,7 @@ struct OcornutImguiContext
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-
+        io.ConfigWindowsMoveFromTitleBarOnly = true;
         //        io.ConfigViewportsNoTaskBarIcon = true;
         io.ConfigDockingTransparentPayload = true;
 

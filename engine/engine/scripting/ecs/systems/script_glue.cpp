@@ -126,6 +126,60 @@ namespace ace
 namespace
 {
 
+struct mono_asset
+{
+    virtual auto get_asset_uuid(const hpp::uuid& uid) const  -> hpp::uuid = 0;
+    virtual auto get_asset_uuid(const std::string& key) const  -> hpp::uuid = 0;
+};
+
+
+template<typename T>
+struct mono_asset_impl : mono_asset
+{
+    auto get_asset_uuid(const hpp::uuid& uid) const  -> hpp::uuid override
+    {
+        auto& ctx = engine::context();
+        auto& am = ctx.get_cached<asset_manager>();
+
+        auto asset = am.get_asset<T>(uid);
+        return asset.uid();
+    }
+
+    auto get_asset_uuid(const std::string& key) const -> hpp::uuid override
+    {
+        auto& ctx = engine::context();
+        auto& am = ctx.get_cached<asset_manager>();
+
+        auto asset = am.get_asset<T>(key);
+        return asset.uid();
+    }
+};
+
+auto get_mono_asset(const std::string& type_name) -> const mono_asset*
+{
+    // clang-format off
+    static std::map<std::string, std::shared_ptr<mono_asset>> reg = {
+        {"Texture",         std::make_shared<mono_asset_impl<gfx::texture>>()},
+        {"Material",        std::make_shared<mono_asset_impl<material>>()},
+        {"Mesh",            std::make_shared<mono_asset_impl<mesh>>()},
+        {"AnimationClip",   std::make_shared<mono_asset_impl<animation_clip>>()},
+        {"Prefab",          std::make_shared<mono_asset_impl<prefab>>()},
+        {"Scene",           std::make_shared<mono_asset_impl<scene_prefab>>()},
+        {"PhysicsMaterial", std::make_shared<mono_asset_impl<physics_material>>()},
+        {"AudioClip",       std::make_shared<mono_asset_impl<audio_clip>>()}
+    };
+    // clang-format on
+
+    auto it = reg.find(type_name);
+    if(it != reg.end())
+    {
+        return it->second.get();
+    }
+    static const mono_asset* empty{};
+    return empty;
+};
+
+
 auto get_entity_from_id(entt::entity id) -> entt::handle
 {
     if(id == entt::entity(0))
@@ -1118,13 +1172,9 @@ auto internal_m2n_from_to_rotation(const math::vec3& from, const math::vec3& to)
 
 auto internal_m2n_get_asset_by_uuid(const hpp::uuid& uid, const mono::mono_type& type) -> hpp::uuid
 {
-    auto& ctx = engine::context();
-    auto& am = ctx.get_cached<asset_manager>();
-
-    if(type.get_name() == "Prefab")
+    if(auto asset = get_mono_asset(type.get_name()))
     {
-        auto asset = am.get_asset<prefab>(uid);
-        return asset.uid();
+        return asset->get_asset_uuid(uid);
     }
 
     return {};
@@ -1132,13 +1182,9 @@ auto internal_m2n_get_asset_by_uuid(const hpp::uuid& uid, const mono::mono_type&
 
 auto internal_m2n_get_asset_by_key(const std::string& key, const mono::mono_type& type) -> hpp::uuid
 {
-    auto& ctx = engine::context();
-    auto& am = ctx.get_cached<asset_manager>();
-
-    if(type.get_name() == "Prefab")
+    if(auto asset = get_mono_asset(type.get_name()))
     {
-        auto asset = am.get_asset<prefab>(key);
-        return asset.uid();
+        return asset->get_asset_uuid(key);
     }
 
     return {};

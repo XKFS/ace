@@ -354,7 +354,6 @@ auto inspector_mono_object::inspect(rtti::context& ctx,
             {"Scene",           &mono_inspector<asset_handle<scene_prefab>>::inspect_field},
             {"PhysicsMaterial", &mono_inspector<asset_handle<physics_material>>::inspect_field},
             {"AudioClip",       &mono_inspector<asset_handle<audio_clip>>::inspect_field},
-
         };
         // clang-format on
 
@@ -425,7 +424,7 @@ auto inspector_mono_object::inspect(rtti::context& ctx,
             {"Scene",           &mono_inspector<asset_handle<scene_prefab>>::inspect_property},
             {"PhysicsMaterial", &mono_inspector<asset_handle<physics_material>>::inspect_property},
             {"AudioClip",       &mono_inspector<asset_handle<audio_clip>>::inspect_property}
-            };
+        };
         // clang-format on
 
         auto it = reg.find(type_name);

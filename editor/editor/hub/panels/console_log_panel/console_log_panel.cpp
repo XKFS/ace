@@ -24,7 +24,7 @@ static const std::array<ImColor, size_t(level::n_levels)> colors{ImColor{255, 25
                                                                  ImColor{255, 255, 255}};
 
 static const std::array<const char*, size_t(level::n_levels)> icons{ICON_MDI_ALERT_CIRCLE_CHECK,
-                                                                    ICON_MDI_ALERT_CIRCLE_CHECK_OUTLINE,
+                                                                    ICON_MDI_BUG_CHECK_OUTLINE,
                                                                     ICON_MDI_ALERT_CIRCLE,
                                                                     ICON_MDI_ALERT_BOX,
                                                                     ICON_MDI_ALERT_OCTAGON,
@@ -61,7 +61,7 @@ void open_log_in_environment(const fs::path& entry)
     }
     else
     {
-        fs::show_in_graphical_env(entry);
+        // fs::show_in_graphical_env(entry);
     }
 }
 
@@ -71,6 +71,8 @@ console_log_panel::console_log_panel()
 
     enabled_categories_.fill(true);
     enabled_categories_[level::trace] = false;
+    enabled_categories_[level::debug] = false;
+
 }
 
 void console_log_panel::sink_it_(const details::log_msg& msg)
@@ -217,16 +219,30 @@ void console_log_panel::draw()
         ImGui::DrawFilterWithHint(filter_, ICON_MDI_TEXT_BOX_SEARCH " Search...", 200.0f);
         ImGui::DrawItemActivityOutline();
         ImGui::SameLine();
-        if(ImGui::SmallButton("Clear"))
+        if(ImGui::MenuItem("Clear"))
         {
             clear_log();
         }
         ImGui::SameLine();
+        if(ImGui::BeginMenu(ICON_MDI_ARROW_DOWN_BOLD, true))
+        {
+            if(ImGui::MenuItem("Clear on Play", nullptr, clear_on_play_))
+            {
+                clear_on_play_ = !clear_on_play_;
+            }
+            if(ImGui::MenuItem("Clear on Recompile", nullptr, clear_on_recompile_))
+            {
+                clear_on_recompile_ = !clear_on_recompile_;
+            }
+            ImGui::EndMenu();
+        }
 
         draw_filter_button(level::err);
         draw_filter_button(level::warn);
         draw_filter_button(level::info);
         draw_filter_button(level::trace);
+        draw_filter_button(level::debug);
+
         ImGui::EndMenuBar();
     }
 
@@ -313,7 +329,6 @@ auto console_log_panel::draw_last_log() -> bool
 {
     log_entry msg;
 
-
     {
         std::lock_guard<std::recursive_mutex> lock(entries_mutex_);
         for(auto it = std::rbegin(entries_); it != std::rend(entries_); ++it)
@@ -373,9 +388,9 @@ void console_log_panel::draw_details()
                                 msg.source.line);
 
         ImGui::MarkdownConfig config{};
-        config.linkCallback = [](const char* link, uint32_t linkLength)
+        config.linkCallback = [](const char* link, uint32_t link_length)
         {
-            open_log_in_environment(std::string(link, linkLength));
+            open_log_in_environment(std::string(link, link_length));
         };
         ImGui::Markdown(desc.data(), int32_t(desc.size()), config);
     }
@@ -389,6 +404,22 @@ void console_log_panel::select_log(const log_entry& entry)
 void console_log_panel::open_log(const log_entry& entry)
 {
     open_log_in_environment(entry.source.filename);
+}
+
+void console_log_panel::on_play()
+{
+    if(clear_on_play_)
+    {
+        clear_log();
+    }
+}
+
+void console_log_panel::on_recompile()
+{
+    if(clear_on_recompile_)
+    {
+        clear_log();
+    }
 }
 
 } // namespace ace

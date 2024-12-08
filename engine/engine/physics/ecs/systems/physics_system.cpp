@@ -25,7 +25,7 @@ void physics_system::on_destroy_component(entt::registry& r, entt::entity e)
 
 auto physics_system::init(rtti::context& ctx) -> bool
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     auto& ev = ctx.get_cached<events>();
     ev.on_frame_update.connect(sentinel_, this, &physics_system::on_frame_update);
@@ -41,14 +41,14 @@ auto physics_system::init(rtti::context& ctx) -> bool
 
 auto physics_system::deinit(rtti::context& ctx) -> bool
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     return true;
 }
 
 void physics_system::on_play_begin(rtti::context& ctx)
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     auto& ec = ctx.get_cached<ecs>();
     auto& scn = ec.get_scene();
@@ -60,7 +60,7 @@ void physics_system::on_play_begin(rtti::context& ctx)
 
 void physics_system::on_play_end(rtti::context& ctx)
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     backend_.on_play_end(ctx);
 

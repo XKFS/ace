@@ -227,10 +227,17 @@ void header_panel::draw_play_toolbar(rtti::context& ctx, float headerSize)
                            ImGuiKeyChord key_chord = ev.is_playing ? ImGuiKey_F5 | ImGuiMod_Shift : ImGuiKey_F5;
                            bool play_pressed = ImGui::IsKeyChordPressed(key_chord);
 
+                           auto& scripting = ctx.get_cached<script_system>();
+                           bool has_errors = scripting.has_compilation_errors();
+                           ImGui::BeginDisabled(has_errors);
                            ImGui::BeginGroup();
 
                            play_pressed |= ImGui::Button(ev.is_playing ? ICON_MDI_STOP : ICON_MDI_PLAY);
 
+                           if(has_errors)
+                           {
+                               play_pressed = false;
+                           }
                            ImGui::SetItemTooltipCurrentViewport("%s", ImGui::GetKeyChordName(key_chord));
                            if(play_pressed)
                            {
@@ -277,6 +284,14 @@ void header_panel::draw_play_toolbar(rtti::context& ctx, float headerSize)
                            }
 
                            ImGui::EndGroup();
+                           ImGui::EndDisabled();
+
+                           if(has_errors)
+                           {
+                               ImGui::SetItemTooltipCurrentViewport(
+                                   "%s",
+                                   "All compiler errors must be fixed before you can enter Play Mode!");
+                           }
                        });
 }
 

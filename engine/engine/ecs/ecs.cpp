@@ -8,14 +8,14 @@ namespace ace
 
 auto ecs::init(rtti::context& ctx) -> bool
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     return true;
 }
 
 auto ecs::deinit(rtti::context& ctx) -> bool
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     unload_scene();
 

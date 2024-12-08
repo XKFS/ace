@@ -165,7 +165,7 @@ public:
             auto& metainfo = kvp.second;
             if(metainfo.location == key)
             {
-                APPLOG_INFO("{}::{} - {} -> {}", __func__, hpp::to_string(uid), key, new_key);
+                APPLOG_TRACE("{}::{} - {} -> {}", __func__, hpp::to_string(uid), key, new_key);
 
                 metainfo.location = new_key;
             }
@@ -185,7 +185,7 @@ public:
             auto& metainfo = kvp.second;
             if(metainfo.location == key)
             {
-                APPLOG_INFO("{}::{} - {}", __func__, hpp::to_string(uid), key);
+                APPLOG_TRACE("{}::{} - {}", __func__, hpp::to_string(uid), key);
 
                 asset_meta_.erase(uid);
                 return;

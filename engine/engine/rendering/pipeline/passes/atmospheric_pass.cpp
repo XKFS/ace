@@ -84,7 +84,7 @@ void atmospheric_pass::run(gfx::frame_buffer::ptr input, const camera& camera, d
     pass.set_view_proj(view, proj);
 
     auto hour = hour_of_day(-params.light_direction);
-    // APPLOG_INFO("Time Of Day {}", hour);
+    // APPLOG_TRACE("Time Of Day {}", hour);
 
     if(atmospheric_program_.program->is_valid())
     {

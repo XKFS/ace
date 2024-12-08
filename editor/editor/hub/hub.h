@@ -20,6 +20,8 @@ private:
     void on_frame_update(rtti::context& ctx, delta_t dt);
     void on_frame_render(rtti::context& ctx, delta_t dt);
     void on_frame_ui_render(rtti::context& ctx, delta_t dt);
+    void on_play_begin(rtti::context& ctx);
+    void on_script_recompile(rtti::context& ctx, const std::string& protocol);
 
     void on_start_page_render(rtti::context& ctx);
     void on_opened_project_render(rtti::context& ctx);

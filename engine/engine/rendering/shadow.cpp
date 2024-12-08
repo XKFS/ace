@@ -310,7 +310,7 @@ void splitFrustum(float* _splits, uint8_t _numSplits, float _near, float _far, f
     auto factor = float(_numSplits) / 4.0f;
     _far = _far * factor;
 
-    // APPLOG_INFO("split_frustum near {}, far {}", _near, _far);
+    // APPLOG_TRACE("split_frustum near {}, far {}", _near, _far);
     const float l = _splitWeight;
     const float ratio = _far / _near;
     const int8_t numSlices = _numSplits * 2;

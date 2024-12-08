@@ -45,7 +45,7 @@ renderer::renderer(rtti::context& ctx, cmd_line::parser& parser)
 
 auto renderer::init(rtti::context& ctx, const cmd_line::parser& parser) -> bool
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     if(!os::init())
     {
@@ -110,9 +110,9 @@ auto renderer::init_backend(const cmd_line::parser& parser) -> bool
         APPLOG_ERROR("Could not initialize rendering backend!");
         return false;
     }
-    APPLOG_INFO("Using {0} rendering backend.", gfx::get_renderer_name(gfx::get_renderer_type()));
+    APPLOG_TRACE("Using {0} rendering backend.", gfx::get_renderer_name(gfx::get_renderer_type()));
 
-    APPLOG_INFO("DebugDraw Init.");
+    APPLOG_TRACE("DebugDraw Init.");
     ddInit();
 
     return true;

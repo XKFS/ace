@@ -1495,7 +1495,7 @@ void internal_m2n_audio_source_set_audio_clip(entt::entity id, hpp::uuid uid)
 
 auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     {
         auto reg = mono::internal_call_registry("Ace.Core.Log");

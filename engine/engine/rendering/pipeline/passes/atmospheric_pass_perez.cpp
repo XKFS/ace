@@ -270,7 +270,7 @@ void atmospheric_pass_perez::run(gfx::frame_buffer::ptr input,
 
         math::vec3 sun_dir(-params.light_direction.x, -params.light_direction.y, -params.light_direction.z);
         hour_ = hour_of_day(-params.light_direction);
-        // APPLOG_INFO("Time Of Day {}", hour_);
+        // APPLOG_TRACE("Time Of Day {}", hour_);
 
         dynamic_value_controller sun_luminance_dc(sunLuminanceXYZTable);
         dynamic_value_controller sky_luminance_dc(skyLuminanceXYZTable);

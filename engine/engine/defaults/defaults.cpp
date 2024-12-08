@@ -74,14 +74,14 @@ void focus_camera_on_bounds(entt::handle camera, const math::bbox& bounds)
 
 auto defaults::init(rtti::context& ctx) -> bool
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str<defaults>(), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str<defaults>(), __func__);
 
     return init_assets(ctx);
 }
 
 auto defaults::deinit(rtti::context& ctx) -> bool
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str<defaults>(), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str<defaults>(), __func__);
     material::default_color_map() = {};
     material::default_normal_map() = {};
     return true;

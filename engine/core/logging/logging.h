@@ -13,6 +13,7 @@ using namespace spdlog;
 
 
 #define APPLOG               "Log"
+#define APPLOG_DEBUG(...)    SPDLOG_LOGGER_CALL(spdlog::get(APPLOG), spdlog::level::debug, __VA_ARGS__)
 #define APPLOG_TRACE(...)    SPDLOG_LOGGER_CALL(spdlog::get(APPLOG), spdlog::level::trace, __VA_ARGS__)
 #define APPLOG_INFO(...)     SPDLOG_LOGGER_CALL(spdlog::get(APPLOG), spdlog::level::info, __VA_ARGS__)
 #define APPLOG_WARNING(...)  SPDLOG_LOGGER_CALL(spdlog::get(APPLOG), spdlog::level::warn, __VA_ARGS__)
@@ -26,6 +27,8 @@ using namespace spdlog;
 #else
 #define SPDLOG_LOGGER_CALL_LOC(logger, level, ...) (logger)->log(spdlog::source_loc{}, level, __VA_ARGS__)
 #endif
+#define APPLOG_DEBUG_LOC(FILE_LOC, LINE_LOC, FUNC_LOC, ...)                                                            \
+SPDLOG_LOGGER_CALL_LOC(spdlog::get(APPLOG), FILE_LOC, LINE_LOC, FUNC_LOC, spdlog::level::debug, __VA_ARGS__)
 #define APPLOG_TRACE_LOC(FILE_LOC, LINE_LOC, FUNC_LOC, ...)                                                            \
     SPDLOG_LOGGER_CALL_LOC(spdlog::get(APPLOG), FILE_LOC, LINE_LOC, FUNC_LOC, spdlog::level::trace, __VA_ARGS__)
 #define APPLOG_INFO_LOC(FILE_LOC, LINE_LOC, FUNC_LOC, ...)                                                             \
@@ -46,7 +49,7 @@ struct logging
 };
 
 
-template<spdlog::level::level_enum lvl = spdlog::level::info, typename T = std::chrono::microseconds>
+template<spdlog::level::level_enum lvl = spdlog::level::debug, typename T = std::chrono::microseconds>
 struct log_stopwatch
 {
     using clock_t = std::chrono::high_resolution_clock;
@@ -82,9 +85,12 @@ struct log_stopwatch
 
 #define APPLOG_INFO_PERF(T) log_stopwatch<spdlog::level::info, T> APPLOG_UNIQUE_VAR(_test)(__func__);
 #define APPLOG_TRACE_PERF(T) log_stopwatch<spdlog::level::trace, T> APPLOG_UNIQUE_VAR(_test)(__func__);
+#define APPLOG_DEBUG_PERF(T) log_stopwatch<spdlog::level::debug, T> APPLOG_UNIQUE_VAR(_test)(__func__);
 
 
 #define APPLOG_INFO_PERF_NAMED(T, name) log_stopwatch<spdlog::level::info, T> APPLOG_UNIQUE_VAR(_test)(name);
 #define APPLOG_TRACE_PERF_NAMED(T, name) log_stopwatch<spdlog::level::trace, T> APPLOG_UNIQUE_VAR(_test)(name);
+#define APPLOG_DEBUG_PERF_NAMED(T, name) log_stopwatch<spdlog::level::trace, T> APPLOG_UNIQUE_VAR(_test)(name);
+
 
 } // namespace ace

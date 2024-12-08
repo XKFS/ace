@@ -19,7 +19,7 @@ namespace ace
 
 auto animation_system::init(rtti::context& ctx) -> bool
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
     auto& ev = ctx.get_cached<events>();
 
     ev.on_play_begin.connect(sentinel_, 10, this, &animation_system::on_play_begin);
@@ -33,7 +33,7 @@ auto animation_system::init(rtti::context& ctx) -> bool
 
 auto animation_system::deinit(rtti::context& ctx) -> bool
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     return true;
 }
@@ -62,7 +62,7 @@ void animation_system::on_destroy_component(entt::registry& r, entt::entity e)
 
 void animation_system::on_play_begin(rtti::context& ctx)
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     auto& ec = ctx.get_cached<ecs>();
     auto& scn = ec.get_scene();
@@ -80,7 +80,7 @@ void animation_system::on_play_begin(rtti::context& ctx)
 
 void animation_system::on_play_end(rtti::context& ctx)
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     auto& ec = ctx.get_cached<ecs>();
     auto& scn = ec.get_scene();

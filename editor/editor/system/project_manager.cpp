@@ -248,7 +248,7 @@ project_manager::project_manager(rtti::context& ctx)
 
 auto project_manager::init(rtti::context& ctx) -> bool
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     auto& aw = ctx.get_cached<asset_watcher>();
     aw.watch_assets(ctx, "editor:/", true);
@@ -258,7 +258,7 @@ auto project_manager::init(rtti::context& ctx) -> bool
 
 auto project_manager::deinit(rtti::context& ctx) -> bool
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     close_project(ctx);
 

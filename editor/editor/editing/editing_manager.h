@@ -49,6 +49,7 @@ struct editing_manager
     void on_play_before_begin(rtti::context& ctx);
     void on_play_after_end(rtti::context& ctx);
     void on_frame_update(rtti::context& ctx, delta_t);
+    void on_script_recompile(rtti::context& ctx, const std::string& protocol);
 
     //-----------------------------------------------------------------------------
     //  Name : select ()
@@ -165,7 +166,6 @@ struct editing_manager
     grid grid_data;
 
 private:
-    void on_script_recompile(rtti::context& ctx, const std::string& protocol);
     void save_checkpoint(rtti::context& ctx);
     void load_checkpoint(rtti::context& ctx, bool recover_selection);
 

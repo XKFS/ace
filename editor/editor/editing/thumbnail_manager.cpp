@@ -210,7 +210,7 @@ void thumbnail_manager::clear_thumbnails()
 
 auto thumbnail_manager::init(rtti::context& ctx) -> bool
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     auto& ev = ctx.get_cached<events>();
     ev.on_frame_update.connect(sentinel_, this, &thumbnail_manager::on_frame_update);
@@ -237,7 +237,7 @@ auto thumbnail_manager::init(rtti::context& ctx) -> bool
 
 auto thumbnail_manager::deinit(rtti::context& ctx) -> bool
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     return true;
 }

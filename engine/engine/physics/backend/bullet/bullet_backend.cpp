@@ -471,10 +471,10 @@ void handle_regular_collision(btPersistentManifold* manifold,
     // Log regular collision
     if(enable_logging)
     {
-        APPLOG_INFO("Collision {} between entities {} and {}",
-                    enter ? "enter" : "exit",
-                    get_entity_tag_from_user_index(obj_a->getUserIndex()),
-                    get_entity_tag_from_user_index(obj_b->getUserIndex()));
+        APPLOG_TRACE("Collision {} between entities {} and {}",
+                     enter ? "enter" : "exit",
+                     get_entity_tag_from_user_index(obj_a->getUserIndex()),
+                     get_entity_tag_from_user_index(obj_b->getUserIndex()));
     }
 
     auto& world = get_world_from_user_pointer(obj_a->getUserPointer());
@@ -502,12 +502,12 @@ void handle_regular_collision(btPersistentManifold* manifold,
         if(enable_logging)
         {
             // Log contact points and impulse
-            APPLOG_INFO("Contact Point A: {}", point.a);
-            APPLOG_INFO("Contact Point B: {}", point.b);
-            APPLOG_INFO("Normal on A: {}", point.normal_on_a);
-            APPLOG_INFO("Normal on B: {}", point.normal_on_b);
-            APPLOG_INFO("Impulse: {}", point.impulse);
-            APPLOG_INFO("Distance: {}", point.distance);
+            APPLOG_TRACE("Contact Point A: {}", point.a);
+            APPLOG_TRACE("Contact Point B: {}", point.b);
+            APPLOG_TRACE("Normal on A: {}", point.normal_on_a);
+            APPLOG_TRACE("Normal on B: {}", point.normal_on_b);
+            APPLOG_TRACE("Impulse: {}", point.impulse);
+            APPLOG_TRACE("Distance: {}", point.distance);
         }
     }
 }
@@ -1272,7 +1272,7 @@ void bullet_backend::on_frame_update(rtti::context& ctx, delta_t dt)
                 to_physics(world, transform, rigidbody);
             });
 
-               // update physics
+        // update physics
         world.simulate(dt);
         // update transform from phyiscs interpolated spatial properties
         registry.view<transform_component, physics_component>().each(
@@ -1283,7 +1283,6 @@ void bullet_backend::on_frame_update(rtti::context& ctx, delta_t dt)
 
         world.process_pending_actions();
     }
-
 }
 
 void bullet_backend::draw_system_gizmos(rtti::context& ctx, const camera& cam, gfx::dd_raii& dd)

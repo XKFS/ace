@@ -30,7 +30,7 @@ void on_destroy_component(entt::registry& r, entt::entity e)
 
 auto audio_system::init(rtti::context& ctx) -> bool
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     auto& ev = ctx.get_cached<events>();
     ev.on_frame_update.connect(sentinel_, this, &audio_system::on_frame_update);
@@ -44,7 +44,7 @@ auto audio_system::init(rtti::context& ctx) -> bool
     audio::set_info_logger(
         [](const std::string& s)
         {
-            APPLOG_INFO(s);
+            APPLOG_TRACE(s);
         });
     audio::set_error_logger(
         [](const std::string& s)
@@ -65,14 +65,14 @@ auto audio_system::init(rtti::context& ctx) -> bool
 
 auto audio_system::deinit(rtti::context& ctx) -> bool
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     return true;
 }
 
 void audio_system::on_play_begin(rtti::context& ctx)
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     auto& ec = ctx.get_cached<ecs>();
     auto& scn = ec.get_scene();
@@ -90,7 +90,7 @@ void audio_system::on_play_begin(rtti::context& ctx)
 
 void audio_system::on_play_end(rtti::context& ctx)
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     auto& ec = ctx.get_cached<ecs>();
     auto& scn = ec.get_scene();

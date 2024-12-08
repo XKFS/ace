@@ -83,7 +83,7 @@ auto engine::init_core(const cmd_line::parser& parser) -> bool
 {
     auto& ctx = engine::context();
 
-    //    APPLOG_INFO(parser.usage());
+    //    APPLOG_TRACE(parser.usage());
 
     if(!ctx.get_cached<threader>().init(ctx))
     {

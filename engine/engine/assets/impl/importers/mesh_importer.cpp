@@ -890,7 +890,7 @@ void process_animation(const aiScene* scene,
         }
     }
 
-    APPLOG_INFO("Mesh Importer : Animation {} discarded {} non relevat node keys", anim.name, skipped);
+    APPLOG_TRACE("Mesh Importer : Animation {} discarded {} non relevat node keys", anim.name, skipped);
 }
 void process_animations(const aiScene* scene,
                         mesh::load_data& load_data,
@@ -1003,13 +1003,13 @@ void log_prop_value(aiMaterialProperty* prop, const char* name1)
 
     if(count == 1)
     {
-        APPLOG_INFO("  {} = {}", name1, data[0]);
+        APPLOG_TRACE("  {} = {}", name1, data[0]);
     }
     else
     {
         std::vector<T> vals(count);
         std::memcpy(vals.data(), data, count * sizeof(T));
-        APPLOG_INFO("  {}[{}] = {}", name1, count, vals);
+        APPLOG_TRACE("  {}[{}] = {}", name1, count, vals);
     }
 }
 
@@ -1019,15 +1019,15 @@ void log_materials(const aiMaterial* material)
     {
         auto prop = material->mProperties[i];
 
-        APPLOG_INFO("Material Property:");
-        APPLOG_INFO("  name = {0}", prop->mKey.C_Str());
+        APPLOG_TRACE("Material Property:");
+        APPLOG_TRACE("  name = {0}", prop->mKey.C_Str());
 
         if(prop->mDataLength > 0 && prop->mData)
         {
             auto semantic = aiTextureType(prop->mSemantic);
             if(semantic != aiTextureType_NONE && semantic != aiTextureType_UNKNOWN)
             {
-                APPLOG_INFO("  semantic = {0}", aiTextureTypeToString(semantic));
+                APPLOG_TRACE("  semantic = {0}", aiTextureTypeToString(semantic));
             }
 
             switch(prop->mType)
@@ -1060,7 +1060,7 @@ void log_materials(const aiMaterial* material)
                     if(aiGetMaterialString(material, prop->mKey.C_Str(), prop->mSemantic, prop->mIndex, &str) ==
                        AI_SUCCESS)
                     {
-                        APPLOG_INFO("  string = {0}", str.C_Str());
+                        APPLOG_TRACE("  string = {0}", str.C_Str());
                     }
                     break;
                 }
@@ -1667,7 +1667,7 @@ void process_imported_scene(asset_manager& am,
 
 auto read_file(Assimp::Importer& importer, const fs::path& file, uint32_t flags) -> const aiScene*
 {
-    APPLOG_INFO_PERF_NAMED(std::chrono::milliseconds, "Importer Read File");
+    APPLOG_TRACE_PERF_NAMED(std::chrono::milliseconds, "Importer Read File");
     return importer.ReadFile(file.string(), flags);
 }
 

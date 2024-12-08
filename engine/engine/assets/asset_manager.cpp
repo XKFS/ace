@@ -29,7 +29,7 @@ void asset_manager::set_parent(asset_manager* parent)
 
 auto asset_manager::init(rtti::context& ctx) -> bool
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     importer::mesh_importer_init();
     {
@@ -96,7 +96,7 @@ auto asset_manager::init(rtti::context& ctx) -> bool
 
 auto asset_manager::deinit(rtti::context& ctx) -> bool
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     return true;
 }

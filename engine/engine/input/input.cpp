@@ -8,7 +8,7 @@ namespace ace
 {
 auto input_system::init(rtti::context& ctx) -> bool
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     // default mapping
     mapper.map("Mouse Left", input::mouse_button::left_button);
@@ -40,7 +40,7 @@ auto input_system::init(rtti::context& ctx) -> bool
 
 auto input_system::deinit(rtti::context& ctx) -> bool
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     return true;
 }

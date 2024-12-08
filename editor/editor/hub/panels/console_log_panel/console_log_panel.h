@@ -52,6 +52,9 @@ public:
 
     void draw_last_log_button();
 
+    void on_play();
+    void on_recompile();
+
 private:
     void select_log(const log_entry& entry);
     void clear_log();
@@ -76,5 +79,8 @@ private:
     uint64_t current_id_{};
     hpp::optional<log_entry> selected_log_{};
     std::string name_;
+
+    bool clear_on_play_{true};
+    bool clear_on_recompile_{true};
 };
 } // namespace ace

@@ -601,7 +601,7 @@ void asset_watcher::on_os_event(rtti::context& ctx, const os::event& e)
 
 auto asset_watcher::init(rtti::context& ctx) -> bool
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     auto& ev = ctx.get_cached<events>();
     ev.on_os_event.connect(sentinel_, 1000, this, &asset_watcher::on_os_event);
@@ -613,7 +613,7 @@ auto asset_watcher::init(rtti::context& ctx) -> bool
 
 auto asset_watcher::deinit(rtti::context& ctx) -> bool
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     unwatch_assets(ctx, "engine:/");
     return true;

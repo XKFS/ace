@@ -40,6 +40,7 @@ struct script_system
     auto is_create_called() const -> bool;
     auto is_start_called() const -> bool;
     void wait_for_jobs_to_finish(rtti::context& ctx);
+    auto has_compilation_errors() const -> bool;
 
 
     void on_sensor_enter(entt::handle sensor, entt::handle other);
@@ -143,11 +144,11 @@ private:
         finished
     };
 
-
-
     call_progress create_call_{call_progress::not_called};
     call_progress start_call_{call_progress::not_called};
 
     std::vector<itc::future<void>> compilation_jobs_;
+
+    bool has_compilation_errors_{};
 };
 } // namespace ace

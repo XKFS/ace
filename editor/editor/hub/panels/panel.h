@@ -52,6 +52,11 @@ public:
     {
         return *scene_panel_;
     }
+
+    console_log_panel& get_console_log_panel()
+    {
+        return *console_log_panel_;
+    }
 private:
     std::shared_ptr<console_log_panel> console_log_panel_;
     std::unique_ptr<content_browser_panel> content_browser_panel_;

@@ -130,13 +130,15 @@ hub::hub(rtti::context& ctx)
 
     ev.on_frame_update.connect(sentinel_, this, &hub::on_frame_update);
     ev.on_frame_render.connect(sentinel_, this, &hub::on_frame_render);
+    ev.on_play_begin.connect(sentinel_, -10000, this, &hub::on_play_begin);
+    ev.on_script_recompile.connect(sentinel_, 10000, this, &hub::on_script_recompile);
 
     ui_ev.on_frame_ui_render.connect(sentinel_, this, &hub::on_frame_ui_render);
 }
 
 auto hub::init(rtti::context& ctx) -> bool
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     panels_.init(ctx);
 
@@ -145,7 +147,7 @@ auto hub::init(rtti::context& ctx) -> bool
 
 auto hub::deinit(rtti::context& ctx) -> bool
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     panels_.deinit(ctx);
 
@@ -186,6 +188,16 @@ void hub::on_frame_ui_render(rtti::context& ctx, delta_t dt)
     {
         on_opened_project_render(ctx);
     }
+}
+
+void hub::on_script_recompile(rtti::context& ctx, const std::string& protocol)
+{
+    panels_.get_console_log_panel().on_recompile();
+}
+
+void hub::on_play_begin(rtti::context& ctx)
+{
+    panels_.get_console_log_panel().on_play();
 }
 
 void hub::on_opened_project_render(rtti::context& ctx)

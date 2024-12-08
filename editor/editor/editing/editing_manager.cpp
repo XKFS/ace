@@ -33,7 +33,7 @@ auto editing_manager::deinit(rtti::context& ctx) -> bool
 
 void editing_manager::on_play_before_begin(rtti::context& ctx)
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     save_checkpoint(ctx);
     auto& scripting = ctx.get_cached<script_system>();
@@ -45,7 +45,7 @@ void editing_manager::on_play_before_begin(rtti::context& ctx)
 
 void editing_manager::on_play_after_end(rtti::context& ctx)
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     auto& scripting = ctx.get_cached<script_system>();
     scripting.unload_app_domain();

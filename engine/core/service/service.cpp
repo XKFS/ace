@@ -114,7 +114,7 @@ auto service::init() -> bool
     auto parse_info = out.str();
     if(!parse_info.empty())
     {
-        //		APPLOG_INFO(parse_info);
+        //		APPLOG_TRACE(parse_info);
     }
 
     for(const auto& module : modules_)

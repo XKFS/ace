@@ -174,7 +174,7 @@ auto script_system::find_mono(const rtti::context& ctx) -> mono::compiler_paths
 
 auto script_system::init(rtti::context& ctx) -> bool
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     auto& ev = ctx.get_cached<events>();
     ev.on_frame_update.connect(sentinel_, this, &script_system::on_frame_update);
@@ -215,7 +215,7 @@ auto script_system::init(rtti::context& ctx) -> bool
 
 auto script_system::deinit(rtti::context& ctx) -> bool
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     unload_app_domain();
     unload_engine_domain();
@@ -268,6 +268,8 @@ auto script_system::load_app_domain(rtti::context& ctx, bool recompile) -> bool
     if(!is_deploy_mode && recompile)
     {
         result &= create_compilation_job(ctx, {"app"}, get_script_debug_mode()).get();
+
+        has_compilation_errors_ = !result;
     }
 
     app_domain_ = std::make_unique<mono::mono_domain>("Ace.App");
@@ -329,7 +331,7 @@ void script_system::on_destroy_component(entt::registry& r, entt::entity e)
 
 void script_system::on_play_begin(rtti::context& ctx)
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     if(!app_domain_ || !domain_)
     {
@@ -407,7 +409,7 @@ void script_system::on_play_begin(rtti::context& ctx)
 
 void script_system::on_play_end(rtti::context& ctx)
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     auto& ec = ctx.get_cached<ecs>();
     auto& scn = ec.get_scene();
@@ -554,8 +556,8 @@ void script_system::check_for_recompile(rtti::context& ctx, delta_t dt, bool emi
                                              return;
                                          }
 
-                                         bool result = f.get();
-                                         if(result)
+                                         has_compilation_errors_ = !f.get();
+                                         if(!has_compilation_errors_)
                                          {
                                              ev.on_script_recompile(ctx, protocol);
                                          }
@@ -569,7 +571,7 @@ void script_system::check_for_recompile(rtti::context& ctx, delta_t dt, bool emi
 
 void script_system::wait_for_jobs_to_finish(rtti::context& ctx)
 {
-    APPLOG_INFO("Waiting for script compilation...");
+    APPLOG_TRACE("Waiting for script compilation...");
 
     check_for_recompile(ctx, 100s, false);
 
@@ -765,5 +767,11 @@ void script_system::on_collision_exit(entt::handle a, entt::handle b, const std:
         APPLOG_ERROR("{}", e.what());
     }
 }
+
+auto script_system::has_compilation_errors() const -> bool
+{
+    return has_compilation_errors_;
+}
+
 
 } // namespace ace

@@ -25,7 +25,7 @@ imgui_interface::~imgui_interface()
 
 auto imgui_interface::init(rtti::context& ctx) -> bool
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     const auto& rend = ctx.get_cached<renderer>();
     const auto& main_window = rend.get_main_window();
@@ -37,7 +37,7 @@ auto imgui_interface::init(rtti::context& ctx) -> bool
 
 auto imgui_interface::deinit(rtti::context& ctx) -> bool
 {
-    APPLOG_INFO("{}::{}", hpp::type_name_str(*this), __func__);
+    APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
 
     return true;
 }

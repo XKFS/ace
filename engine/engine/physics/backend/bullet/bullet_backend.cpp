@@ -12,7 +12,9 @@
 #include <engine/scripting/ecs/systems/script_system.h>
 
 #define BT_USE_SSE_IN_API
+#include "LinearMath/btThreads.h"
 #include <BulletCollision/NarrowPhaseCollision/btRaycastCallback.h>
+#include <BulletDynamics/Dynamics/btDiscreteDynamicsWorldMt.h>
 #include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>
 
@@ -178,6 +180,35 @@ public:
     }
 };
 
+void setup_task_scheduler()
+{
+    // // Select and initialize a task scheduler
+    // btITaskScheduler* scheduler = btGetTaskScheduler();
+    // if(!scheduler)
+    //     scheduler = btCreateDefaultTaskScheduler(); // Use Intel TBB if available
+
+    // if(!scheduler)
+    //     scheduler = btGetSequentialTaskScheduler(); // Fallback to single-threaded
+
+    // // Set the chosen scheduler
+    // if(scheduler)
+    // {
+    //     btSetTaskScheduler(scheduler);
+    // }
+}
+
+void cleanup_task_scheduler()
+{
+    // // Select and initialize a task scheduler
+    // btITaskScheduler* scheduler = btGetTaskScheduler();
+    // if(scheduler)
+    // {
+    //     delete scheduler;
+    // }
+
+    // btSetTaskScheduler(nullptr);
+}
+
 auto get_entity_from_user_index(int index) -> entt::handle
 {
     auto& ctx = ace::engine::context();
@@ -325,7 +356,15 @@ struct world
     void simulate(delta_t dt)
     {
         in_simulate = true;
-        dynamics_world->stepSimulation(dt.count());
+
+        int maxSubSteps = 10;
+        btScalar fixedTimeStep = 1.0 / 60.0;
+
+        int steps = dynamics_world->stepSimulation(dt.count(), maxSubSteps, fixedTimeStep);
+        if(steps > 0)
+        {
+        }
+
         in_simulate = false;
     }
 
@@ -579,24 +618,34 @@ auto create_dynamics_world() -> bullet::world
     gContactProcessedCallback = contact_processed_callback;
     bullet::world world{};
     /// collision configuration contains default setup for memory, collision setup
-    world.collision_config = std::make_shared<btDefaultCollisionConfiguration>();
-    // m_collisionConfiguration->setConvexConvexMultipointIterations();
+    auto collision_config = std::make_shared<btDefaultCollisionConfiguration>();
+    //collision_config->setConvexConvexMultipointIterations();
 
     /// use the default collision dispatcher. For parallel processing you can use a diffent dispatcher (see
     /// Extras/BulletMultiThreaded)
-    world.dispatcher = std::make_shared<btCollisionDispatcher>(world.collision_config.get());
+    auto dispatcher = std::make_shared<btCollisionDispatcher>(collision_config.get());
 
-    world.broadphase = std::make_shared<btDbvtBroadphase>();
+    auto broadphase = std::make_shared<btDbvtBroadphase>();
 
     /// the default constraint solver. For parallel processing you can use a different solver (see
     /// Extras/BulletMultiThreaded)
-    world.solver = std::make_shared<btSequentialImpulseConstraintSolver>();
+    auto solver = std::make_shared<btSequentialImpulseConstraintSolver>();
+    world.dynamics_world = std::make_shared<btDiscreteDynamicsWorld>(dispatcher.get(),
+                                                                       broadphase.get(),
+                                                                       solver.get(),
+                                                                       collision_config.get());
 
-    world.dynamics_world = std::make_shared<btDiscreteDynamicsWorld>(world.dispatcher.get(),
-                                                                     world.broadphase.get(),
-                                                                     world.solver.get(),
-                                                                     world.collision_config.get());
+    // auto solver = std::make_shared<btConstraintSolverPoolMt>(std::thread::hardware_concurrency());
+    // world.dynamics_world = std::make_shared<btDiscreteDynamicsWorldMt>(dispatcher.get(),
+    //                                                                    broadphase.get(),
+    //                                                                    solver.get(),
+    //                                                                    solver.get(),
+    //                                                                    collision_config.get());
 
+    world.collision_config = collision_config;
+    world.dispatcher = dispatcher;
+    world.broadphase = broadphase;
+    world.solver = solver;
     world.dynamics_world->setGravity(gravity_earth);
 
     return world;
@@ -717,20 +766,20 @@ void update_rigidbody_kind(bullet::rigidbody& body, physics_component& comp)
 
 void update_rigidbody_constraints(bullet::rigidbody& body, physics_component& comp)
 {
-    // auto freeze_position = comp.get_freeze_position();
-    // btVector3 linear_factor(float(freeze_position.x), float(freeze_position.y), float(freeze_position.z));
+    auto freeze_position = comp.get_freeze_position();
+    btVector3 linear_factor(float(!freeze_position.x), float(!freeze_position.y), float(!freeze_position.z));
 
-    // body.internal->setLinearFactor(linear_factor);
+    body.internal->setLinearFactor(linear_factor);
 
-    // auto freeze_rotation = comp.get_freeze_rotation();
-    // btVector3 angular_factor(float(freeze_rotation.x), float(freeze_rotation.y), float(freeze_rotation.z));
+    auto freeze_rotation = comp.get_freeze_rotation();
+    btVector3 angular_factor(float(!freeze_rotation.x), float(!freeze_rotation.y), float(!freeze_rotation.z));
 
-    // body.internal->setAngularFactor(angular_factor);
+    body.internal->setAngularFactor(angular_factor);
 
-    // body.internal->clearForces();
-    // body.internal->applyGravity();
+    body.internal->clearForces();
+    body.internal->applyGravity();
 
-    // wake_up(body);
+    wake_up(body);
 }
 
 void update_rigidbody_mass_and_inertia(bullet::rigidbody& body, physics_component& comp)
@@ -800,6 +849,7 @@ void make_rigidbody(bullet::world& world, entt::handle entity, physics_component
     update_rigidbody_gravity(world, body, comp);
     update_rigidbody_material(body, comp);
     update_rigidbody_sensor(body, comp);
+    update_rigidbody_constraints(body, comp);
 
     world.add_rigidbody(body);
 }
@@ -1035,6 +1085,16 @@ auto add_torque(btRigidBody* body, const btVector3& torque, force_mode mode) -> 
 }
 
 } // namespace
+
+void bullet_backend::init()
+{
+    // bullet::setup_task_scheduler();
+}
+
+void bullet_backend::deinit()
+{
+    // bullet::cleanup_task_scheduler();
+}
 
 void bullet_backend::on_create_component(entt::registry& r, entt::entity e)
 {

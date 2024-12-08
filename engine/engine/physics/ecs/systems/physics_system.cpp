@@ -36,12 +36,16 @@ auto physics_system::init(rtti::context& ctx) -> bool
     ev.on_resume.connect(sentinel_, -10, this, &physics_system::on_resume);
     ev.on_skip_next_frame.connect(sentinel_, -10, this, &physics_system::on_skip_next_frame);
 
+    backend_.init();
+
     return true;
 }
 
 auto physics_system::deinit(rtti::context& ctx) -> bool
 {
     APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
+
+    backend_.deinit();
 
     return true;
 }

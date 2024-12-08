@@ -14,6 +14,8 @@ class camera;
 
 struct bullet_backend
 {
+    void init();
+    void deinit();
     void on_frame_update(rtti::context& ctx, delta_t dt);
     void on_play_begin(rtti::context& ctx);
     void on_play_end(rtti::context& ctx);

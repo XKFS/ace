@@ -19,6 +19,7 @@ if(NOT DEFINED PROJECT_IS_TOPLEVEL)
     endif()
 endif()
 
+add_definitions(-DBT_THREADSAFE=1)
 # Build options
 option(LIBBULLET3_BUILD_TESTS "Build libbullet3 tests" ${PROJECT_IS_TOPLEVEL})
 option(LIBBULLET3_INSTALL "Install library" ${PROJECT_IS_TOPLEVEL})

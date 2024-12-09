@@ -14,12 +14,15 @@
 #define BT_USE_SSE_IN_API
 #include "LinearMath/btThreads.h"
 #include <BulletCollision/NarrowPhaseCollision/btRaycastCallback.h>
+#include <BulletCollision/CollisionDispatch/btCollisionDispatcherMt.h>
+#include <BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolverMt.h>
 #include <BulletDynamics/Dynamics/btDiscreteDynamicsWorldMt.h>
+
 #include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>
 
 #include <logging/logging.h>
-
+#include <thread>
 namespace bullet
 {
 namespace
@@ -182,31 +185,36 @@ public:
 
 void setup_task_scheduler()
 {
-    // // Select and initialize a task scheduler
-    // btITaskScheduler* scheduler = btGetTaskScheduler();
-    // if(!scheduler)
-    //     scheduler = btCreateDefaultTaskScheduler(); // Use Intel TBB if available
+#ifdef BULLET_MT
+    // Select and initialize a task scheduler
+    btITaskScheduler* scheduler = btGetTaskScheduler();
+    if(!scheduler)
+        scheduler = btCreateDefaultTaskScheduler(); // Use Intel TBB if available
 
-    // if(!scheduler)
-    //     scheduler = btGetSequentialTaskScheduler(); // Fallback to single-threaded
+    if(!scheduler)
+        scheduler = btGetSequentialTaskScheduler(); // Fallback to single-threaded
 
-    // // Set the chosen scheduler
-    // if(scheduler)
-    // {
-    //     btSetTaskScheduler(scheduler);
-    // }
+    // Set the chosen scheduler
+    if(scheduler)
+    {
+        btSetTaskScheduler(scheduler);
+    }
+#endif
 }
 
 void cleanup_task_scheduler()
 {
-    // // Select and initialize a task scheduler
-    // btITaskScheduler* scheduler = btGetTaskScheduler();
-    // if(scheduler)
-    // {
-    //     delete scheduler;
-    // }
+#ifdef BULLET_MT
+    // Select and initialize a task scheduler
+    btITaskScheduler* scheduler = btGetTaskScheduler();
+    if(scheduler)
+    {
+        delete scheduler;
+    }
 
-    // btSetTaskScheduler(nullptr);
+    btSetTaskScheduler(nullptr);
+
+#endif
 }
 
 auto get_entity_from_user_index(int index) -> entt::handle
@@ -287,6 +295,7 @@ struct world
     std::shared_ptr<btBroadphaseInterface> broadphase;
     std::shared_ptr<btCollisionDispatcher> dispatcher;
     std::shared_ptr<btConstraintSolver> solver;
+    std::shared_ptr<btConstraintSolverPoolMt> solver_pool;
     std::shared_ptr<btDefaultCollisionConfiguration> collision_config;
     std::shared_ptr<btDiscreteDynamicsWorld> dynamics_world;
 
@@ -357,10 +366,10 @@ struct world
     {
         in_simulate = true;
 
-        int maxSubSteps = 10;
-        btScalar fixedTimeStep = 1.0 / 60.0;
+        int max_sub_steps = 10;
+        btScalar fixed_time_step = 1.0 / 60.0;
 
-        int steps = dynamics_world->stepSimulation(dt.count(), maxSubSteps, fixedTimeStep);
+        int steps = dynamics_world->stepSimulation(dt.count(), max_sub_steps, fixed_time_step);
         if(steps > 0)
         {
         }
@@ -516,6 +525,7 @@ void handle_regular_collision(btPersistentManifold* manifold,
                      get_entity_tag_from_user_index(obj_b->getUserIndex()));
     }
 
+
     auto& world = get_world_from_user_pointer(obj_a->getUserPointer());
     auto& new_manifold = world.pending_manifolds.emplace_back();
 
@@ -621,27 +631,28 @@ auto create_dynamics_world() -> bullet::world
     auto collision_config = std::make_shared<btDefaultCollisionConfiguration>();
     //collision_config->setConvexConvexMultipointIterations();
 
-    /// use the default collision dispatcher. For parallel processing you can use a diffent dispatcher (see
-    /// Extras/BulletMultiThreaded)
-    auto dispatcher = std::make_shared<btCollisionDispatcher>(collision_config.get());
-
     auto broadphase = std::make_shared<btDbvtBroadphase>();
 
-    /// the default constraint solver. For parallel processing you can use a different solver (see
-    /// Extras/BulletMultiThreaded)
-    auto solver = std::make_shared<btSequentialImpulseConstraintSolver>();
-    world.dynamics_world = std::make_shared<btDiscreteDynamicsWorld>(dispatcher.get(),
+#ifdef BULLET_MT
+    auto dispatcher = std::make_shared<btCollisionDispatcherMt>(collision_config.get());
+    auto solver_pool = std::make_shared<btConstraintSolverPoolMt>(std::thread::hardware_concurrency());
+    auto solver = std::make_shared<btSequentialImpulseConstraintSolverMt>();
+    world.dynamics_world = std::make_shared<btDiscreteDynamicsWorldMt>(dispatcher.get(),
                                                                        broadphase.get(),
+                                                                       solver_pool.get(),
                                                                        solver.get(),
                                                                        collision_config.get());
+    world.solver_pool = solver_pool;
+#else
 
-    // auto solver = std::make_shared<btConstraintSolverPoolMt>(std::thread::hardware_concurrency());
-    // world.dynamics_world = std::make_shared<btDiscreteDynamicsWorldMt>(dispatcher.get(),
-    //                                                                    broadphase.get(),
-    //                                                                    solver.get(),
-    //                                                                    solver.get(),
-    //                                                                    collision_config.get());
 
+    auto dispatcher = std::make_shared<btCollisionDispatcher>(collision_config.get());
+    auto solver = std::make_shared<btSequentialImpulseConstraintSolver>();
+    world.dynamics_world = std::make_shared<btDiscreteDynamicsWorld>(dispatcher.get(),
+                                                                     broadphase.get(),
+                                                                     solver.get(),
+                                                                     collision_config.get());
+#endif
     world.collision_config = collision_config;
     world.dispatcher = dispatcher;
     world.broadphase = broadphase;
@@ -1088,12 +1099,12 @@ auto add_torque(btRigidBody* body, const btVector3& torque, force_mode mode) -> 
 
 void bullet_backend::init()
 {
-    // bullet::setup_task_scheduler();
+    bullet::setup_task_scheduler();
 }
 
 void bullet_backend::deinit()
 {
-    // bullet::cleanup_task_scheduler();
+    bullet::cleanup_task_scheduler();
 }
 
 void bullet_backend::on_create_component(entt::registry& r, entt::entity e)

@@ -246,7 +246,7 @@ auto script_system::load_engine_domain(rtti::context& ctx, bool recompile) -> bo
     copy_compiled_lib(engine_script_lib_temp, engine_script_lib);
 
     auto assembly = domain_->get_assembly(engine_script_lib.string());
-    print_assembly_info(assembly);
+    // print_assembly_info(assembly);
 
     cache_.update_manager_type = assembly.get_type("Ace.Core", "SystemManager");
 
@@ -294,7 +294,7 @@ auto script_system::load_app_domain(rtti::context& ctx, bool recompile) -> bool
     try
     {
         auto assembly = app_domain_->get_assembly(app_script_lib.string());
-        print_assembly_info(assembly);
+        // print_assembly_info(assembly);
 
         auto engine_script_lib = fs::resolve_protocol(get_lib_compiled_key("engine"));
         auto engine_assembly = domain_->get_assembly(engine_script_lib.string());

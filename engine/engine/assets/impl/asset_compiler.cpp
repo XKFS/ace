@@ -28,6 +28,8 @@
 #include <regex>
 #include <subprocess/subprocess.hpp>
 
+#include <core/base/platform/config.hpp>
+
 namespace ace::asset_compiler
 {
 
@@ -60,98 +62,27 @@ auto run_process(const std::string& process,
                  bool chekc_retcode,
                  std::string& err) -> bool
 {
-    try
+    auto result = subprocess::call(process, args_array);
+    err = result.out_output;
+
+    if(!result.err_output.empty())
     {
-        auto result = subprocess::call(process, args_array);
-        err = result.out_output;
-
-        if(!result.err_output.empty())
+        if(!err.empty())
         {
-            if(!err.empty())
-            {
-                err += "\n";
-            }
-
-            err += result.err_output;
+            err += "\n";
         }
 
-        if(err.find("error") != std::string::npos)
-        {
-            return false;
-        }
-
-        return result.retcode == 0;
-
+        err += result.err_output;
     }
-    catch(const subprocess::CalledProcessError& e)
+
+    if(err.find("error") != std::string::npos)
     {
-        err = e.what();
-        return e.retcode == 0;
-    }
-    catch(const subprocess::OSError& e)
-    {
-        err = e.what();
         return false;
     }
+
+    return result.retcode == 0;
 }
 
-auto run_process_bx(const std::string& process,
-                 const std::vector<std::string>& args_array,
-                 bool chekc_retcode,
-                 std::string& err) -> bool
-{
-    std::string args;
-    size_t i = 0;
-    for(const auto& arg : args_array)
-    {
-        if(arg.front() == '-')
-        {
-            args += arg;
-        }
-        else if(arg.front() != '"')
-        {
-            args += escape_str(arg);
-        }
-        if(i++ != args_array.size() - 1)
-        {
-            args += " ";
-        }
-    }
-
-    bx::Error error;
-    bx::ProcessReader process_reader;
-
-    auto executable_dir = fs::resolve_protocol("binary:/");
-    auto process_full = executable_dir / process;
-#if ACE_PLATFORM_WINDOWS
-    process_reader.open((process_full.string() + " " + args).c_str(), "", &error);
-#else
-    process_reader.open(process_full.string().c_str(), args.c_str(), &error);
-#endif
-    if(!error.isOk())
-    {
-        err = std::string(error.getMessage().getCPtr());
-        return false;
-    }
-    else
-    {
-        std::array<char, 2048 * 32> buffer;
-        buffer.fill(0);
-        int32_t sz = process_reader.read(buffer.data(), static_cast<std::int32_t>(buffer.size()), &error);
-        process_reader.close();
-        int32_t result = process_reader.getExitCode();
-        if(0 != result)
-        {
-            err = std::string(error.getMessage().getCPtr());
-            if(sz > 0)
-            {
-                err += " " + std::string(buffer.data());
-            }
-            return err != "ProcessReader: EOF.";
-        } 
-        return true;
-    }
-}
 } // namespace
 
 template<>
@@ -285,7 +216,7 @@ auto compile<gfx::shader>(asset_manager& am, const fs::path& key, const fs::path
         (void)output_file;
     }
 
-    if(!run_process_bx("shaderc", args_array, true, error))
+    if(!run_process("shaderc", args_array, true, error))
     {
         APPLOG_ERROR("Failed compilation of {0} with error: {1}", str_input, error);
         result = false;
@@ -333,7 +264,7 @@ auto compile<gfx::texture>(asset_manager& am, const fs::path& key, const fs::pat
         (void)output_file;
     }
 
-    if(!run_process_bx("texturec", args_array, false, error))
+    if(!run_process("texturec", args_array, false, error))
     {
         APPLOG_ERROR("Failed compilation of {0} with error: {1}", str_input, error);
         result = false;
@@ -634,6 +565,33 @@ auto parse_compilation_error(const std::string& log) -> std::optional<script_com
     return std::nullopt; // No match found
 }
 
+// Function to parse all compilation warnings
+auto parse_compilation_warnings(const std::string& log) -> std::vector<script_compilation_error>
+{
+    // Regular expression to extract the warning details
+    std::regex warning_regex(R"((.*)\((\d+),\d+\): warning .*)");
+    std::vector<script_compilation_error> warnings;
+
+    // Use std::sregex_iterator to find all matches
+    auto begin = std::sregex_iterator(log.begin(), log.end(), warning_regex);
+    auto end = std::sregex_iterator();
+
+    for(auto it = begin; it != end; ++it)
+    {
+        const std::smatch& match = *it;
+        if(match.size() >= 3)
+        {
+            script_compilation_error warning;
+            warning.file = match[1].str();            // Extract file path
+            warning.line = std::stoi(match[2].str()); // Extract line number
+            warning.error = match[0].str();           // Extract full warning line
+            warnings.push_back(warning);
+        }
+    }
+
+    return warnings;
+}
+
 template<>
 auto compile<script_library>(asset_manager& am, const fs::path& key, const fs::path& output, uint32_t flags) -> bool
 {
@@ -725,6 +683,17 @@ auto compile<script_library>(asset_manager& am, const fs::path& key, const fs::p
         }
 
         fs::create_directories(output.parent_path(), err);
+
+        if(protocol != "engine")
+        {
+            auto parsed_warnings = parse_compilation_warnings(error);
+
+            for(const auto& warning : parsed_warnings)
+            {
+                APPLOG_WARNING_LOC(warning.file.c_str(), warning.line, "", warning.error);
+            }
+        }
+
         APPLOG_INFO("Successful compilation of {0}", output.string());
 
         script_system::copy_compiled_lib(temp, output);

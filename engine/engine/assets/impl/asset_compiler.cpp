@@ -535,42 +535,19 @@ auto compile<audio_clip>(asset_manager& am, const fs::path& key, const fs::path&
     return true;
 }
 // Struct to hold the parsed error details
-struct script_compilation_error
+struct script_compilation_entry
 {
-    std::string file{};  // Path to the file
-    int line{};          // Line number of the error
-    std::string error{}; // Full error line
+    std::string file{}; // Path to the file
+    int line{};         // Line number of the error
+    std::string msg{};  // Full error line
 };
 
-// Function to parse the error log and extract details
-auto parse_compilation_error(const std::string& log) -> std::optional<script_compilation_error>
-{
-    // Regular expression to extract the error details
-    std::regex error_regex(R"((.*)\((\d+),\d+\): error .*)");
-    std::smatch match;
-
-    // Search for the first error line
-    if(std::regex_search(log, match, error_regex))
-    {
-        if(match.size() >= 3)
-        {
-            script_compilation_error error;
-            error.file = match[1].str();            // Extract file path
-            error.line = std::stoi(match[2].str()); // Extract line number
-            error.error = match[0].str();           // Extract full error line
-            return error;
-        }
-    }
-
-    return std::nullopt; // No match found
-}
-
-// Function to parse all compilation warnings
-auto parse_compilation_warnings(const std::string& log) -> std::vector<script_compilation_error>
+// Function to parse all compilation errors
+auto parse_compilation_errors(const std::string& log) -> std::vector<script_compilation_entry>
 {
     // Regular expression to extract the warning details
-    std::regex warning_regex(R"((.*)\((\d+),\d+\): warning .*)");
-    std::vector<script_compilation_error> warnings;
+    std::regex warning_regex(R"((.*)\((\d+),\d+\): error .*)");
+    std::vector<script_compilation_entry> entries;
 
     // Use std::sregex_iterator to find all matches
     auto begin = std::sregex_iterator(log.begin(), log.end(), warning_regex);
@@ -581,15 +558,42 @@ auto parse_compilation_warnings(const std::string& log) -> std::vector<script_co
         const std::smatch& match = *it;
         if(match.size() >= 3)
         {
-            script_compilation_error warning;
-            warning.file = match[1].str();            // Extract file path
-            warning.line = std::stoi(match[2].str()); // Extract line number
-            warning.error = match[0].str();           // Extract full warning line
-            warnings.push_back(warning);
+            script_compilation_entry entry;
+            entry.file = match[1].str();            // Extract file path
+            entry.line = std::stoi(match[2].str()); // Extract line number
+            entry.msg = match[0].str();             // Extract full warning line
+            entries.emplace_back(std::move(entry));
         }
     }
 
-    return warnings;
+    return entries;
+}
+
+// Function to parse all compilation warnings
+auto parse_compilation_warnings(const std::string& log) -> std::vector<script_compilation_entry>
+{
+    // Regular expression to extract the warning details
+    std::regex warning_regex(R"((.*)\((\d+),\d+\): error .*)");
+    std::vector<script_compilation_entry> entries;
+
+    // Use std::sregex_iterator to find all matches
+    auto begin = std::sregex_iterator(log.begin(), log.end(), warning_regex);
+    auto end = std::sregex_iterator();
+
+    for(auto it = begin; it != end; ++it)
+    {
+        const std::smatch& match = *it;
+        if(match.size() >= 3)
+        {
+            script_compilation_entry entry;
+            entry.file = match[1].str();            // Extract file path
+            entry.line = std::stoi(match[2].str()); // Extract line number
+            entry.msg = match[0].str();             // Extract full warning line
+            entries.emplace_back(std::move(entry));
+        }
+    }
+
+    return entries;
 }
 
 template<>
@@ -663,11 +667,14 @@ auto compile<script_library>(asset_manager& am, const fs::path& key, const fs::p
 
     if(!run_process(cmd.cmd, cmd.args, true, error))
     {
-        auto parsed_error = parse_compilation_error(error);
+        auto parsed_errors = parse_compilation_errors(error);
 
-        if(parsed_error)
+        if(!parsed_errors.empty())
         {
-            APPLOG_ERROR_LOC(parsed_error->file.c_str(), parsed_error->line, "", parsed_error->error);
+            for(const auto& error : parsed_errors)
+            {
+                APPLOG_ERROR_LOC(error.file.c_str(), error.line, "", error.msg);
+            }
         }
         else
         {
@@ -690,7 +697,7 @@ auto compile<script_library>(asset_manager& am, const fs::path& key, const fs::p
 
             for(const auto& warning : parsed_warnings)
             {
-                APPLOG_WARNING_LOC(warning.file.c_str(), warning.line, "", warning.error);
+                APPLOG_WARNING_LOC(warning.file.c_str(), warning.line, "", warning.msg);
             }
         }
 

@@ -33,7 +33,9 @@
 
 *.user
 
+[Bb]uild_*/
 [Bb]uild/
 [Bb]in/
 .vs/
 .vscode/
+.cache/

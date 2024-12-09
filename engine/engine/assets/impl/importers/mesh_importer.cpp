@@ -1703,15 +1703,15 @@ void mesh_importer_init()
         Assimp::Logger::ErrorSeverity severity{};
     };
 
-    if(Assimp::DefaultLogger::isNullLogger())
-    {
-        auto logger = Assimp::DefaultLogger::create("", Assimp::Logger::VERBOSE);
+    // if(Assimp::DefaultLogger::isNullLogger())
+    // {
+    //     auto logger = Assimp::DefaultLogger::create("", Assimp::Logger::VERBOSE);
 
-        logger->attachStream(new log_stream(Assimp::Logger::Debugging), Assimp::Logger::Debugging);
-        logger->attachStream(new log_stream(Assimp::Logger::Info), Assimp::Logger::Info);
-        logger->attachStream(new log_stream(Assimp::Logger::Warn), Assimp::Logger::Warn);
-        logger->attachStream(new log_stream(Assimp::Logger::Err), Assimp::Logger::Err);
-    }
+    //     logger->attachStream(new log_stream(Assimp::Logger::Debugging), Assimp::Logger::Debugging);
+    //     logger->attachStream(new log_stream(Assimp::Logger::Info), Assimp::Logger::Info);
+    //     logger->attachStream(new log_stream(Assimp::Logger::Warn), Assimp::Logger::Warn);
+    //     logger->attachStream(new log_stream(Assimp::Logger::Err), Assimp::Logger::Err);
+    // }
 }
 
 auto load_mesh_data_from_file(asset_manager& am,

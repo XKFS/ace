@@ -74,7 +74,7 @@ namespace Core
             }
 
             return string.Format(CultureInfo.InvariantCulture.NumberFormat, "(entity={0}, point={1}, normal={2}, distance={3})",
-                entity.tag,
+                entity.name,
                 point.ToString(format, formatProvider),
                 normal.ToString(format, formatProvider),
                 distance.ToString(format, formatProvider));

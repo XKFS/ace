@@ -61,7 +61,7 @@ namespace Core
             }
 
             return string.Format(CultureInfo.InvariantCulture.NumberFormat, "(entity={0}, contacts={1})",
-                entity.tag,
+                entity.name,
                 string.Join(",",
                               contacts.Select(x => x.ToString()).ToArray()));
         }

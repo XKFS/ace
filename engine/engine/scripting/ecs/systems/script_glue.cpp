@@ -332,7 +332,7 @@ auto internal_m2n_is_entity_valid(entt::entity id) -> bool
     return valid;
 }
 
-auto internal_m2n_find_entity_by_name(const std::string& name) -> uint32_t
+auto internal_m2n_find_entity_by_name(const std::string& name) -> entt::entity
 {
     auto& ctx = engine::context();
     auto& ec = ctx.get_cached<ecs>();
@@ -345,15 +345,36 @@ auto internal_m2n_find_entity_by_name(const std::string& name) -> uint32_t
     {
         if(registry.get<tag_component>(e).name == name)
         {
-            return static_cast<uint32_t>(e);
+            return e;
         }
     }
 
     const entt::handle invalid;
-    return static_cast<uint32_t>(invalid.entity());
+    return invalid.entity();
 }
 
-auto internal_m2n_find_entity_by_tag(const std::string& tag) -> uint32_t
+auto internal_m2n_find_entities_by_name(const std::string& name) -> std::vector<entt::entity>
+{
+    auto& ctx = engine::context();
+    auto& ec = ctx.get_cached<ecs>();
+    auto& scn = ec.get_scene();
+    auto& registry = *scn.registry;
+
+    auto view = registry.view<tag_component>();
+
+    std::vector<entt::entity> result;
+    for(const auto& e : view)
+    {
+        if(registry.get<tag_component>(e).name == name)
+        {
+            result.emplace_back(e);
+        }
+    }
+
+    return result;
+}
+
+auto internal_m2n_find_entity_by_tag(const std::string& tag) -> entt::entity
 {
     auto& ctx = engine::context();
     auto& ec = ctx.get_cached<ecs>();
@@ -366,12 +387,33 @@ auto internal_m2n_find_entity_by_tag(const std::string& tag) -> uint32_t
     {
         if(registry.get<tag_component>(e).tag == tag)
         {
-            return static_cast<uint32_t>(e);
+            return e;
         }
     }
 
     const entt::handle invalid;
-    return static_cast<uint32_t>(invalid.entity());
+    return invalid.entity();
+}
+
+auto internal_m2n_find_entities_by_tag(const std::string& tag) -> std::vector<entt::entity>
+{
+    auto& ctx = engine::context();
+    auto& ec = ctx.get_cached<ecs>();
+    auto& scn = ec.get_scene();
+    auto& registry = *scn.registry;
+
+    auto view = registry.view<tag_component>();
+
+    std::vector<entt::entity> result;
+    for(const auto& e : view)
+    {
+        if(registry.get<tag_component>(e).tag == tag)
+        {
+            result.emplace_back(e);
+        }
+    }
+
+    return result;
 }
 
 struct native_comp_lut
@@ -1648,7 +1690,10 @@ auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
 
         reg.add_internal_call("internal_m2n_is_entity_valid", internal_call(internal_m2n_is_entity_valid));
         reg.add_internal_call("internal_m2n_find_entity_by_name", internal_call(internal_m2n_find_entity_by_name));
+        reg.add_internal_call("internal_m2n_find_entities_by_name", internal_call(internal_m2n_find_entities_by_name));
         reg.add_internal_call("internal_m2n_find_entity_by_tag", internal_call(internal_m2n_find_entity_by_tag));
+        reg.add_internal_call("internal_m2n_find_entities_by_tag", internal_call(internal_m2n_find_entities_by_tag));
+
     }
 
     {

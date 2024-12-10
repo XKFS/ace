@@ -102,6 +102,18 @@ namespace Ace.Core
             return internal_m2n_find_entity_by_tag(tag);
         }
 
+        /// <summary>
+        /// Finds all entities with the specified tag.
+        /// </summary>
+        /// <param name="tag">The tag to search for.</param>
+        /// <returns>The entities with the specified tag, or <c>empty</c> if no entities match.</returns>
+        public static Entity[] FindEntitiesByTag(string tag)
+        {
+
+            byte[] rawEntities = internal_m2n_find_entities_by_tag(tag);
+            return rawEntities.ToStructArray<Entity>();
+        }
+
         
         /// <summary>
         /// Finds the first entity with the specified name.
@@ -111,6 +123,19 @@ namespace Ace.Core
         public static Entity FindEntityByName(string name)
         {
             return internal_m2n_find_entity_by_name(name);
+        }
+
+
+         // <summary>
+        /// Finds all entities with the specified name.
+        /// </summary>
+        /// <param name="name">The name to search for.</param>
+        /// <returns>The entities with the specified name, or <c>empty</c> if no entities match.</returns>
+        public static Entity[] FindEntitiesByName(string name)
+        {
+
+            byte[] rawEntities = internal_m2n_find_entities_by_name(name);
+            return rawEntities.ToStructArray<Entity>();
         }
 
         [MethodImpl(MethodImplOptions.InternalCall)]
@@ -147,6 +172,12 @@ namespace Ace.Core
         private static extern Entity internal_m2n_find_entity_by_name(string name);
 
         [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern byte[] internal_m2n_find_entities_by_name(string name);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern Entity internal_m2n_find_entity_by_tag(string tag);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern byte[] internal_m2n_find_entities_by_tag(string tag);
     }
 }

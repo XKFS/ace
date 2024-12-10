@@ -267,7 +267,7 @@ auto compile<gfx::texture>(asset_manager& am, const fs::path& key, const fs::pat
     }
     auto texturec = fs::resolve_protocol("binary:/texturec");
 
-    if(!run_process(texturec, args_array, false, error))
+    if(!run_process(texturec.string(), args_array, false, error))
     {
         APPLOG_ERROR("Failed compilation of {0} with error: {1}", str_input, error);
         result = false;

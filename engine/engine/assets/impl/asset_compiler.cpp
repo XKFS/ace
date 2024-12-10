@@ -216,7 +216,9 @@ auto compile<gfx::shader>(asset_manager& am, const fs::path& key, const fs::path
         (void)output_file;
     }
 
-    if(!run_process("shaderc", args_array, true, error))
+    auto shaderc = fs::resolve_protocol("binary:/shaderc");
+
+    if(!run_process(shaderc.string(), args_array, true, error))
     {
         APPLOG_ERROR("Failed compilation of {0} with error: {1}", str_input, error);
         result = false;
@@ -263,8 +265,9 @@ auto compile<gfx::texture>(asset_manager& am, const fs::path& key, const fs::pat
         std::ofstream output_file(str_output);
         (void)output_file;
     }
+    auto texturec = fs::resolve_protocol("binary:/texturec");
 
-    if(!run_process("texturec", args_array, false, error))
+    if(!run_process(texturec, args_array, false, error))
     {
         APPLOG_ERROR("Failed compilation of {0} with error: {1}", str_input, error);
         result = false;

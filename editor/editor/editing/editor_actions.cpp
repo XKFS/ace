@@ -304,6 +304,15 @@ void generate_workspace_file(const std::string& file_path,
     json_stream << "        }\n"; // End of "files.exclude"
     json_stream << "    }\n";     // End of "settings"
 
+    // Add the "extensions" section
+    json_stream << ",\n";
+    json_stream << "    \"extensions\": {\n";
+    json_stream << "        \"recommendations\": [\n";
+    json_stream << "             \"ms-vscode.mono-debug\",\n";
+    json_stream << "             \"ms-dotnettools.csharp\"\n";
+    json_stream << "        ]\n";
+    json_stream << "    }\n";
+
     // Add the "launch" section
     json_stream << ",\n";
     json_stream << "    \"launch\": {\n";
@@ -313,7 +322,6 @@ void generate_workspace_file(const std::string& file_path,
     json_stream << "                \"name\": \"Attach to Mono\",\n";
     json_stream << "                \"request\": \"attach\",\n";
     json_stream << "                \"type\": \"mono\",\n";
-    // json_stream << "                \"address\": \"localhost\",\n" << settings.debugger.ip << "";
     json_stream << "                \"address\": \"" << settings.debugger.ip << "\",\n";
     json_stream << "                \"port\": "<< settings.debugger.port << "\n";
     json_stream << "            }\n";

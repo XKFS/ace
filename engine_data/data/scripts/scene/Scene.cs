@@ -48,13 +48,13 @@ namespace Ace.Core
         }
 
         /// <summary>
-        /// Creates a new entity with the specified tag.
+        /// Creates a new entity with the specified name.
         /// </summary>
-        /// <param name="tag">The tag to assign to the new entity. Defaults to "Unnamed".</param>
+        /// <param name="name">The name to assign to the new entity. Defaults to "Unnamed".</param>
         /// <returns>The newly created entity.</returns>
-        public static Entity CreateEntity(string tag = "Unnamed")
+        public static Entity CreateEntity(string name = "Unnamed")
         {
-            return internal_m2n_create_entity(tag);
+            return internal_m2n_create_entity(name);
         }
 
         /// <summary>
@@ -102,6 +102,17 @@ namespace Ace.Core
             return internal_m2n_find_entity_by_tag(tag);
         }
 
+        
+        /// <summary>
+        /// Finds the first entity with the specified name.
+        /// </summary>
+        /// <param name="name">The name to search for.</param>
+        /// <returns>The entity with the specified name, or <c>invalid</c> if no such entity exists.</returns>
+        public static Entity FindEntityByName(string name)
+        {
+            return internal_m2n_find_entity_by_name(name);
+        }
+
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern void internal_m2n_load_scene(string key);
 
@@ -118,7 +129,7 @@ namespace Ace.Core
         private static extern Entity internal_m2n_create_entity_from_prefab_key(string key);
 
         [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern Entity internal_m2n_create_entity(string tag);
+        private static extern Entity internal_m2n_create_entity(string name);
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern Entity internal_m2n_clone_entity(Entity id);
@@ -131,6 +142,9 @@ namespace Ace.Core
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern bool internal_m2n_is_entity_valid(Entity id);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern Entity internal_m2n_find_entity_by_name(string name);
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern Entity internal_m2n_find_entity_by_tag(string tag);

@@ -64,23 +64,23 @@ void stop_editing_label(graph_context& ctx, entt::handle entity)
     edit_label_ = false;
 }
 
-auto get_entity_tag(entt::handle entity) -> const std::string&
+auto get_entity_name(entt::handle entity) -> const std::string&
 {
-    auto& tag = entity.get_or_emplace<tag_component>();
-    return tag.tag;
+    auto& comp = entity.get_or_emplace<tag_component>();
+    return comp.name;
 }
 
-void set_entity_tag(entt::handle entity, const std::string& name)
+void set_entity_name(entt::handle entity, const std::string& name)
 {
-    auto& tag = entity.get_or_emplace<tag_component>();
-    tag.tag = name;
+    auto& comp = entity.get_or_emplace<tag_component>();
+    comp.name = name;
 }
 
 bool process_drag_drop_source(graph_context& ctx, entt::handle entity)
 {
     if(entity && ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
     {
-        ImGui::TextUnformatted(get_entity_tag(entity).c_str());
+        ImGui::TextUnformatted(get_entity_name(entity).c_str());
         ImGui::SetDragDropPayload("entity", &entity, sizeof(entity));
         ImGui::EndDragDropSource();
         return true;
@@ -406,7 +406,7 @@ void draw_entity(graph_context& ctx, entt::handle entity)
         return;
     }
 
-    const auto& name = get_entity_tag(entity);
+    const auto& name = get_entity_name(entity);
     ImGui::PushID(static_cast<int>(entity.entity()));
 
     ImGuiTreeNodeFlags flags =
@@ -527,7 +527,7 @@ void draw_entity(graph_context& ctx, entt::handle entity)
         ImGui::InputTextWidget("##rename", edit_name, false, ImGuiInputTextFlags_AutoSelectAll);
         if(ImGui::IsItemDeactivatedAfterEdit())
         {
-            set_entity_tag(entity, edit_name);
+            set_entity_name(entity, edit_name);
             stop_editing_label(ctx, entity);
         }
 

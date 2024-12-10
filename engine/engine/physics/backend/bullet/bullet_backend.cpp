@@ -28,6 +28,7 @@ namespace bullet
 namespace
 {
 bool enable_logging = false;
+#define BULLET_MT 0
 
 enum class manifold_type
 {
@@ -209,10 +210,10 @@ void cleanup_task_scheduler()
     btITaskScheduler* scheduler = btGetTaskScheduler();
     if(scheduler)
     {
+        btSetTaskScheduler(nullptr);
         delete scheduler;
     }
 
-    btSetTaskScheduler(nullptr);
 
 #endif
 }
@@ -235,11 +236,11 @@ auto get_entity_id_from_user_index(int index) -> entt::entity
     return id;
 }
 
-auto get_entity_tag_from_user_index(int index) -> const std::string&
+auto get_entity_name_from_user_index(int index) -> const std::string&
 {
     auto e = get_entity_from_user_index(index);
 
-    return e.get<ace::tag_component>().tag;
+    return e.get<ace::tag_component>().name;
 }
 
 template<typename Callback>
@@ -304,11 +305,13 @@ struct world
 
     void add_rigidbody(const rigidbody& body)
     {
+        btAssert(in_simulate == false);
         dynamics_world->addRigidBody(body.internal.get());
     }
 
     void remove_rigidbody(const rigidbody& body)
     {
+        btAssert(in_simulate == false);
         dynamics_world->removeRigidBody(body.internal.get());
     }
 
@@ -521,8 +524,8 @@ void handle_regular_collision(btPersistentManifold* manifold,
     {
         APPLOG_TRACE("Collision {} between entities {} and {}",
                      enter ? "enter" : "exit",
-                     get_entity_tag_from_user_index(obj_a->getUserIndex()),
-                     get_entity_tag_from_user_index(obj_b->getUserIndex()));
+                     get_entity_name_from_user_index(obj_a->getUserIndex()),
+                     get_entity_name_from_user_index(obj_b->getUserIndex()));
     }
 
 
@@ -589,8 +592,8 @@ void contact_callback(btPersistentManifold* const& manifold, bool enter)
         {
             APPLOG_INFO("Sensor {} {} by {}",
                         enter ? "entered" : "exited",
-                        get_entity_tag_from_user_index(sensor->getUserIndex()),
-                        get_entity_tag_from_user_index(other->getUserIndex()));
+                        get_entity_name_from_user_index(sensor->getUserIndex()),
+                        get_entity_name_from_user_index(other->getUserIndex()));
         }
 
         auto& world = get_world_from_user_pointer(sensor->getUserPointer());

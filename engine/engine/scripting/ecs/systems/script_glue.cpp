@@ -332,6 +332,27 @@ auto internal_m2n_is_entity_valid(entt::entity id) -> bool
     return valid;
 }
 
+auto internal_m2n_find_entity_by_name(const std::string& name) -> uint32_t
+{
+    auto& ctx = engine::context();
+    auto& ec = ctx.get_cached<ecs>();
+    auto& scn = ec.get_scene();
+    auto& registry = *scn.registry;
+
+    auto view = registry.view<tag_component>();
+
+    for(const auto& e : view)
+    {
+        if(registry.get<tag_component>(e).name == name)
+        {
+            return static_cast<uint32_t>(e);
+        }
+    }
+
+    const entt::handle invalid;
+    return static_cast<uint32_t>(invalid.entity());
+}
+
 auto internal_m2n_find_entity_by_tag(const std::string& tag) -> uint32_t
 {
     auto& ctx = engine::context();
@@ -632,6 +653,25 @@ auto internal_m2n_get_transform_component(entt::entity id, const mono::mono_type
 
     auto& script_comp = e.get_or_emplace<script_component>();
     return internal_get_native_component_impl(type, e, script_comp, true);
+}
+
+auto internal_m2n_get_name(entt::entity id) -> const std::string&
+{
+    if(auto comp = safe_get_component<tag_component>(id))
+    {
+        return comp->name;
+    }
+
+    static const std::string empty;
+    return empty;
+}
+
+void internal_m2n_set_name(entt::entity id, const std::string& name)
+{
+    if(auto comp = safe_get_component<tag_component>(id))
+    {
+        comp->name = name;
+    }
 }
 
 auto internal_m2n_get_tag(entt::entity id) -> const std::string&
@@ -1607,6 +1647,7 @@ auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
                               internal_call(internal_m2n_destroy_entity_immediate));
 
         reg.add_internal_call("internal_m2n_is_entity_valid", internal_call(internal_m2n_is_entity_valid));
+        reg.add_internal_call("internal_m2n_find_entity_by_name", internal_call(internal_m2n_find_entity_by_name));
         reg.add_internal_call("internal_m2n_find_entity_by_tag", internal_call(internal_m2n_find_entity_by_tag));
     }
 
@@ -1622,6 +1663,8 @@ auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
         reg.add_internal_call("internal_m2n_remove_component", internal_call(internal_m2n_remove_component));
         reg.add_internal_call("internal_m2n_get_transform_component",
                               internal_call(internal_m2n_get_transform_component));
+        reg.add_internal_call("internal_m2n_get_name", internal_call(internal_m2n_get_name));
+        reg.add_internal_call("internal_m2n_set_name", internal_call(internal_m2n_set_name));
         reg.add_internal_call("internal_m2n_get_tag", internal_call(internal_m2n_get_tag));
         reg.add_internal_call("internal_m2n_set_tag", internal_call(internal_m2n_set_tag));
     }

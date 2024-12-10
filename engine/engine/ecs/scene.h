@@ -78,13 +78,13 @@ struct scene
     auto clone_entity(entt::handle e, bool keep_parent = true) -> entt::handle;
 
     /**
-     * @brief Creates an entity in the specified registry with an optional tag and parent.
+     * @brief Creates an entity in the specified registry with an optional name and parent.
      * @param r The registry to create the entity in.
-     * @param tag The tag for the entity.
+     * @param name The name for the entity.
      * @param parent The parent entity handle.
      * @return A handle to the created entity.
      */
-    static auto create_entity(entt::registry& r, const std::string& tag = {}, entt::handle parent = {}) -> entt::handle;
+    static auto create_entity(entt::registry& r, const std::string& name = {}, entt::handle parent = {}) -> entt::handle;
 
     /**
      * @brief Clones the entities from one scene to another.

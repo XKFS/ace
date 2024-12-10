@@ -20,8 +20,10 @@ REFLECT(tag_component)
     rttr::registration::class_<tag_component>("tag_component")(rttr::metadata("category", "BASIC"),
                                                                rttr::metadata("pretty_name", "Tag"))
         .constructor<>()()
+        .property("name", &tag_component::name)(rttr::metadata("pretty_name", "Name"),
+                                                rttr::metadata("tooltip", "This is the name of the entity."))
         .property("tag", &tag_component::tag)(rttr::metadata("pretty_name", "Tag"),
-                                              rttr::metadata("tooltip", "This is the name of the entity."));
+                                              rttr::metadata("tooltip", "This is the tag(group) of the entity."));
 }
 
 SAVE(id_component)
@@ -33,6 +35,7 @@ SAVE_INSTANTIATE(id_component, ser20::oarchive_binary_t);
 
 SAVE(tag_component)
 {
+    try_save(ar, ser20::make_nvp("name", obj.name));
     try_save(ar, ser20::make_nvp("tag", obj.tag));
 }
 SAVE_INSTANTIATE(tag_component, ser20::oarchive_associative_t);
@@ -53,6 +56,7 @@ LOAD_INSTANTIATE(id_component, ser20::iarchive_binary_t);
 
 LOAD(tag_component)
 {
+    try_load(ar, ser20::make_nvp("name", obj.name));
     try_load(ar, ser20::make_nvp("tag", obj.tag));
 }
 

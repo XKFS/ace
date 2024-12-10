@@ -19,6 +19,16 @@ public struct Entity : IEquatable<Entity>
 	public readonly uint Id;
 
 	/// <summary>
+	/// Gets or sets the name of the entity.
+	/// </summary>
+	/// <value>The name associated with the entity.</value>
+	public string name
+	{
+		get => internal_m2n_get_name(this);
+		set => internal_m2n_set_name(this, value);
+	}
+
+	/// <summary>
 	/// Gets or sets the tag of the entity.
 	/// </summary>
 	/// <value>The tag associated with the entity.</value>
@@ -175,6 +185,12 @@ public struct Entity : IEquatable<Entity>
 	{
 		Id = id;
 	}
+
+	[MethodImpl(MethodImplOptions.InternalCall)]
+	private static extern string internal_m2n_get_name(Entity id);
+
+	[MethodImpl(MethodImplOptions.InternalCall)]
+	private static extern void internal_m2n_set_name(Entity id, string name);
 
 	[MethodImpl(MethodImplOptions.InternalCall)]
 	private static extern string internal_m2n_get_tag(Entity id);

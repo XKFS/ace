@@ -150,9 +150,8 @@ void process_drag_drop_target(const fs::path& absolute_path)
                         std::memcpy(&dropped, payload->Data, size_t(payload->DataSize));
                         if(dropped)
                         {
-                            auto& tag = dropped.get<tag_component>();
-
-                            auto prefab_path = absolute_path / fs::path(tag.tag + ".pfb").make_preferred();
+                            auto& comp = dropped.get<tag_component>();
+                            auto prefab_path = absolute_path / fs::path(comp.name + ".pfb").make_preferred();
                             save_to_file(prefab_path.string(), dropped);
                         }
                     }

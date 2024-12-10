@@ -26,7 +26,11 @@ struct id_component
 struct tag_component
 {
     /**
-     * @brief The tag or name of the entity.
+     * @brief The name of the entity.
+     */
+    std::string name{};
+    /**
+     * @brief The tag of the entity.
      */
     std::string tag{};
 };

@@ -102,10 +102,10 @@ auto scene::instantiate(const asset_handle<prefab>& pfb) -> entt::handle
     return load_from_prefab(pfb, *registry);
 }
 
-auto scene::create_entity(entt::registry& r, const std::string& tag, entt::handle parent) -> entt::handle
+auto scene::create_entity(entt::registry& r, const std::string& name, entt::handle parent) -> entt::handle
 {
     entt::handle ent(r, r.create());
-    ent.emplace<tag_component>(!tag.empty() ? tag : "Entity");
+    ent.emplace<tag_component>().name = !name.empty() ? name : "Entity";
 
     auto& transform = ent.emplace<transform_component>();
     if(parent)

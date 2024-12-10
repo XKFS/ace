@@ -17,7 +17,7 @@ auto get_bone_entity(const std::string& bone_id, const std::vector<entt::handle>
         if(e)
         {
             const auto& tag = e.get<tag_component>();
-            if(tag.tag == bone_id)
+            if(tag.name == bone_id)
             {
                 return e;
             }
@@ -434,7 +434,7 @@ auto model_component::get_armature_by_id(const std::string& node_id) const -> en
     for(const auto& e : armature_entities_)
     {
         const auto& tag_comp = e.get<tag_component>();
-        if(tag_comp.tag == node_id)
+        if(tag_comp.name == node_id)
         {
             return e;
         }

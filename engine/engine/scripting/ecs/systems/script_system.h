@@ -25,6 +25,8 @@ struct script_system
     static auto get_lib_temp_compiled_key(const std::string& protocol) -> std::string;
     static auto get_lib_compiled_key(const std::string& protocol) -> std::string;
     static void copy_compiled_lib(const fs::path& from, const fs::path& to);
+    static auto is_debugger_attached() -> bool;
+
     static auto find_mono(const rtti::context& ctx) -> mono::compiler_paths;
     auto init(rtti::context& ctx) -> bool;
     auto deinit(rtti::context& ctx) -> bool;

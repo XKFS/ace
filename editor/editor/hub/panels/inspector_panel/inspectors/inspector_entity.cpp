@@ -132,7 +132,7 @@ void list_component(ImGuiTextFilter& filter, const std::string& name, const insp
         ImGui::CloseCurrentPopup();
     }
 }
-auto get_entity_tag(entt::handle entity) -> const std::string&
+auto get_entity_name(entt::handle entity) -> const std::string&
 {
     if(!entity)
     {
@@ -140,7 +140,7 @@ auto get_entity_tag(entt::handle entity) -> const std::string&
         return empty;
     }
     auto& tag = entity.get_or_emplace<tag_component>();
-    return tag.tag;
+    return tag.name;
 }
 
 
@@ -190,7 +190,7 @@ static auto process_drag_drop_target(rtti::context& ctx, entt::handle& obj) -> b
 
 auto inspector_entity::inspect_as_property(rtti::context& ctx, entt::handle& data) -> inspect_result
 {
-    auto name = get_entity_tag(data);
+    auto name = get_entity_name(data);
 
     inspect_result result;
 

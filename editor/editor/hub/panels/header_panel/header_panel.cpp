@@ -29,6 +29,22 @@ auto get_debug_mode_size() -> float
 }
 void draw_debug_mode()
 {
+
+    bool debugger_attached = script_system::is_debugger_attached();
+    ImVec4 color = debugger_attached ? ImVec4(0.6f, 0.6f, 0.0f, 1.0f) : ImVec4(0.5f, 0.0f, 0.0f, 1.0f);
+    if(debugger_attached)
+    {
+        ImGui::Spinner(ImGui::GetFrameHeight() * 0.5f, 4.0f, 24, 1.0f, ImGui::GetColorU32(color));
+    }
+    else
+    {
+        ImGui::RadioButton("###", true);
+    }
+    const char* debuger_tooltip = debugger_attached ? "Debugger Attached" : "Debugger Not Attached";
+    ImGui::SetItemTooltipCurrentViewport("%s", debuger_tooltip);
+
+    ImGui::SameLine();
+
     bool debug_mode = script_system::get_script_debug_mode();
     const char* modes[] = {ICON_MDI_BUG_CHECK " Debug", ICON_MDI_BUG " Release"};
     const char* debug_mode_preview = modes[int(!debug_mode)];

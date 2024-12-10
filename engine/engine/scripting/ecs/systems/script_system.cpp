@@ -518,6 +518,11 @@ auto script_system::is_start_called() const -> bool
     return start_call_ == call_progress::finished;
 }
 
+auto script_system::is_debugger_attached() -> bool
+{
+    return mono::is_debugger_attached();
+}
+
 void script_system::check_for_recompile(rtti::context& ctx, delta_t dt, bool emit_callback)
 {
     time_since_last_check_ += dt;

@@ -28,7 +28,7 @@ namespace bullet
 namespace
 {
 bool enable_logging = false;
-#define BULLET_MT 0
+//#define BULLET_MT 1
 
 enum class manifold_type
 {

@@ -43,7 +43,7 @@ SAVE_INSTANTIATE(model_component, ser20::oarchive_binary_t);
 LOAD(model_component)
 {
     bool is_enabled{true};
-    try_load(ar, ser20::make_nvp("is_enabled", is_enabled));
+    try_load(ar, ser20::make_nvp("enabled", is_enabled));
     obj.set_static(is_enabled);
 
     bool is_static{};

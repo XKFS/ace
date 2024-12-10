@@ -1,6 +1,7 @@
 #pragma once
 #include "subprocess.h"
 #include <string>
+#include <cstring>
 #include <vector>
 
 namespace subprocess
@@ -19,6 +20,7 @@ inline auto call(const std::vector<std::string>& args_array) -> call_result
 
     std::vector<const char*> args;
 
+    args.reserve(args_array.size());
     for(const auto& arg : args_array)
     {
         args.emplace_back(arg.c_str());

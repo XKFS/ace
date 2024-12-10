@@ -318,8 +318,7 @@ auto inspector_entity::inspect(rtti::context& ctx,
 
                             if(ImGui::IsItemDoubleClicked(ImGuiMouseButton_Left))
                             {
-                                auto& pm = ctx.get_cached<project_manager>();
-                                editor_actions::open_workspace_on_file(pm.get_name(), source_loc);
+                                editor_actions::open_workspace_on_file(source_loc);
                             }
                         }
                         ImGui::PopReadonly();

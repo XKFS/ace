@@ -1,7 +1,7 @@
 #pragma once
 #include <engine/engine_export.h>
-#include <engine/scripting/ecs/components/script_component.h>
 #include <engine/physics/ecs/components/physics_component.h>
+#include <engine/scripting/ecs/components/script_component.h>
 
 #include <engine/threading/threader.h>
 
@@ -9,8 +9,8 @@
 #include <context/context.hpp>
 #include <filesystem/filesystem.h>
 
-#include <monort/monort.h>
 #include <monopp/mono_jit.h>
+#include <monort/monort.h>
 
 namespace ace
 {
@@ -31,6 +31,8 @@ struct script_system
     auto init(rtti::context& ctx) -> bool;
     auto deinit(rtti::context& ctx) -> bool;
 
+    void set_debug_config(const std::string& address, uint32_t port, uint32_t loglevel);
+
     auto load_engine_domain(rtti::context& ctx, bool recompile) -> bool;
     void unload_engine_domain();
 
@@ -44,10 +46,8 @@ struct script_system
     void wait_for_jobs_to_finish(rtti::context& ctx);
     auto has_compilation_errors() const -> bool;
 
-
     void on_sensor_enter(entt::handle sensor, entt::handle other);
     void on_sensor_exit(entt::handle sensor, entt::handle other);
-
 
     void on_collision_enter(entt::handle a, entt::handle b, const std::vector<manifold_point>& manifolds);
     void on_collision_exit(entt::handle a, entt::handle b, const std::vector<manifold_point>& manifolds);
@@ -117,6 +117,7 @@ private:
 
     delta_t time_since_last_check_{};
 
+    mono::debugging_config debug_config_;
     std::unique_ptr<mono::mono_domain> domain_;
 
     struct mono_cache
@@ -135,7 +136,6 @@ private:
         std::vector<mono::mono_type> scriptable_system_types;
 
     } app_cache_;
-
 
     std::vector<script_component::scoped_object_ptr> scriptable_systems_;
 

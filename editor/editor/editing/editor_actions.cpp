@@ -5,6 +5,7 @@
 #include <engine/assets/impl/asset_reader.h>
 #include <engine/defaults/defaults.h>
 #include <engine/ecs/ecs.h>
+#include <engine/engine.h>
 #include <engine/events.h>
 #include <engine/meta/assets/asset_database.hpp>
 #include <engine/meta/ecs/entity.hpp>
@@ -264,7 +265,8 @@ void remove_extensions(std::vector<std::vector<std::string>>& resourceExtensions
     }
 }
 void generate_workspace_file(const std::string& file_path,
-                             const std::vector<std::vector<std::string>>& exclude_extensions)
+                             const std::vector<std::vector<std::string>>& exclude_extensions,
+                             const editor_settings& settings)
 {
     // Start constructing the JSON content
     std::ostringstream json_stream;
@@ -311,8 +313,9 @@ void generate_workspace_file(const std::string& file_path,
     json_stream << "                \"name\": \"Attach to Mono\",\n";
     json_stream << "                \"request\": \"attach\",\n";
     json_stream << "                \"type\": \"mono\",\n";
-    json_stream << "                \"address\": \"localhost\",\n";
-    json_stream << "                \"port\": 55555\n";
+    // json_stream << "                \"address\": \"localhost\",\n" << settings.debugger.ip << "";
+    json_stream << "                \"address\": \"" << settings.debugger.ip << "\",\n";
+    json_stream << "                \"port\": "<< settings.debugger.port << "\n";
     json_stream << "            }\n";
     json_stream << "        ]\n";
     json_stream << "    }\n";
@@ -1044,8 +1047,13 @@ auto editor_actions::deploy_project(rtti::context& ctx, const deploy_settings& p
     return jobs;
 }
 
-void editor_actions::generate_script_workspace(const std::string& project_name)
+void editor_actions::generate_script_workspace()
 {
+    auto& ctx = engine::context();
+    auto& pm = ctx.get_cached<project_manager>();
+    auto project_name = pm.get_name();
+    const auto& editor_settings = pm.get_editor_settings();
+
     fs::error_code err;
 
     auto workspace_folder = fs::resolve_protocol("app:/.vscode");
@@ -1056,7 +1064,7 @@ void editor_actions::generate_script_workspace(const std::string& project_name)
     remove_extensions(formats, ex::get_suported_formats<script>());
 
     auto workspace_file = workspace_folder / fmt::format("{}-workspace.code-workspace", project_name);
-    generate_workspace_file(workspace_file.string(), formats);
+    generate_workspace_file(workspace_file.string(), formats, editor_settings);
 
     auto source_path = fs::resolve_protocol("app:/data");
 
@@ -1067,28 +1075,38 @@ void editor_actions::generate_script_workspace(const std::string& project_name)
     generate_csproj_legacy(source_path, {engine_dep}, output_path, project_name);
 }
 
-void editor_actions::open_workspace_on_file(const std::string& project_name, const fs::path& file, int line)
+void editor_actions::open_workspace_on_file(const fs::path& file, int line)
 {
+    auto& ctx = engine::context();
+    auto& pm = ctx.get_cached<project_manager>();
+    auto project_name = pm.get_name();
+    auto vscode_exe = pm.get_editor_settings().external_tools.vscode_executable;
     itc::async(
-        [project_name, file, line]()
+        [vscode_exe, project_name, file, line]()
         {
-            try
+            auto external_tool = vscode_exe;
+            if(external_tool.empty())
             {
-                auto external_tool = get_vscode_executable();
-                if(external_tool.empty())
-                {
-                    APPLOG_ERROR("Cannot locate external tool [vscode]");
-                    return;
-                }
-                auto workspace_key = fmt::format("app:/.vscode/{}-workspace.code-workspace", project_name);
-                auto workspace_path = fs::resolve_protocol(workspace_key);
-
-                subprocess::call(external_tool.string(),
-                                 {workspace_path.string(), "-g", fmt::format("{}:{}", file.string(), line)});
+                external_tool = get_vscode_executable();
             }
-            catch(const std::exception& e)
+
+            if(external_tool.empty())
             {
-                APPLOG_ERROR("Cannot open external tool [vscode] for file {} with {}", file.string(), e.what());
+                APPLOG_ERROR("Cannot locate external tool [vscode]");
+                return;
+            }
+            auto workspace_key = fmt::format("app:/.vscode/{}-workspace.code-workspace", project_name);
+            auto workspace_path = fs::resolve_protocol(workspace_key);
+
+            auto result = subprocess::call(external_tool.string(),
+                                           {workspace_path.string(), "-g", fmt::format("{}:{}", file.string(), line)});
+
+            if(result.retcode != 0)
+            {
+                APPLOG_ERROR("Cannot open external tool [{}] for file {} with {}",
+                             external_tool.string(),
+                             file.string(),
+                             result.out_output);
             }
         });
 }

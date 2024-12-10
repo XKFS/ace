@@ -133,6 +133,11 @@ void header_panel::draw_menubar_child(rtti::context& ctx)
 
         if(ImGui::BeginMenu("Edit"))
         {
+            if(ImGui::MenuItem("Editor Settings..."))
+            {
+                parent_->get_editor_settings_panel().show(true);
+            }
+
             if(ImGui::MenuItem("Project Settings..."))
             {
                 parent_->get_project_settings_panel().show(true);

@@ -31,6 +31,7 @@ imgui_panels::imgui_panels()
 
     deploy_panel_ = std::make_unique<deploy_panel>(this);
     project_settings_panel_ = std::make_unique<project_settings_panel>(this);
+    editor_settings_panel_ = std::make_unique<editor_settings_panel>(this);
 }
 
 imgui_panels::~imgui_panels()
@@ -100,6 +101,8 @@ void imgui_panels::on_frame_ui_render(rtti::context& ctx)
     deploy_panel_->on_frame_ui_render(ctx, DEPLOY_VIEW);
 
     project_settings_panel_->on_frame_ui_render(ctx, PROJECT_SETTINGS_VIEW);
+
+    editor_settings_panel_->on_frame_ui_render(ctx, EDITOR_SETTINGS_VIEW);
 
     footer_panel_->on_frame_ui_render(ctx,
                                       footer_size,

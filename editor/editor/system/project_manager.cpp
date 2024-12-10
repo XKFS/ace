@@ -5,6 +5,7 @@
 #include <editor/editing/thumbnail_manager.h>
 #include <editor/meta/deploy/deploy.hpp>
 #include <editor/meta/system/project_manager.hpp>
+#include <editor/meta/settings/settings.hpp>
 
 #include <engine/animation/animation.h>
 #include <engine/assets/asset_manager.h>
@@ -82,6 +83,7 @@ auto project_manager::open_project(rtti::context& ctx, const fs::path& project_p
     set_name(project_path.filename().string());
 
     save_config();
+    save_editor_settings();
 
     auto& aw = ctx.get_cached<asset_watcher>();
     aw.watch_assets(ctx, "app:/");
@@ -95,7 +97,7 @@ auto project_manager::open_project(rtti::context& ctx, const fs::path& project_p
     load_deploy_settings();
     save_deploy_settings();
 
-    editor_actions::generate_script_workspace(get_name());
+    editor_actions::generate_script_workspace();
 
     return true;
 }
@@ -161,6 +163,29 @@ void project_manager::load_config()
     }
 }
 
+void project_manager::load_editor_settings()
+{
+    fs::error_code err;
+    const fs::path config = fs::resolve_protocol("editor:/config/settings.cfg");
+    if(!fs::exists(config, err))
+    {
+        save_editor_settings();
+    }
+    else
+    {
+        load_from_file(config.string(), editor_settings_);
+    }
+}
+
+void project_manager::save_editor_settings()
+{
+    fs::error_code err;
+    fs::create_directory(fs::resolve_protocol("editor:/config"), err);
+
+    const fs::path config = fs::resolve_protocol("editor:/config/settings.cfg");
+    save_to_file(config.string(), editor_settings_);
+}
+
 auto project_manager::get_name() const -> const std::string&
 {
     return project_name_;
@@ -179,6 +204,11 @@ auto project_manager::get_settings() -> settings&
 auto project_manager::get_deploy_settings() -> deploy_settings&
 {
     return deploy_settings_;
+}
+
+auto project_manager::get_editor_settings() -> editor_settings&
+{
+    return editor_settings_;
 }
 
 auto project_manager::get_options() -> options&
@@ -233,6 +263,12 @@ void project_manager::save_config()
 project_manager::project_manager(rtti::context& ctx)
 {
     load_config();
+    load_editor_settings();
+
+    auto& scripting = ctx.get_cached<script_system>();
+    scripting.set_debug_config(editor_settings_.debugger.ip,
+                               editor_settings_.debugger.port,
+                               editor_settings_.debugger.loglevel);
 
     auto& ev = ctx.get_cached<events>();
     ev.on_script_recompile.connect(sentinel_,
@@ -241,7 +277,7 @@ project_manager::project_manager(rtti::context& ctx)
                                    {
                                        if(protocol == "app" && has_open_project())
                                        {
-                                           editor_actions::generate_script_workspace(get_name());
+                                           editor_actions::generate_script_workspace();
                                        }
                                    });
 }
@@ -271,5 +307,6 @@ auto project_manager::deinit(rtti::context& ctx) -> bool
 project_manager::~project_manager()
 {
     save_config();
+    save_editor_settings();
 }
 } // namespace ace

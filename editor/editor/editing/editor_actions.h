@@ -27,8 +27,8 @@ struct editor_actions
         -> std::map<std::string, itc::shared_future<void>>;
 
 
-    static void generate_script_workspace(const std::string& project_name);
-    static void open_workspace_on_file(const std::string& project_name, const fs::path& file, int line = 0);
+    static void generate_script_workspace();
+    static void open_workspace_on_file(const fs::path& file, int line = 0);
 
 };
 

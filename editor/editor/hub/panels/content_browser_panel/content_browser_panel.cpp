@@ -697,8 +697,7 @@ void content_browser_panel::draw_as_explorer(rtti::context& ctx, const fs::path&
                         {
                             item.on_double_click = [&]()
                             {
-                                auto& pm = ctx.get_cached<project_manager>();
-                                editor_actions::open_workspace_on_file(pm.get_name(), absolute_path);
+                                editor_actions::open_workspace_on_file(absolute_path);
                             };
                         }
 

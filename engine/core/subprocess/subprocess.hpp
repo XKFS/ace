@@ -36,7 +36,7 @@ inline auto call(const std::vector<std::string>& args_array) -> call_result
         if(0 != op_code)
         {
             // an error occurred!
-            result.err_output = "Failed to create subprocess.";
+            result.out_output = "Failed to create subprocess for " + args_array.front();
             return result;
         }
     }

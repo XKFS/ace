@@ -1,6 +1,7 @@
 #pragma once
 #include <context/context.hpp>
 #include <engine/settings/settings.h>
+#include <editor/settings/settings.h>
 #include <editor/deploy/deploy.h>
 #include <filesystem/syncer.h>
 #include <deque>
@@ -38,12 +39,17 @@ public:
 
     void load_config();
 
+    void save_editor_settings();
+
+    void load_editor_settings();
+
     auto get_name() const -> const std::string&;
 
     void set_name(const std::string& name);
 
     auto get_settings() -> settings&;
     auto get_deploy_settings() -> deploy_settings&;
+    auto get_editor_settings() -> editor_settings&;
 
     auto get_options() -> options&;
 
@@ -71,6 +77,7 @@ private:
     std::string project_name_;
     settings project_settings_;
     deploy_settings deploy_settings_;
+    editor_settings editor_settings_;
 
     fs::syncer app_meta_syncer_;
     fs::syncer app_cache_syncer_;

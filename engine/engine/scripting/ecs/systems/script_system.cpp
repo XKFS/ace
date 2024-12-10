@@ -184,10 +184,9 @@ auto script_system::init(rtti::context& ctx) -> bool
     ev.on_resume.connect(sentinel_, -100, this, &script_system::on_resume);
     ev.on_skip_next_frame.connect(sentinel_, -100, this, &script_system::on_skip_next_frame);
 
-    mono::debugging_config debug_config;
-    debug_config.enable_debugging = true;
+    debug_config_.enable_debugging = true;
 
-    if(mono::init(find_mono(ctx), debug_config))
+    if(mono::init(find_mono(ctx), debug_config_))
     {
         bind_internal_calls(ctx);
 
@@ -223,6 +222,13 @@ auto script_system::deinit(rtti::context& ctx) -> bool
     mono::shutdown();
 
     return true;
+}
+
+void script_system::set_debug_config(const std::string& address, uint32_t port, uint32_t loglevel)
+{
+    debug_config_.address = address;
+    debug_config_.port = port;
+    debug_config_.loglevel = loglevel;
 }
 
 auto script_system::load_engine_domain(rtti::context& ctx, bool recompile) -> bool

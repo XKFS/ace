@@ -1092,7 +1092,8 @@ void editor_actions::open_workspace_on_file(const fs::path& file, int line)
 
             if(external_tool.empty())
             {
-                APPLOG_ERROR("Cannot locate external tool [vscode]");
+                APPLOG_ERROR("Cannot locate external tool [Visual Studio Code]");
+                APPLOG_ERROR("To setup Visual Studio Code visit : Edit -> Editor Settings -> External Tools");
                 return;
             }
             auto workspace_key = fmt::format("app:/.vscode/{}-workspace.code-workspace", project_name);
@@ -1107,6 +1108,7 @@ void editor_actions::open_workspace_on_file(const fs::path& file, int line)
                              external_tool.string(),
                              file.string(),
                              result.out_output);
+                APPLOG_ERROR("To setup Visual Studio Code visit : Edit -> Editor Settings -> External Tools");
             }
         });
 }

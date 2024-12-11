@@ -222,17 +222,41 @@ auto inspector_path::inspect(rtti::context& ctx,
 
     if(!info.read_only)
     {
-        if(ImGui::Button(ICON_MDI_FOLDER_OPEN))
+        std::string type = "directory";
+        auto type_var = get_metadata("type");
+        if(type_var)
         {
-            if(native::pick_folder_dialog(picked))
-            {
-                data = picked;
-                picked = data.generic_string();
-                result.changed = true;
-                result.edit_finished |= true;
-            }
+            type = type_var.get_value<std::string>();
         }
-        ImGui::SetItemTooltipCurrentViewport("Pick a location...");
+
+        if(type == "file")
+        {
+            if(ImGui::Button(ICON_MDI_FILE_SEARCH))
+            {
+                if(native::open_file_dialog(picked, {}))
+                {
+                    data = picked;
+                    picked = data.generic_string();
+                    result.changed = true;
+                    result.edit_finished |= true;
+                }
+            }
+            ImGui::SetItemTooltipCurrentViewport("Pick a file...");
+        }
+        else
+        {
+            if(ImGui::Button(ICON_MDI_FOLDER_OPEN))
+            {
+                if(native::pick_folder_dialog(picked))
+                {
+                    data = picked;
+                    picked = data.generic_string();
+                    result.changed = true;
+                    result.edit_finished |= true;
+                }
+            }
+            ImGui::SetItemTooltipCurrentViewport("Pick a location...");
+        }
         ImGui::SameLine();
     }
 

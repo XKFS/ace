@@ -16,7 +16,8 @@ REFLECT_INLINE(editor_settings::external_tools_settings)
         .constructor<>()()
         .property("vscode_executable", &editor_settings::external_tools_settings::vscode_executable)(
             rttr::metadata("pretty_name", "Visual Studio Code"),
-            rttr::metadata("tooltip", "Full path of vscode executable."));
+            rttr::metadata("type", "file"),
+            rttr::metadata("tooltip", "Full path to executable."));
 }
 
 SAVE_INLINE(editor_settings::external_tools_settings)

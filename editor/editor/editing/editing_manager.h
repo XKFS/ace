@@ -146,7 +146,7 @@ struct editing_manager
         return focused.get_value<fs::path>() == fs::resolve_protocol(entry.id());
     }
 
-    void close_project();
+    void clear();
 
     /// enable editor grid
     bool show_grid = true;

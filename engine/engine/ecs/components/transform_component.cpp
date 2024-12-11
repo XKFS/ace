@@ -648,4 +648,39 @@ auto transform_component::resolve_global_value_transform() const noexcept -> mat
 
     return get_transform_local();
 }
+
+void transform_component::on_dirty_flags(bool dirty) noexcept
+{
+    if(dirty)
+    {
+        transform_dirty_.set();
+    }
+
+    if(flags_.has_auto_resolve())
+    {
+        for(const auto& child : get_children())
+        {
+            auto component = child.try_get<transform_component>();
+            if(component)
+            {
+                component->flags_.set_dirty(component, dirty);
+            }
+        }
+    }
+}
+
+auto transform_component::resolve_global_value_flags() const noexcept -> flags_t
+{
+    auto parent = get_parent();
+
+    const auto& local_flags = flags_.get_value(this);
+    if(parent)
+    {
+        const auto& parent_flags = parent.get<transform_component>().flags_.get_global_value(this, false);
+
+        return parent_flags | local_flags;
+    }
+
+    return local_flags;
+}
 } // namespace ace

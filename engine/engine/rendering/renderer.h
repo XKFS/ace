@@ -36,7 +36,7 @@ struct renderer
 protected:
     auto init_backend(const cmd_line::parser& parser) -> bool;
 
-    void on_os_event(rtti::context& ctx, const os::event& e);
+    void on_os_event(rtti::context& ctx, os::event& e);
     void frame_begin(rtti::context& ctx, delta_t dt);
     void frame_end(rtti::context& ctx, delta_t dt);
 

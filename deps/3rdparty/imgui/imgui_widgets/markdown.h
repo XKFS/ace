@@ -119,6 +119,7 @@ You can add [links like this one to enkisoftware](https://www.enkisoftware.com/)
 */
 
 #include <stdint.h>
+#include <functional>
 
 namespace ImGui
 {
@@ -131,7 +132,7 @@ namespace ImGui
 //     * separator controls whether an underlined separator is drawn after the header
 IMGUI_API struct MarkdownConfig
 {
-    typedef void MarkdownLinkCallback(const char* link_, uint32_t linkLength_);
+    using MarkdownLinkCallback = std::function<void(const char* link_, uint32_t linkLength_)>;
     struct HeadingFormat
     {
         ImFont* font;
@@ -141,7 +142,7 @@ IMGUI_API struct MarkdownConfig
     static const int NUMHEADINGS = 3;
     bool linkTooltip = false;
 
-    MarkdownLinkCallback* linkCallback = 0;
+    MarkdownLinkCallback linkCallback = nullptr;
     const char* linkIcon = "";
     HeadingFormat headingFormats[NUMHEADINGS] = {{NULL, true}, {NULL, true}, {NULL, true}};
 };

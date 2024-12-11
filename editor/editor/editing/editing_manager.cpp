@@ -160,7 +160,7 @@ void editing_manager::unfocus()
     focused_data = {};
 }
 
-void editing_manager::close_project()
+void editing_manager::clear()
 {
     unselect();
     unfocus();

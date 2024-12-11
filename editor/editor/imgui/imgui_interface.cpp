@@ -42,7 +42,7 @@ auto imgui_interface::deinit(rtti::context& ctx) -> bool
     return true;
 }
 
-void imgui_interface::on_os_event(rtti::context& ctx, const os::event& e)
+void imgui_interface::on_os_event(rtti::context& ctx, os::event& e)
 {
     imguiProcessEvent(e);
 }

@@ -29,7 +29,7 @@ struct events
     hpp::event<void(rtti::context&)> on_skip_next_frame;
 
     /// os events
-    hpp::event<void(rtti::context&, const os::event& e)> on_os_event;
+    hpp::event<void(rtti::context&, os::event& e)> on_os_event;
 
     hpp::event<void(rtti::context&, const std::string& protocol)> on_script_recompile;
 

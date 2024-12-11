@@ -578,7 +578,7 @@ asset_watcher::~asset_watcher()
 {
 }
 
-void asset_watcher::on_os_event(rtti::context& ctx, const os::event& e)
+void asset_watcher::on_os_event(rtti::context& ctx, os::event& e)
 {
     auto& rend = ctx.get_cached<renderer>();
     const auto& window = rend.get_main_window();

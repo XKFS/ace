@@ -118,7 +118,7 @@ auto renderer::init_backend(const cmd_line::parser& parser) -> bool
     return true;
 }
 
-void renderer::on_os_event(rtti::context& ctx, const os::event& e)
+void renderer::on_os_event(rtti::context& ctx, os::event& e)
 {
     if(e.type == os::events::window)
     {

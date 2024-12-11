@@ -22,6 +22,7 @@ struct root_component : public component_crtp<root_component>
 class transform_component : public component_crtp<transform_component, owned_component>
 {
 public:
+    using flags_t = std::bitset<8>;
     /**
      * @brief Called when the component is created.
      * @param r The registry containing the component.
@@ -445,7 +446,7 @@ private:
      * @brief Sets the owner of the component.
      * @param owner A handle to the owner entity.
      */
-    void set_owner(entt::handle owner) ;
+    void set_owner(entt::handle owner);
 
     /**
      * @brief Applies a transformation to the component.
@@ -465,19 +466,21 @@ private:
      * @param dirty The dirty flag.
      */
     void on_dirty_transform(bool dirty) noexcept;
+    void on_dirty_flags(bool dirty) noexcept;
 
     /**
      * @brief Resolves the global transform value.
      * @return The global transform.
      */
     auto resolve_global_value_transform() const noexcept -> math::transform;
+    auto resolve_global_value_flags() const noexcept -> flags_t;
 
     /**
      * @brief Attaches a child entity.
      * @param child A handle to the child entity.
      * @param child_transform The transform component of the child.
      */
-    void attach_child(const entt::handle& child, transform_component& child_transform) ;
+    void attach_child(const entt::handle& child, transform_component& child_transform);
 
     /**
      * @brief Removes a child entity.
@@ -499,7 +502,11 @@ private:
      * @struct local_global_property
      * @brief Template structure for managing local and global properties.
      */
-    template<typename T, typename Owner, void (Owner::*on_dirty)(bool), T (Owner::*resolve_global_value)() const, bool auto_resolve>
+    template<typename T,
+             typename Owner,
+             void (Owner::*on_dirty)(bool),
+             T (Owner::*resolve_global_value)() const,
+             bool auto_resolve>
     struct local_global_property
     {
         /**
@@ -600,8 +607,16 @@ private:
                                                      &transform_component::resolve_global_value_transform,
                                                      true>;
 
+    using property_flags = local_global_property<flags_t,
+                                                 transform_component,
+                                                 &transform_component::on_dirty_flags,
+                                                 &transform_component::resolve_global_value_flags,
+                                                 true>;
+
     ///< Transform property.
     property_transform transform_{};
+
+    property_flags flags_{};
     ///< Bitset for transform dirty flags.
     std::bitset<32> transform_dirty_{};
 };

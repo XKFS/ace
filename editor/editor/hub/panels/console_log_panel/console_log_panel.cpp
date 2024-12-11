@@ -51,11 +51,11 @@ auto extract_lines(hpp::string_view text, int num_lines, int& found_lines) -> hp
     return text.substr(0, pos);
 }
 
-void open_log_in_environment(const fs::path& entry)
+void open_log_in_environment(const fs::path& entry, int line)
 {
     if(ex::is_format<script>(entry.extension().string()))
     {
-        editor_actions::open_workspace_on_file(entry);
+        editor_actions::open_workspace_on_file(entry, line);
     }
     else
     {
@@ -386,9 +386,9 @@ void console_log_panel::draw_details()
                                 msg.source.line);
 
         ImGui::MarkdownConfig config{};
-        config.linkCallback = [](const char* link, uint32_t link_length)
+        config.linkCallback = [&](const char* link, uint32_t link_length)
         {
-            open_log_in_environment(std::string(link, link_length));
+            open_log_in_environment(fs::path(msg.source.filename), msg.source.line);
         };
         ImGui::Markdown(desc.data(), int32_t(desc.size()), config);
     }
@@ -401,7 +401,7 @@ void console_log_panel::select_log(const log_entry& entry)
 
 void console_log_panel::open_log(const log_entry& entry)
 {
-    open_log_in_environment(entry.source.filename);
+    open_log_in_environment(entry.source.filename, entry.source.line);
 }
 
 void console_log_panel::on_play()

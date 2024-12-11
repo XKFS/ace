@@ -43,7 +43,7 @@ void project_manager::close_project(rtti::context& ctx)
     scr.unload_app_domain();
 
     auto& em = ctx.get_cached<editing_manager>();
-    em.close_project();
+    em.clear();
 
     auto& tm = ctx.get_cached<thumbnail_manager>();
     tm.clear_thumbnails();

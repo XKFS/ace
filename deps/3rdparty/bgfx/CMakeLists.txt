@@ -37,6 +37,7 @@ add_definitions(-DBGFX_CONFIG_MAX_VERTEX_LAYOUTS=4096)
 add_definitions(-DBGFX_CONFIG_SORT_KEY_NUM_BITS_PROGRAM=10)
 add_definitions(-DBGFX_CONFIG_MAX_VIEWS=4096)
 add_definitions(-DBGFX_CONFIG_MAX_BONES=128)
+add_definitions(-DBGFX_CONFIG_RENDERER_OPENGL=31)
 
 add_subdirectory(bgfx)
 

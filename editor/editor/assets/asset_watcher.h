@@ -21,7 +21,7 @@ public:
     void unwatch_assets(rtti::context& ctx, const std::string& protocol);
 
 private:
-    void on_os_event(rtti::context& ctx, const os::event& e);
+    void on_os_event(rtti::context& ctx, os::event& e);
 
     void setup_directory(rtti::context& ctx, fs::syncer& syncer);
     void setup_meta_syncer(rtti::context& ctx,

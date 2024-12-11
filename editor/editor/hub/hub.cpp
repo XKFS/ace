@@ -132,6 +132,7 @@ hub::hub(rtti::context& ctx)
     ev.on_frame_render.connect(sentinel_, this, &hub::on_frame_render);
     ev.on_play_begin.connect(sentinel_, -10000, this, &hub::on_play_begin);
     ev.on_script_recompile.connect(sentinel_, 10000, this, &hub::on_script_recompile);
+    ev.on_os_event.connect(sentinel_, 10000, this, &hub::on_os_event);
 
     ui_ev.on_frame_ui_render.connect(sentinel_, this, &hub::on_frame_ui_render);
 }
@@ -198,6 +199,46 @@ void hub::on_script_recompile(rtti::context& ctx, const std::string& protocol)
 void hub::on_play_begin(rtti::context& ctx)
 {
     panels_.get_console_log_panel().on_play();
+}
+
+void hub::on_os_event(rtti::context& ctx, os::event& e)
+{
+    auto& pm = ctx.get_cached<project_manager>();
+    if(!pm.has_open_project())
+    {
+        return;
+    }
+
+    if(e.type == os::events::window)
+    {
+        if(e.window.type == os::window_event_id::close)
+        {
+            auto window_id = e.window.window_id;
+
+            auto& rend = ctx.get_cached<renderer>();
+            auto& render_window = rend.get_main_window();
+            if(render_window)
+            {
+                if(render_window->get_window().get_id() == window_id)
+                {
+                    auto result = native::message_box("Do you want to save changes you made?",
+                                                      native::dialog_type::yes_no,
+                                                      native::icon_type::question,
+                                                      "Save before exit?");
+
+                    switch(result)
+                    {
+                        case native::action_type::ok_or_yes:
+                            editor_actions::save_scene(ctx);
+                            break;
+                        default:
+                            break;
+                    }
+
+                }
+            }
+        }
+    }
 }
 
 void hub::on_opened_project_render(rtti::context& ctx)
@@ -319,7 +360,7 @@ void hub::on_start_page_render(rtti::context& ctx)
             ImGui::PushFont(ImGui::Font::Black);
             if(ImGui::Button("New Project", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetFrameHeight() * 2)))
             {
-                new_project_creator = true;
+                new_project_creator_ = true;
                 std::string path;
                 if(native::pick_folder_dialog(path))
                 {

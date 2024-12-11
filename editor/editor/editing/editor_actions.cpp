@@ -323,7 +323,7 @@ void generate_workspace_file(const std::string& file_path,
     json_stream << "                \"request\": \"attach\",\n";
     json_stream << "                \"type\": \"mono\",\n";
     json_stream << "                \"address\": \"" << settings.debugger.ip << "\",\n";
-    json_stream << "                \"port\": "<< settings.debugger.port << "\n";
+    json_stream << "                \"port\": " << settings.debugger.port << "\n";
     json_stream << "            }\n";
     json_stream << "        ]\n";
     json_stream << "    }\n";
@@ -758,7 +758,7 @@ auto editor_actions::new_scene(rtti::context& ctx) -> bool
         return false;
     }
     auto& em = ctx.get_cached<editing_manager>();
-    em.close_project();
+    em.clear();
 
     auto& ec = ctx.get_cached<ecs>();
     ec.unload_scene();
@@ -771,7 +771,7 @@ auto editor_actions::open_scene(rtti::context& ctx) -> bool
     auto& ev = ctx.get_cached<events>();
     if(ev.is_playing)
     {
-        return false;
+        ev.set_play_mode(ctx, false);
     }
     std::string picked;
     if(native::open_file_dialog(picked,
@@ -784,7 +784,7 @@ auto editor_actions::open_scene(rtti::context& ctx) -> bool
         if(ex::is_format<scene_prefab>(path.extension().generic_string()))
         {
             auto& em = ctx.get_cached<editing_manager>();
-            em.close_project();
+            em.clear();
 
             auto& am = ctx.get_cached<asset_manager>();
             auto asset = am.get_asset<scene_prefab>(path.string());
@@ -1098,10 +1098,13 @@ void editor_actions::open_workspace_on_file(const fs::path& file, int line)
                 external_tool = get_vscode_executable();
             }
 
+            static const char* tool = "[Visual Studio Code]";
+            static const char* setup_hint = "Edit -> Editor Settings -> External Tools";
+
             if(external_tool.empty())
             {
-                APPLOG_ERROR("Cannot locate external tool [Visual Studio Code]");
-                APPLOG_ERROR("To setup Visual Studio Code visit : Edit -> Editor Settings -> External Tools");
+                APPLOG_ERROR("Cannot locate external tool {}", tool);
+                APPLOG_ERROR("To configure {} visit : {}", tool, setup_hint);
                 return;
             }
             auto workspace_key = fmt::format("app:/.vscode/{}-workspace.code-workspace", project_name);
@@ -1112,11 +1115,8 @@ void editor_actions::open_workspace_on_file(const fs::path& file, int line)
 
             if(result.retcode != 0)
             {
-                APPLOG_ERROR("Cannot open external tool [{}] for file {} with {}",
-                             external_tool.string(),
-                             file.string(),
-                             result.out_output);
-                APPLOG_ERROR("To setup Visual Studio Code visit : Edit -> Editor Settings -> External Tools");
+                APPLOG_ERROR("Cannot open external tool {} for file {}", tool, external_tool.string(), file.string());
+                APPLOG_ERROR("To configure {} visit : {}", tool, setup_hint);
             }
         });
 }

@@ -151,6 +151,16 @@ void header_panel::draw_menubar_child(rtti::context& ctx)
             ImGui::EndMenu();
         }
 
+        if(ImGui::BeginMenu("Developer"))
+        {
+            if(ImGui::MenuItem("Crash"))
+            {
+                std::abort();
+            }
+
+            ImGui::EndMenu();
+        }
+
         if(ImGui::BeginMenu("Help"))
         {
             if(ImGui::MenuItem("About"))

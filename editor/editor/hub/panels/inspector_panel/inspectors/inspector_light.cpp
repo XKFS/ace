@@ -98,7 +98,6 @@ auto inspector_light_component::inspect(rtti::context& ctx,
     if(result.changed)
     {
         data.set_light(light_val);
-        return result;
     }
 
     return result;
@@ -126,7 +125,6 @@ auto inspector_reflection_probe_component::inspect(rtti::context& ctx,
     if(result.changed)
     {
         data.set_probe(probe);
-        return result;
     }
 
     return result;

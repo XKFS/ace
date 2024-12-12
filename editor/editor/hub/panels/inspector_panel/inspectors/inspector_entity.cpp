@@ -462,9 +462,8 @@ auto inspector_entity::inspect(rtti::context& ctx,
     if(result.changed)
     {
         var = data;
-        return result;
     }
 
-    return {};
+    return result;
 }
 } // namespace ace

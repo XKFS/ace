@@ -12,6 +12,7 @@
 #include <engine/rendering/material.h>
 #include <engine/rendering/mesh.h>
 #include <engine/meta/rendering/texture.hpp>
+#include <engine/meta/ecs/entity.hpp>
 
 #include <editor/editing/editing_manager.h>
 #include <editor/editing/thumbnail_manager.h>
@@ -276,7 +277,7 @@ auto inspector_asset_handle_texture::inspect_as_property(rtti::context& ctx, ass
     auto& em = ctx.get_cached<editing_manager>();
 
     inspect_result result{};
-    result |= pick_asset(filter, em, tm, am, data, "Texture");
+    result |= pick_asset(filter, em, tm, am, data, ex::get_type(data.extension()));
 
     return result;
 }
@@ -301,7 +302,7 @@ auto inspector_asset_handle_texture::inspect(rtti::context& ctx,
     if(ImGui::BeginTabBar("asset_handle_texture",
                           ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_FittingPolicyScroll))
     {
-        if(ImGui::BeginTabItem("Info"))
+        if(ImGui::BeginTabItem(ex::get_type(data.extension()).c_str()))
         {
             draw_image(data, available);
 
@@ -340,7 +341,7 @@ auto inspector_asset_handle_material::inspect_as_property(rtti::context& ctx, as
 
     inspect_result result{};
 
-    result |= pick_asset(filter, em, tm, am, data, "Material");
+    result |= pick_asset(filter, em, tm, am, data, ex::get_type(data.extension()));
 
     return result;
 }
@@ -387,7 +388,7 @@ auto inspector_asset_handle_mesh::inspect_as_property(rtti::context& ctx, asset_
 
     inspect_result result{};
 
-    result |= pick_asset(filter, em, tm, am, data, "Mesh");
+    result |= pick_asset(filter, em, tm, am, data, ex::get_type(data.extension()));
     return result;
 }
 
@@ -409,7 +410,7 @@ auto inspector_asset_handle_mesh::inspect(rtti::context& ctx,
     if(ImGui::BeginTabBar("asset_handle_mesh",
                           ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_FittingPolicyScroll))
     {
-        if(ImGui::BeginTabItem("Info"))
+        if(ImGui::BeginTabItem(ex::get_type(data.extension()).c_str()))
         {
             if(data)
             {
@@ -447,7 +448,7 @@ auto inspector_asset_handle_animation::inspect_as_property(rtti::context& ctx, a
     auto& em = ctx.get_cached<editing_manager>();
 
     inspect_result result{};
-    result |= pick_asset(filter, em, tm, am, data, "Animation Clip");
+    result |= pick_asset(filter, em, tm, am, data, ex::get_type(data.extension()));
 
     return result;
 }
@@ -470,7 +471,7 @@ auto inspector_asset_handle_animation::inspect(rtti::context& ctx,
     if(ImGui::BeginTabBar("asset_handle_animation",
                           ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_FittingPolicyScroll))
     {
-        if(ImGui::BeginTabItem("Info"))
+        if(ImGui::BeginTabItem(ex::get_type(data.extension()).c_str()))
         {
             if(data)
             {
@@ -502,7 +503,7 @@ auto inspector_asset_handle_prefab::inspect_as_property(rtti::context& ctx, asse
     auto& em = ctx.get_cached<editing_manager>();
 
     inspect_result result{};
-    result |= pick_asset(filter, em, tm, am, data, "Prefab");
+    result |= pick_asset(filter, em, tm, am, data, ex::get_type(data.extension()));
 
     return result;
 }
@@ -519,18 +520,39 @@ auto inspector_asset_handle_prefab::inspect(rtti::context& ctx,
         return inspect_as_property(ctx, data);
     }
 
+
+    if(inspected_asset_ != data)
+    {
+        inspected_scene_.unload();
+        inspected_asset_ = data;
+        inspected_prefab_ = inspected_scene_.instantiate(data);
+    }
+
     auto& am = ctx.get_cached<asset_manager>();
     inspect_result result{};
 
     if(ImGui::BeginTabBar("asset_handle_prefab",
                           ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_FittingPolicyScroll))
     {
-        if(ImGui::BeginTabItem("Info"))
+        if(ImGui::BeginTabItem(ex::get_type(data.extension()).c_str()))
         {
+            ImGui::Text(" --- %s ---", ex::get_type(data.extension()).c_str());
+
             if(data)
             {
-                //                rttr::variant vari = &data.get();
-                //                changed |= inspect_var(ctx, vari);
+                rttr::variant var = inspected_prefab_;
+                result |= inspect_var(ctx, var);
+
+                if(result.changed)
+                {
+                    inspected_prefab_ = var.get_value<entt::handle>();
+                }
+
+                if(result.edit_finished)
+                {
+                    fs::path absolute_key = fs::absolute(fs::resolve_protocol(data.id()));
+                    save_to_file(absolute_key.string(), inspected_prefab_);
+                }
             }
             ImGui::EndTabItem();
         }
@@ -558,7 +580,7 @@ auto inspector_asset_handle_scene_prefab::inspect_as_property(rtti::context& ctx
 
     inspect_result result{};
 
-    result |= pick_asset(filter, em, tm, am, data, "Scene");
+    result |= pick_asset(filter, em, tm, am, data, ex::get_type(data.extension()));
 
     return result;
 }
@@ -581,7 +603,7 @@ auto inspector_asset_handle_scene_prefab::inspect(rtti::context& ctx,
     if(ImGui::BeginTabBar("asset_handle_scene_prefab",
                           ImGuiTabBarFlags_NoCloseWithMiddleMouseButton | ImGuiTabBarFlags_FittingPolicyScroll))
     {
-        if(ImGui::BeginTabItem("Info"))
+        if(ImGui::BeginTabItem(ex::get_type(data.extension()).c_str()))
         {
             if(data)
             {
@@ -614,7 +636,7 @@ auto inspector_asset_handle_physics_material::inspect_as_property(rtti::context&
     auto& em = ctx.get_cached<editing_manager>();
 
     inspect_result result{};
-    result |= pick_asset(filter, em, tm, am, data, "Physics Material");
+    result |= pick_asset(filter, em, tm, am, data, ex::get_type(data.extension()));
 
     return result;
 }
@@ -656,7 +678,7 @@ auto inspector_asset_handle_audio_clip::inspect_as_property(rtti::context& ctx, 
     auto& em = ctx.get_cached<editing_manager>();
 
     inspect_result result{};
-    result |= pick_asset(filter, em, tm, am, data, "Audio Clip");
+    result |= pick_asset(filter, em, tm, am, data, ex::get_type(data.extension()));
 
     return result;
 }

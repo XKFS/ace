@@ -102,6 +102,11 @@ struct asset_handle
         return fs::path(id()).stem().string();
     }
 
+    auto extension() const -> std::string
+    {
+        return fs::path(id()).extension().string();
+    }
+
     /**
      * @brief Gets the shared pointer to the asset.
      * @param wait If true, waits for the task to complete if not ready.

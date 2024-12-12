@@ -330,16 +330,21 @@ auto engine::process() -> bool
 
     input.manager.before_events_update();
 
+    bool should_quit = false;
+
     os::event e{};
     while(os::poll_event(e))
     {
         input.manager.on_os_event(e);
         ev.on_os_event(ctx, e);
+
+        should_quit = rend.get_main_window() == nullptr;
+        if(should_quit)
+        {
+            break;
+        }
     }
     input.manager.after_events_update();
-
-    const auto& window = rend.get_main_window();
-    bool should_quit = window == nullptr;
 
     if(should_quit)
     {

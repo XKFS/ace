@@ -2,7 +2,7 @@
 
 #include "inspector.h"
 #include <engine/assets/asset_handle.h>
-
+#include <engine/ecs/scene.h>
 namespace gfx
 {
 struct texture;
@@ -69,6 +69,11 @@ struct inspector_asset_handle_prefab : public inspector_asset_handle
     auto inspect_as_property(rtti::context& ctx, asset_handle<prefab>& data) -> inspect_result;
     auto inspect(rtti::context& ctx, rttr::variant& var, const var_info& info, const meta_getter& get_metadata)
         -> inspect_result;
+
+private:
+    asset_handle<prefab> inspected_asset_;
+    scene inspected_scene_;
+    entt::handle inspected_prefab_;
 };
 REFLECT_INSPECTOR_INLINE(inspector_asset_handle_prefab, asset_handle<prefab>)
 

@@ -22,7 +22,7 @@
 
 #include <logging/logging.h>
 #include <simulation/simulation.h>
-#include <tweeny/tweeny.h>
+#include <seq/seq.h>
 
 #include <filesystem/filesystem.h>
 
@@ -354,7 +354,7 @@ auto engine::process() -> bool
 
     ev.on_frame_begin(ctx, dt);
 
-    tweeny::update(std::chrono::duration_cast<tweeny::duration_t>(dt));
+    seq::update(dt);
 
     ev.on_frame_update(ctx, dt);
 

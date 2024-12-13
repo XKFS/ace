@@ -1,6 +1,6 @@
-#include "tween_ease.h"
+#include "seq_ease.h"
 
-#include "tween_math.h"
+#include "seq_math.h"
 
 #include <cmath>
 
@@ -47,7 +47,7 @@ float cubicEaseOut(float a)
 
 float cubicEaseInOut(float a)
 {
-    if (a < static_cast<float>(0.5))
+    if(a < static_cast<float>(0.5))
     {
         return static_cast<float>(4) * a * a * a;
     }
@@ -132,7 +132,9 @@ float circularEaseInOut(float a)
         return static_cast<float>(0.5) * (1.0f - std::sqrt(1.0f - static_cast<float>(4) * (a * a)));
     }
 
-    return static_cast<float>(0.5) * (std::sqrt(-((static_cast<float>(2) * a) - static_cast<float>(3)) * ((static_cast<float>(2) * a) - 1.0f)) + 1.0f);
+    return static_cast<float>(0.5) *
+           (std::sqrt(-((static_cast<float>(2) * a) - static_cast<float>(3)) * ((static_cast<float>(2) * a) - 1.0f)) +
+            1.0f);
 }
 
 float exponentialEaseIn(float a)
@@ -162,30 +164,40 @@ float exponentialEaseInOut(float a)
 {
     if(a < static_cast<float>(0.5))
     {
-        return static_cast<float>(0.5) * std::pow(static_cast<float>(2), (static_cast<float>(20) * a) - static_cast<float>(10));
+        return static_cast<float>(0.5) *
+               std::pow(static_cast<float>(2), (static_cast<float>(20) * a) - static_cast<float>(10));
     }
 
-    return -static_cast<float>(0.5) * std::pow(static_cast<float>(2), (-static_cast<float>(20) * a) + static_cast<float>(10)) + 1.0f;
+    return -static_cast<float>(0.5) *
+               std::pow(static_cast<float>(2), (-static_cast<float>(20) * a) + static_cast<float>(10)) +
+           1.0f;
 }
 
 float elasticEaseIn(float a)
 {
-    return std::sin(static_cast<float>(13) * half_pi * a) * std::pow(static_cast<float>(2), static_cast<float>(10) * (a - 1.0f));
+    return std::sin(static_cast<float>(13) * half_pi * a) *
+           std::pow(static_cast<float>(2), static_cast<float>(10) * (a - 1.0f));
 }
 
 float elasticEaseOut(float a)
 {
-    return std::sin(-static_cast<float>(13) * half_pi * (a + 1.0f)) * std::pow(static_cast<float>(2), -static_cast<float>(10) * a) + 1.0f;
+    return std::sin(-static_cast<float>(13) * half_pi * (a + 1.0f)) *
+               std::pow(static_cast<float>(2), -static_cast<float>(10) * a) +
+           1.0f;
 }
 
 float elasticEaseInOut(float a)
 {
     if(a < static_cast<float>(0.5))
     {
-        return static_cast<float>(0.5) * std::sin(static_cast<float>(13) * half_pi * (static_cast<float>(2) * a)) * std::pow(static_cast<float>(2), static_cast<float>(10) * ((static_cast<float>(2) * a) - 1.0f));
+        return static_cast<float>(0.5) * std::sin(static_cast<float>(13) * half_pi * (static_cast<float>(2) * a)) *
+               std::pow(static_cast<float>(2), static_cast<float>(10) * ((static_cast<float>(2) * a) - 1.0f));
     }
 
-    return static_cast<float>(0.5) * (std::sin(-static_cast<float>(13) * half_pi * ((static_cast<float>(2) * a - 1.0f) + 1.0f)) * std::pow(static_cast<float>(2), -static_cast<float>(10) * (static_cast<float>(2) * a - 1.0f)) + static_cast<float>(2));
+    return static_cast<float>(0.5) *
+           (std::sin(-static_cast<float>(13) * half_pi * ((static_cast<float>(2) * a - 1.0f) + 1.0f)) *
+                std::pow(static_cast<float>(2), -static_cast<float>(10) * (static_cast<float>(2) * a - 1.0f)) +
+            static_cast<float>(2));
 }
 
 float backEaseIn(float a, float const& o)
@@ -207,7 +219,7 @@ float backEaseInOut(float a, float const& o)
     float x = 0.5f;
     float n = a / static_cast<float>(0.5);
 
-    if (n < static_cast<float>(1))
+    if(n < static_cast<float>(1))
     {
         float z = ((s + static_cast<float>(1)) * n) - s;
         float m = n * n * z;
@@ -216,7 +228,7 @@ float backEaseInOut(float a, float const& o)
 
     n -= static_cast<float>(2);
     float z = ((s + static_cast<float>(1)) * n) + s;
-    float m = (n*n*z) + static_cast<float>(2);
+    float m = (n * n * z) + static_cast<float>(2);
     return x * m;
 }
 
@@ -243,13 +255,16 @@ float bounceEaseOut(float a)
     }
     if(a < static_cast<float>(8.0 / 11.0))
     {
-        return (static_cast<float>(363.0 / 40.0) * a * a) - (static_cast<float>(99.0 / 10.0) * a) + static_cast<float>(17.0 / 5.0);
+        return (static_cast<float>(363.0 / 40.0) * a * a) - (static_cast<float>(99.0 / 10.0) * a) +
+               static_cast<float>(17.0 / 5.0);
     }
     if(a < static_cast<float>(9.0 / 10.0))
     {
-        return (static_cast<float>(4356.0 / 361.0) * a * a) - (static_cast<float>(35442.0 / 1805.0) * a) + static_cast<float>(16061.0 / 1805.0);
+        return (static_cast<float>(4356.0 / 361.0) * a * a) - (static_cast<float>(35442.0 / 1805.0) * a) +
+               static_cast<float>(16061.0 / 1805.0);
     }
-    return (static_cast<float>(54.0 / 5.0) * a * a) - (static_cast<float>(513.0 / 25.0) * a) + static_cast<float>(268.0 / 25.0);
+    return (static_cast<float>(54.0 / 5.0) * a * a) - (static_cast<float>(513.0 / 25.0) * a) +
+           static_cast<float>(268.0 / 25.0);
 }
 
 float bounceEaseIn(float a)
@@ -267,10 +282,9 @@ float bounceEaseInOut(float a)
     return static_cast<float>(0.5) * bounceEaseOut(a * static_cast<float>(2) - 1.0f) + static_cast<float>(0.5);
 }
 
-} //end of anonymous namespace
+} // end of anonymous namespace
 
-
-namespace tweeny
+namespace seq
 {
 namespace ease
 {
@@ -520,55 +534,54 @@ std::function<float(float)> create_back_stop_stop(float overshoot)
 
 const std::vector<std::pair<std::string, std::function<float(float)>>>& get_ease_list()
 {
-    static const std::vector<std::pair<std::string, std::function<float(float)>>> list =
-    {
-        {"linear",               linear},
+    static const std::vector<std::pair<std::string, std::function<float(float)>>> list = {
+        {"linear", linear},
 
-        {"smooth_start",         smooth_start},
-        {"smooth_start2",        smooth_start2},
-        {"smooth_start3",        smooth_start3},
-        {"smooth_start4",        smooth_start4},
-        {"smooth_start5",        smooth_start5},
-        {"smooth_start6",        smooth_start6},
+        {"smooth_start", smooth_start},
+        {"smooth_start2", smooth_start2},
+        {"smooth_start3", smooth_start3},
+        {"smooth_start4", smooth_start4},
+        {"smooth_start5", smooth_start5},
+        {"smooth_start6", smooth_start6},
 
-        {"smooth_stop",          smooth_stop},
-        {"smooth_stop2",         smooth_stop2},
-        {"smooth_stop3",         smooth_stop3},
-        {"smooth_stop4",         smooth_stop4},
-        {"smooth_stop5",         smooth_stop5},
-        {"smooth_stop6",         smooth_stop6},
+        {"smooth_stop", smooth_stop},
+        {"smooth_stop2", smooth_stop2},
+        {"smooth_stop3", smooth_stop3},
+        {"smooth_stop4", smooth_stop4},
+        {"smooth_stop5", smooth_stop5},
+        {"smooth_stop6", smooth_stop6},
 
-        {"smooth_start_stop",    smooth_start_stop},
-        {"smooth_start_stop2",   smooth_start_stop2},
-        {"smooth_start_stop3",   smooth_start_stop3},
-        {"smooth_start_stop4",   smooth_start_stop4},
-        {"smooth_start_stop5",   smooth_start_stop5},
-        {"smooth_start_stop6",   smooth_start_stop6},
+        {"smooth_start_stop", smooth_start_stop},
+        {"smooth_start_stop2", smooth_start_stop2},
+        {"smooth_start_stop3", smooth_start_stop3},
+        {"smooth_start_stop4", smooth_start_stop4},
+        {"smooth_start_stop5", smooth_start_stop5},
+        {"smooth_start_stop6", smooth_start_stop6},
 
-        {"circular_start",       circular_start},
-        {"circular_stop",        circular_stop},
-        {"circular_start_stop",  circular_start_stop},
+        {"circular_start", circular_start},
+        {"circular_stop", circular_stop},
+        {"circular_start_stop", circular_start_stop},
 
-        {"elastic_start",        elastic_start},
-        {"elastic_stop",         elastic_stop},
-        {"elastic_start_stop",   elastic_start_stop},
+        {"elastic_start", elastic_start},
+        {"elastic_stop", elastic_stop},
+        {"elastic_start_stop", elastic_start_stop},
 
-        {"back_start",           back_start},
-        {"back_stop",            back_stop},
-        {"back_start_stop",      back_start_stop},
+        {"back_start", back_start},
+        {"back_stop", back_stop},
+        {"back_start_stop", back_start_stop},
 
-        {"bounce_start",         bounce_start},
-        {"bounce_stop",          bounce_stop},
-        {"bounce_start_stop",    bounce_start_stop},
+        {"bounce_start", bounce_start},
+        {"bounce_stop", bounce_stop},
+        {"bounce_start_stop", bounce_start_stop},
 
-        {"arch",                    arch},
-        {"arch_smooth_step",        arch_smooth_step},
-        {"arch_smooth_start_stop",  arch_smooth_start_stop},
-        {"arch_smooth_start",       arch_smooth_start},
-        {"arch_smooth_stop",        arch_smooth_stop},
+        {"arch", arch},
+        {"arch_smooth_step", arch_smooth_step},
+        {"arch_smooth_start_stop", arch_smooth_start_stop},
+        {"arch_smooth_start", arch_smooth_start},
+        {"arch_smooth_stop", arch_smooth_stop},
     };
     return list;
 }
 
-} //end of namesace ease
-} //end of namespace tweeny
+} // namespace ease
+} // namespace seq

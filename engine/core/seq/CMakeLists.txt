@@ -1,4 +1,4 @@
-set(target_name tweeny)
+set(target_name seq)
 
 file(GLOB_RECURSE SOURCES "*.cpp" "*.h" "*.hpp")
 
@@ -29,7 +29,7 @@ target_include_directories(${target_name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
 ###############################################################################################
 
-set(target_name tweeny_tests)
+set(target_name seq_tests)
 add_library(${target_name} EXCLUDE_FROM_ALL ${TESTS_SOURCES})
 
 # Add definitions
@@ -42,5 +42,5 @@ set_target_properties(${target_name} PROPERTIES
 )
 
 target_link_libraries(${target_name} PUBLIC suitepp)
-target_link_libraries(${target_name} PUBLIC tweeny)
+target_link_libraries(${target_name} PUBLIC seq)
 target_include_directories(${target_name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)

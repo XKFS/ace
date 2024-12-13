@@ -40,7 +40,7 @@ target_link_libraries (${target_name}
     assimp
     string_utils
     monort
-    tweeny
+    seq
 )
 
 target_precompile_headers(${target_name}

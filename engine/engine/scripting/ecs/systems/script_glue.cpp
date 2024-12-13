@@ -18,7 +18,7 @@
 
 #include <filesystem/filesystem.h>
 #include <logging/logging.h>
-#include <tweeny/tweeny.h>
+#include <seq/seq.h>
 
 namespace mono
 {
@@ -309,18 +309,18 @@ auto internal_m2n_destroy_entity(entt::entity id, float seconds) -> bool
     seconds = std::max(0.0001f, seconds);
 
     delta_t secs(seconds);
-    auto dur = std::chrono::duration_cast<tweeny::duration_t>(secs);
+    auto dur = std::chrono::duration_cast<seq::duration_t>(secs);
 
-    auto tween = tweeny::delay(dur);
+    auto tween = seq::delay(dur);
     tween.on_end.connect(
         [id]()
         {
             internal_m2n_destroy_entity_immediate(id);
         });
 
-    tweeny::tween_scope_policy policy{};
+    seq::seq_scope_policy policy{};
     policy.scope = "script";
-    tweeny::start(tween, policy);
+    seq::start(tween, policy);
 
     return true;
 }

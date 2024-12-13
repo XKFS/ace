@@ -1,15 +1,15 @@
-#include "tween_action.h"
-#include "tween_inspector.h"
+#include "seq_action.h"
+#include "seq_inspector.h"
 
-namespace tweeny
+namespace seq
 {
-tween_id_t unique_id = 1;
+seq_id_t unique_id = 1;
 
-tween_action::tween_action(creator_t&& creator, duration_t duration, sentinel_t sentinel)
+seq_action::seq_action(creator_t&& creator, duration_t duration, sentinel_t sentinel)
     : id_(unique_id++)
     , creator_(std::move(creator))
     , duration_(duration)
-    , sentinel_(sentinel)
+    , sentinel_(std::move(sentinel))
 {
     if(duration_ < duration_t::zero())
     {
@@ -17,17 +17,22 @@ tween_action::tween_action(creator_t&& creator, duration_t duration, sentinel_t 
     }
 }
 
-tween_id_t tween_action::get_id() const
+auto seq_action::get_id() const -> seq_id_t
 {
     return id_;
 }
 
-bool tween_action::is_valid() const noexcept
+seq_action::operator seq_id_t() const
+{
+    return get_id();
+}
+
+auto seq_action::is_valid() const noexcept -> bool
 {
     return get_id() > 0;
 }
 
-void tween_action::update_elapsed(duration_t update_time)
+void seq_action::update_elapsed(duration_t update_time)
 {
     elapsed_ += update_time;
 
@@ -36,7 +41,7 @@ void tween_action::update_elapsed(duration_t update_time)
     clamp_elapsed();
 }
 
-void tween_action::set_elapsed(duration_t elapsed)
+void seq_action::set_elapsed(duration_t elapsed)
 {
     elapsed_ = elapsed;
     elapsed_not_clamped_ = elapsed;
@@ -44,7 +49,7 @@ void tween_action::set_elapsed(duration_t elapsed)
     clamp_elapsed();
 }
 
-void tween_action::clamp_elapsed()
+void seq_action::clamp_elapsed()
 {
     elapsed_ = std::max(elapsed_, duration_t::zero());
     elapsed_ = std::min(elapsed_, duration_);
@@ -52,7 +57,7 @@ void tween_action::clamp_elapsed()
     elapsed_not_clamped_ = std::max(elapsed_not_clamped_, duration_t::zero());
 }
 
-void tween_action::start()
+void seq_action::start()
 {
     if(creator_ == nullptr)
     {
@@ -65,24 +70,24 @@ void tween_action::start()
     on_begin.emit();
     updater_ = creator_();
     state_ = updater_(0ms, *this);
-    inspector::update_tween_state(*this, state_);
+    inspector::update_action_state(*this, state_);
 
     if(state_ == state_t::finished)
     {
-        if(false == sentinel_.expired())
+        if(!sentinel_.expired())
         {
             on_end.emit();
         }
     }
 }
 
-void tween_action::stop()
+void seq_action::stop()
 {
     state_ = state_t::finished;
-    inspector::update_tween_state(*this, state_);
+    inspector::update_action_state(*this, state_);
 }
 
-void tween_action::resume(const std::string& key, bool force)
+void seq_action::resume(const std::string& key, bool force)
 {
     if(state_ == state_t::paused)
     {
@@ -90,12 +95,12 @@ void tween_action::resume(const std::string& key, bool force)
         {
             pause_key_ = {};
             state_ = state_t::running;
-            inspector::update_tween_state(*this, state_);
+            inspector::update_action_state(*this, state_);
         }
     }
 }
 
-void tween_action::pause(const std::string& key)
+void seq_action::pause(const std::string& key)
 {
     if(state_ == state_t::running)
     {
@@ -103,20 +108,20 @@ void tween_action::pause(const std::string& key)
     }
 }
 
-void tween_action::pause_forced(const std::string& key)
+void seq_action::pause_forced(const std::string& key)
 {
     pause_key_ = key;
 
     pause_forced();
 }
 
-void tween_action::pause_forced()
+void seq_action::pause_forced()
 {
     state_ = state_t::paused;
-    inspector::update_tween_state(*this, state_);
+    inspector::update_action_state(*this, state_);
 }
 
-state_t tween_action::update(duration_t delta)
+auto seq_action::update(duration_t delta) -> state_t
 {
     if(state_ == state_t::finished || state_ == state_t::paused)
     {
@@ -135,8 +140,8 @@ state_t tween_action::update(duration_t delta)
 
     if(state_ == state_t::finished)
     {
-        inspector::update_tween_state(*this, state_);
-        if(false == sentinel_.expired())
+        inspector::update_action_state(*this, state_);
+        if(!sentinel_.expired())
         {
             on_end.emit();
         }

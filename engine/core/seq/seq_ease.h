@@ -4,7 +4,7 @@
 #include <functional>
 #include <utility>
 
-namespace tweeny
+namespace seq
 {
 namespace ease
 {

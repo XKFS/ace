@@ -17,7 +17,7 @@
 #include <filesystem/filesystem.h>
 #include <logging/logging.h>
 #include <simulation/simulation.h>
-#include <tweeny/tweeny.h>
+#include <seq/seq.h>
 namespace ace
 {
 namespace
@@ -421,7 +421,7 @@ void script_system::on_play_end(rtti::context& ctx)
     auto& scn = ec.get_scene();
     auto& registry = *scn.registry;
 
-    tweeny::scope::stop_all("script");
+    seq::scope::stop_all("script");
 
     try
     {

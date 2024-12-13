@@ -381,7 +381,57 @@ static void process_drag_drop_target(rtti::context& ctx, const camera_component&
         ImGui::EndDragDropTarget();
     }
 }
+void draw_selected_camera(rtti::context& ctx, entt::handle editor_camera, const ImVec2& size)
+{
+    auto& em = ctx.get_cached<editing_manager>();
 
+    auto& selected = em.selection_data.object;
+
+    if(selected.is_type<entt::handle>())
+    {
+        auto sel = selected.get_value<entt::handle>();
+
+        if(sel && (editor_camera != sel) && sel.all_of<camera_component>())
+        {
+            auto& selected_camera = sel.get<camera_component>();
+            const auto& camera = selected_camera.get_camera();
+            auto& render_view = selected_camera.get_render_view();
+            const auto& viewport_size = camera.get_viewport_size();
+            const auto& obuffer = render_view.fbo_safe_get("OBUFFER");
+
+            if(!obuffer)
+            {
+                return;
+
+            }
+            float factor =
+                std::min(size.x / float(viewport_size.width), size.y / float(viewport_size.height)) / 4.0f;
+            ImVec2 bounds(viewport_size.width * factor, viewport_size.height * factor);
+            auto p = ImGui::GetWindowPos();
+            p.x += size.x - bounds.x - 20.0f;
+            p.y += size.y - bounds.y - 40.0f;
+            ImGui::SetCursorScreenPos(p);
+            // ImGui::SetNextWindowPos(p);
+            // if(ImGui::Begin("Camera Preview", nullptr,
+            //               ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoCollapse |
+            //                   ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
+            //                   ImGuiWindowFlags_AlwaysAutoResize))
+            // {
+                const auto& tex = obuffer->get_texture(0);
+                ImGui::Image(ImGui::ToId(tex), bounds);
+
+            // }
+            // ImGui::End();
+
+            if(ImGui::IsKeyPressed(ImGuiKey_F))
+            {
+                auto& transform = editor_camera.get<transform_component>();
+                auto& transform_selected = sel.get<transform_component>();
+                transform_selected.set_transform_global(transform.get_transform_global());
+            }
+        }
+    }
+}
 } // namespace
 
 void scene_panel::draw_menubar(rtti::context& ctx)
@@ -635,9 +685,11 @@ void scene_panel::draw_ui(rtti::context& ctx)
     auto size = ImGui::GetContentRegionAvail();
     auto pos = ImGui::GetCursorScreenPos();
 
+
     auto& camera_comp = editor_camera.get<camera_component>();
     if(size.x > 0 && size.y > 0)
     {
+
         camera_comp.get_camera().set_viewport_pos(
             {static_cast<std::uint32_t>(pos.x), static_cast<std::uint32_t>(pos.y)});
         camera_comp.set_viewport_size({static_cast<std::uint32_t>(size.x), static_cast<std::uint32_t>(size.y)});
@@ -701,6 +753,7 @@ void scene_panel::draw_ui(rtti::context& ctx)
 
         manipulation_gizmos(editor_camera, em);
         handle_camera_movement(editor_camera, move_dir_, acceleration_, is_dragging_);
+        draw_selected_camera(ctx, editor_camera, size);
 
         camera_comp.get_pipeline_data().get_pipeline()->set_debug_pass(visualize_passes_);
     }

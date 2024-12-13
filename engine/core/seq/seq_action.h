@@ -1,57 +1,56 @@
 #pragma once
-#include "tween_common.h"
+#include "seq_common.h"
 #include <hpp/event.hpp>
 
-namespace tweeny
+namespace seq
 {
 
-struct tween_action
+struct seq_action
 {
-    friend struct tween_private;
+    friend struct seq_private;
 
-    using updater_t = std::function<state_t(duration_t, tween_action&)>;
+    using updater_t = std::function<state_t(duration_t, seq_action&)>;
     using creator_t = std::function<updater_t()>;
 
-    tween_action() = default;
-    ~tween_action() = default;
-    tween_action(creator_t&& creator, duration_t duration, sentinel_t sentinel);
+    seq_action() = default;
+    ~seq_action() = default;
+    seq_action(creator_t&& creator, duration_t duration, sentinel_t sentinel);
 
-    tween_action(const tween_action&) = default;
-    tween_action(tween_action&&) = default;
+    seq_action(const seq_action&) = default;
+    seq_action(seq_action&&) = default;
 
-    tween_action& operator=(const tween_action&) = default;
-    tween_action& operator=(tween_action&&) = default;
+    auto operator=(const seq_action&) -> seq_action& = default;
+    auto operator=(seq_action&&) -> seq_action& = default;
 
     //---------------------------------------------------------------------------------------
-    /// on_begin - Emit when tween is started.
+    /// on_begin - Emit when action is started.
     //---------------------------------------------------------------------------------------
     hpp::event<void()> on_begin;
 
     //---------------------------------------------------------------------------------------
-    /// on_step - Emit every time the tweened value is changed.
+    /// on_step - Emit every time the action value is changed.
     //---------------------------------------------------------------------------------------
     hpp::event<void()> on_step;
 
     //---------------------------------------------------------------------------------------
-    /// on_update - Emit every frame when state of tween is running.
+    /// on_update - Emit every frame when state of action is running.
     //---------------------------------------------------------------------------------------
     hpp::event<void()> on_update;
 
     //---------------------------------------------------------------------------------------
-    /// on_end - Emit when tween is finished, if stop is called we consider it
+    /// on_end - Emit when action is finished, if stop is called we consider it
     /// as interupt and on_end is not called.
     //---------------------------------------------------------------------------------------
     hpp::event<void()> on_end;
 
-    tween_inspect_info::ptr info;
+    seq_inspect_info::ptr info;
 
-    tween_id_t get_id() const;
-    inline operator tween_id_t() const
-    {
-        return get_id();
-    }
+    auto get_id() const -> seq_id_t;
 
-    bool is_valid() const noexcept;
+    operator seq_id_t() const;
+
+    auto is_valid() const noexcept -> bool;
+
 private:
     void update_elapsed(duration_t update_time);
     void set_elapsed(duration_t elapsed);
@@ -66,9 +65,9 @@ private:
     void pause_forced(const std::string& key);
     void pause_forced();
 
-    state_t update(duration_t delta);
-private:
-    tween_id_t id_ {};
+    auto update(duration_t delta) -> state_t;
+
+    seq_id_t id_{};
     creator_t creator_;
     updater_t updater_;
 
@@ -86,4 +85,4 @@ private:
     float speed_multiplier_ = 1.0f;
 };
 
-}
+} // namespace seq

@@ -133,11 +133,9 @@ private:
     struct mono_app_cache
     {
         std::vector<mono::mono_type> scriptable_component_types;
-        std::vector<mono::mono_type> scriptable_system_types;
 
     } app_cache_;
 
-    std::vector<script_component::scoped_object_ptr> scriptable_systems_;
 
     enum class call_progress
     {

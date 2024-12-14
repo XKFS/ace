@@ -32,53 +32,6 @@ public static class SystemManager
     }
 }
 
-public abstract class ScriptSystem
-{
-    public ScriptSystem()
-    {
-        SystemManager.OnUpdate += OnUpdate;
-    }
-
-    ~ScriptSystem()
-    {
-        SystemManager.OnUpdate -= OnUpdate;
-    }
-
-    public virtual void OnCreate()
-    {
-
-    }
-    public virtual void OnStart()
-    {
-
-    }
-
-    public virtual void OnDestroy()
-    {
-
-    }
-
-    public virtual void OnUpdate()
-    {
-
-    }
-
-    private void internal_n2m_on_create()
-    {
-        OnCreate();
-    }
-    private void internal_n2m_on_start()
-    {
-        OnStart();
-    }
-
-    private void internal_n2m_on_destroy()
-    {
-        OnDestroy();
-    }
-}
-
-
 }
 
 }

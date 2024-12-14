@@ -11,6 +11,8 @@
 #include <engine/assets/impl/asset_writer.h>
 #include <engine/ecs/components/id_component.h>
 #include <engine/meta/ecs/entity.hpp>
+#include <engine/meta/rendering/material.hpp>
+#include <engine/meta/physics/physics_material.hpp>
 #include <engine/physics/physics_material.h>
 #include <engine/rendering/material.h>
 #include <engine/rendering/mesh.h>
@@ -352,6 +354,13 @@ auto draw_item(const content_browser_item& item)
         action = entry_action::none;
     }
 
+    if(open_rename_menu)
+    {
+        if(item.on_click)
+        {
+            item.on_click();
+        }
+    }
     switch(action)
     {
         case entry_action::clicked:
@@ -826,7 +835,7 @@ void content_browser_panel::context_create_menu(rtti::context& ctx)
 
         ImGui::Separator();
 
-        if(ImGui::MenuItem("C# Script Component"))
+        if(ImGui::MenuItem("C# Script"))
         {
             auto& am = ctx.get_cached<asset_manager>();
 
@@ -836,23 +845,6 @@ void content_browser_panel::context_create_menu(rtti::context& ctx)
             fs::error_code ec;
             auto new_script_template =
                 fs::resolve_protocol("engine:/data/scripts/template/TemplateComponent" + ex::get_format<script>());
-            fs::copy(new_script_template, available, ec);
-
-            if(!ec)
-            {
-                pending_rename = available;
-            }
-        }
-
-        if(ImGui::MenuItem("C# Script System"))
-        {
-            auto& am = ctx.get_cached<asset_manager>();
-
-            const auto available = get_new_file_simple(cache_.get_path(), "NewScriptSystem", ex::get_format<script>());
-
-            fs::error_code ec;
-            auto new_script_template =
-                fs::resolve_protocol("engine:/data/scripts/template/TemplateSystem" + ex::get_format<script>());
             fs::copy(new_script_template, available, ec);
 
             if(!ec)

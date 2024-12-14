@@ -2,6 +2,8 @@
 #include "imgui/imgui.h"
 #include "inspectors.h"
 
+#include <engine/engine.h>
+#include <engine/events.h>
 #include <engine/animation/animation.h>
 #include <engine/assets/asset_manager.h>
 #include <engine/assets/impl/asset_extensions.h>
@@ -12,7 +14,9 @@
 #include <engine/rendering/material.h>
 #include <engine/rendering/mesh.h>
 #include <engine/meta/rendering/texture.hpp>
+#include <engine/meta/rendering/material.hpp>
 #include <engine/meta/ecs/entity.hpp>
+#include <engine/meta/physics/physics_material.hpp>
 
 #include <editor/editing/editing_manager.h>
 #include <editor/editing/thumbnail_manager.h>
@@ -493,6 +497,21 @@ auto inspector_asset_handle_animation::inspect(rtti::context& ctx,
         ImGui::EndTabBar();
     }
     return result;
+}
+
+inspector_asset_handle_prefab::inspector_asset_handle_prefab()
+{
+    auto& ctx = engine::context();
+    auto& ev = ctx.get_cached<events>();
+
+    ev.on_script_recompile.connect(sentinel_, 1000, this, &inspector_asset_handle_prefab::on_script_recompile);
+
+}
+void inspector_asset_handle_prefab::on_script_recompile(rtti::context& ctx, const std::string& protocol)
+{
+    inspected_asset_ = {};
+    inspected_scene_.unload();
+    inspected_prefab_ = {};
 }
 
 auto inspector_asset_handle_prefab::inspect_as_property(rtti::context& ctx, asset_handle<prefab>& data)

@@ -66,14 +66,19 @@ REFLECT_INSPECTOR_INLINE(inspector_asset_handle_animation, asset_handle<animatio
 struct inspector_asset_handle_prefab : public inspector_asset_handle
 {
     REFLECTABLEV(inspector_asset_handle_prefab, inspector_asset_handle)
+    inspector_asset_handle_prefab();
     auto inspect_as_property(rtti::context& ctx, asset_handle<prefab>& data) -> inspect_result;
     auto inspect(rtti::context& ctx, rttr::variant& var, const var_info& info, const meta_getter& get_metadata)
         -> inspect_result;
 
 private:
+    void on_script_recompile(rtti::context& ctx, const std::string& protocol);
+
     asset_handle<prefab> inspected_asset_;
     scene inspected_scene_;
     entt::handle inspected_prefab_;
+    std::shared_ptr<int> sentinel_ = std::make_shared<int>(0);
+
 };
 REFLECT_INSPECTOR_INLINE(inspector_asset_handle_prefab, asset_handle<prefab>)
 

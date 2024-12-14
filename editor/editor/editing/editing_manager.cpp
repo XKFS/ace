@@ -78,9 +78,9 @@ void editing_manager::save_checkpoint(rtti::context& ctx)
                 id_comp.id = generate_uuid();
             }
         }
-        
-        unselect();
     }
+
+    unselect();
 
     scene_cache_ = {};
     scene_cache_source_ = scn.source;

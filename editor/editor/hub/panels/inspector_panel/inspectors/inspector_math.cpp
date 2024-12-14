@@ -149,10 +149,11 @@ auto inspector_bvec2::inspect(rtti::context& ctx,
     flags |= data.y ? bflags::y : 0;
 
     bool mod = false;
+    ImGui::BeginGroup();
     mod |= ImGui::CheckboxFlags("X", &flags, bflags::x);
     ImGui::SameLine();
     mod |= ImGui::CheckboxFlags("Y", &flags, bflags::y);
-
+    ImGui::EndGroup();
     if(mod)
     {
         data.x = flags & bflags::x;
@@ -187,11 +188,13 @@ auto inspector_bvec3::inspect(rtti::context& ctx,
     flags |= data.z ? bflags::z : 0;
 
     bool mod = false;
+    ImGui::BeginGroup();
     mod |= ImGui::CheckboxFlags("X", &flags, bflags::x);
     ImGui::SameLine();
     mod |= ImGui::CheckboxFlags("Y", &flags, bflags::y);
     ImGui::SameLine();
     mod |= ImGui::CheckboxFlags("Z", &flags, bflags::z);
+    ImGui::EndGroup();
 
     if(mod)
     {
@@ -231,6 +234,7 @@ auto inspector_bvec4::inspect(rtti::context& ctx,
     flags |= data.w ? bflags::w : 0;
 
     bool mod = false;
+    ImGui::BeginGroup();
     mod |= ImGui::CheckboxFlags("X", &flags, bflags::x);
     ImGui::SameLine();
     mod |= ImGui::CheckboxFlags("Y", &flags, bflags::y);
@@ -238,6 +242,7 @@ auto inspector_bvec4::inspect(rtti::context& ctx,
     mod |= ImGui::CheckboxFlags("Z", &flags, bflags::z);
     ImGui::SameLine();
     mod |= ImGui::CheckboxFlags("W", &flags, bflags::w);
+    ImGui::EndGroup();
 
     if(mod)
     {

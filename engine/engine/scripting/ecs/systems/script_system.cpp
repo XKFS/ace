@@ -305,9 +305,6 @@ auto script_system::load_app_domain(rtti::context& ctx, bool recompile) -> bool
         auto engine_script_lib = fs::resolve_protocol(get_lib_compiled_key("engine"));
         auto engine_assembly = domain_->get_assembly(engine_script_lib.string());
 
-        auto system_type = engine_assembly.get_type("Ace.Core", "ScriptSystem");
-        app_cache_.scriptable_system_types = assembly.get_types_derived_from(system_type);
-
         auto comp_type = engine_assembly.get_type("Ace.Core", "ScriptComponent");
         app_cache_.scriptable_component_types = assembly.get_types_derived_from(comp_type);
     }
@@ -345,31 +342,6 @@ void script_system::on_play_begin(rtti::context& ctx)
     }
     try
     {
-        {
-            scriptable_systems_.clear();
-            scriptable_systems_.reserve(app_cache_.scriptable_system_types.size());
-            for(const auto& type : app_cache_.scriptable_system_types)
-            {
-                auto obj = type.new_instance();
-                auto scoped_obj = std::make_shared<mono::mono_scoped_object>(obj);
-                scriptable_systems_.emplace_back(scoped_obj);
-            }
-
-            for(const auto& scoped_obj : scriptable_systems_)
-            {
-                const auto& obj = scoped_obj->object;
-                auto method = mono::make_method_invoker<void()>(obj, "internal_n2m_on_create");
-                method(obj);
-            }
-
-            for(const auto& scoped_obj : scriptable_systems_)
-            {
-                const auto& obj = scoped_obj->object;
-                auto method = mono::make_method_invoker<void()>(obj, "internal_n2m_on_start");
-                method(obj);
-            }
-        }
-
         auto& ec = ctx.get_cached<ecs>();
         auto& scn = ec.get_scene();
         auto& registry = *scn.registry;
@@ -431,12 +403,6 @@ void script_system::on_play_end(rtti::context& ctx)
                 comp.destroy();
             });
 
-        for(const auto& scoped_obj : scriptable_systems_)
-        {
-            const auto& obj = scoped_obj->object;
-            auto method = mono::make_method_invoker<void()>(obj, "internal_n2m_on_destroy");
-            method(obj);
-        }
     }
     catch(const mono::mono_exception& e)
     {

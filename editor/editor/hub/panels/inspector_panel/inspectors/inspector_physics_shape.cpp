@@ -48,6 +48,8 @@ inspect_result inspector_physics_compound_shape::inspect(rtti::context& ctx,
         }
         ImGui::EndCombo();
     }
+    result.edit_finished |= ImGui::IsItemDeactivatedAfterEdit();
+
     ImGui::DrawItemActivityOutline();
 
     property_layout::get_current()->pop_layout();

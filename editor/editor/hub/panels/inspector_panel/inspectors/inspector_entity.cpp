@@ -1,14 +1,13 @@
 #include "inspector_entity.h"
 #include "inspectors.h"
 
-#include <editor/imgui/imgui_interface.h>
 #include <editor/editing/editing_manager.h>
+#include <editor/imgui/imgui_interface.h>
 #include <editor/system/project_manager.h>
 #include <engine/meta/ecs/components/all_components.h>
 #include <engine/scripting/ecs/systems/script_system.h>
 #include <hpp/type_name.hpp>
 #include <hpp/utility.hpp>
-
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_internal.h>
@@ -143,7 +142,6 @@ auto get_entity_name(entt::handle entity) -> const std::string&
     return tag.name;
 }
 
-
 static auto process_drag_drop_target(rtti::context& ctx, entt::handle& obj) -> bool
 {
     if(ImGui::IsDragDropPossibleTargetForType("entity"))
@@ -164,7 +162,6 @@ static auto process_drag_drop_target(rtti::context& ctx, entt::handle& obj) -> b
             ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
         }
 
-
         {
             auto payload = ImGui::AcceptDragDropPayload("entity");
             if(payload != nullptr)
@@ -178,7 +175,6 @@ static auto process_drag_drop_target(rtti::context& ctx, entt::handle& obj) -> b
                 }
             }
         }
-
 
         ImGui::EndDragDropTarget();
     }
@@ -194,21 +190,22 @@ auto inspector_entity::inspect_as_property(rtti::context& ctx, entt::handle& dat
 
     inspect_result result;
 
-
     if(ImGui::Button(ICON_MDI_DELETE, ImVec2(0.0f, ImGui::GetFrameHeight())))
     {
         data = {};
         result.changed = true;
-        result.edit_finished = true;
     }
+    result.edit_finished |= ImGui::IsItemDeactivatedAfterEdit();
 
     ImGui::SameLine();
-    if(ImGui::Button(fmt::format("{} {}", ICON_MDI_CUBE, name).c_str(), ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetFrameHeight())))
+    if(ImGui::Button(fmt::format("{} {}", ICON_MDI_CUBE, name).c_str(),
+                     ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetFrameHeight())))
     {
         auto& em = ctx.get_cached<editing_manager>();
 
         em.focus(data);
     }
+    result.edit_finished |= ImGui::IsItemDeactivatedAfterEdit();
 
     bool drag_dropped = process_drag_drop_target(ctx, data);
     result.changed |= drag_dropped;
@@ -216,7 +213,6 @@ auto inspector_entity::inspect_as_property(rtti::context& ctx, entt::handle& dat
 
     return result;
 }
-
 
 auto inspector_entity::inspect(rtti::context& ctx,
                                rttr::variant& var,
@@ -304,7 +300,7 @@ auto inspector_entity::inspect(rtti::context& ctx,
                         field_info.read_only = true;
                         ImGui::PushReadonly(field_info.read_only);
 
-                        std::string var = ICON_MDI_SCRIPT" " + source_loc.stem().string();
+                        std::string var = ICON_MDI_SCRIPT " " + source_loc.stem().string();
                         {
                             property_layout layout("Script");
 
@@ -387,7 +383,6 @@ auto inspector_entity::inspect(rtti::context& ctx,
 
         if(ImGui::BeginPopup("COMPONENT_MENU"))
         {
-
             if(ImGui::IsWindowAppearing())
             {
                 ImGui::SetKeyboardFocusHere();
@@ -409,6 +404,8 @@ auto inspector_entity::inspect(rtti::context& ctx,
                 callbacks.on_add = [&]()
                 {
                     data.get_or_emplace<script_component>().add_script_component(type);
+                    result.changed |= true;
+                    result.edit_finished |= true;
                 };
 
                 callbacks.on_remove = [&]()
@@ -437,11 +434,15 @@ auto inspector_entity::inspect(rtti::context& ctx,
                     callbacks.on_add = [&]()
                     {
                         data.emplace<ctype>();
+                        result.changed |= true;
+                        result.edit_finished |= true;
                     };
 
                     callbacks.on_remove = [&]()
                     {
                         data.remove<ctype>();
+                        result.changed |= true;
+                        result.edit_finished |= true;
                     };
 
                     callbacks.can_remove = []()
@@ -449,7 +450,7 @@ auto inspector_entity::inspect(rtti::context& ctx,
                         return true;
                     };
 
-                           // callbacks.icon = ICON_MDI_GRID;
+                    // callbacks.icon = ICON_MDI_GRID;
 
                     list_component(filter_, name, callbacks);
                 });

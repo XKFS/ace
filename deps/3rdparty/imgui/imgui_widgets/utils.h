@@ -65,7 +65,7 @@ IMGUI_API void RenderFrameEx(ImVec2 p_min, ImVec2 p_max, float rounding = -1.0f,
 
 IMGUI_API void SetItemFocusFrame(ImU32 color = GetColorU32(ImGuiCol_NavCursor));
 IMGUI_API void SameLineInner();
-IMGUI_API void Spinner(float radius,
+IMGUI_API void Spinner(float diameter,
                        float thickness,
                        int num_segments,
                        float speed,

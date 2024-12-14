@@ -480,7 +480,7 @@ void RenderFrameEx(ImVec2 p_min, ImVec2 p_max, float rounding, float thickness)
     window->DrawList->AddRect(p_min, p_max, GetColorU32(ImGuiCol_Border), rounding, 0, thickness);
 }
 
-void Spinner(float radius, float thickness, int num_segments, float speed, ImU32 color)
+void Spinner(float diameter, float thickness, int num_segments, float speed, ImU32 color)
 {
     auto window = GetCurrentWindow();
     if(window->SkipItems)
@@ -489,16 +489,20 @@ void Spinner(float radius, float thickness, int num_segments, float speed, ImU32
     }
 
     auto& g = *ImGui::GetCurrentContext();
-    const auto pos = window->DC.CursorPos;
+    auto pos = window->DC.CursorPos;
 
-    ImVec2 size{radius * 2, radius * 2};
+    auto padding = ImGui::GetStyle().FramePadding;
+
+    pos += padding;
+    diameter -= thickness * 0.5f;
+    ImVec2 size{diameter, diameter};
     const ImRect bb{pos, pos + size};
     ItemSize(bb);
     if(!ItemAdd(bb, 0))
     {
         return;
     }
-
+    float radius = diameter * 0.5f;
     auto time = static_cast<float>(g.Time) * speed;
     window->DrawList->PathClear();
     int start = static_cast<int>(abs(ImSin(time) * (num_segments - 5)));

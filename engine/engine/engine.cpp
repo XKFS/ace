@@ -21,8 +21,8 @@
 #include <ospp/event.h>
 
 #include <logging/logging.h>
-#include <simulation/simulation.h>
 #include <seq/seq.h>
+#include <simulation/simulation.h>
 
 #include <filesystem/filesystem.h>
 
@@ -101,8 +101,6 @@ auto engine::create(rtti::context& ctx, cmd_line::parser& parser) -> bool
 auto engine::init_core(const cmd_line::parser& parser) -> bool
 {
     auto& ctx = engine::context();
-
-    //    APPLOG_TRACE(parser.usage());
 
     if(!ctx.get_cached<threader>().init(ctx))
     {

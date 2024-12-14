@@ -1,8 +1,7 @@
 #include "service.h"
 #include <chrono>
-#include <iostream>
 #include <csignal>
-
+#include <iostream>
 
 using namespace std::chrono_literals;
 
@@ -99,22 +98,9 @@ auto service::unload() -> bool
 
 auto service::init() -> bool
 {
-    std::stringstream out, err;
-    if(!parser_.run(out, err))
+    if(!parser_.run())
     {
-        auto parse_error = out.str();
-        if(parse_error.empty())
-        {
-            parse_error = "Failed to parse command line.";
-        }
-        //		APPLOG_ERROR(parse_error);
-
         return false;
-    }
-    auto parse_info = out.str();
-    if(!parse_info.empty())
-    {
-        //		APPLOG_TRACE(parse_info);
     }
 
     for(const auto& module : modules_)
@@ -150,7 +136,6 @@ auto service::interrupt() -> bool
 
     return processed;
 }
-
 
 auto service::process() -> bool
 {

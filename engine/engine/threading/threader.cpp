@@ -27,12 +27,6 @@ threader::threader()
     pool = std::make_unique<tpp::thread_pool>();
 }
 
-threader::~threader()
-{
-    pool.reset();
-    tpp::shutdown();
-}
-
 auto threader::init(rtti::context& ctx) -> bool
 {
     APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
@@ -43,6 +37,12 @@ auto threader::init(rtti::context& ctx) -> bool
 auto threader::deinit(rtti::context& ctx) -> bool
 {
     APPLOG_TRACE("{}::{}", hpp::type_name_str(*this), __func__);
+
+    if(pool)
+    {
+        pool.reset();
+        tpp::shutdown();
+    }
 
     return true;
 }

@@ -2229,19 +2229,24 @@ struct DebugDrawEncoderImpl
     bgfx::Encoder* m_defaultEncoder;
 };
 
+static bool s_initted = false;
 static DebugDrawEncoderImpl s_dde;
 BX_STATIC_ASSERT(sizeof(DebugDrawEncoderImpl) <= sizeof(DebugDrawEncoder), "Size must match");
 
 void ddInit(bx::AllocatorI* _allocator)
 {
+    s_initted = true;
     s_dds.init(_allocator);
     s_dde.init(bgfx::begin());
 }
 
 void ddShutdown()
 {
-    s_dde.shutdown();
-    s_dds.shutdown();
+    if(s_initted)
+    {
+        s_dde.shutdown();
+        s_dds.shutdown();
+    }
 }
 
 SpriteHandle ddCreateSprite(uint16_t _width, uint16_t _height, const void* _data)

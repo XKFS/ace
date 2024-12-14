@@ -13,7 +13,6 @@ namespace ace
 struct threader
 {
     threader();
-    ~threader();
 
     auto init(rtti::context& ctx) -> bool;
     auto deinit(rtti::context& ctx) -> bool;

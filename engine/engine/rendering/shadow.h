@@ -548,7 +548,7 @@ public:
 
     auto get_depth_type() const -> PackDepth::Enum;
     auto get_rt_texture(uint8_t split) const -> bgfx::TextureHandle;
-    auto get_depth_render_program(PackDepth::Enum depth) const -> bgfx::ProgramHandle;
+    auto get_depth_render_program(PackDepth::Enum depth) const -> gpu_program::ptr;
     void submit_uniforms(uint8_t stage) const;
 
 private:

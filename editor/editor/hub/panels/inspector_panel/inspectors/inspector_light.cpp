@@ -68,8 +68,10 @@ auto inspector_light_component::inspect(rtti::context& ctx,
                 auto depth_type = generator.get_depth_type();
 
                 ImGui::BeginGroup();
+                auto program = generator.get_depth_render_program(depth_type);
+                program->begin();
                 ImGui::Image(
-                    ImGui::ToTex(generator.get_rt_texture(0), 0, generator.get_depth_render_program(depth_type)).id,
+                    ImGui::ToTex(generator.get_rt_texture(0), 0, program->native_handle()).id,
                     ImVec2(256, 250));
 
                 if(light_val.type == light_type::directional)
@@ -78,12 +80,12 @@ auto inspector_light_component::inspect(rtti::context& ctx,
                     {
                         ImGui::Image(ImGui::ToTex(generator.get_rt_texture(ii),
                                                   0,
-                                                  generator.get_depth_render_program(depth_type))
+                                                  program->native_handle())
                                          .id,
                                      ImVec2(256, 256));
                     }
                 }
-
+                program->end();
                 ImGui::EndGroup();
 
                 ImGui::TreePop();

@@ -210,7 +210,7 @@ auto camera::get_projection() const -> const math::transform&
             // Generate the updated perspective projection matrix
             float fov_radians = math::radians<float>(get_fov());
             static const auto perspective_ =
-                /*gfx::is_homogeneous_depth() ? math::perspectiveNO<float> :*/ math::perspectiveZO<float>;
+                gfx::is_homogeneous_depth() ? math::perspectiveNO<float> : math::perspectiveZO<float>;
 
             math::mat4 projection = perspective_(fov_radians, aspect_ratio_, near_clip_, far_clip_);
 
@@ -245,7 +245,7 @@ auto camera::get_projection() const -> const math::transform&
                                   float(viewport_size_.width) / 2.0f,
                                   -float(viewport_size_.height) / 2.0f};
             static const auto ortho_ =
-                /*gfx::is_homogeneous_depth() ? math::orthoNO<float> :*/ math::orthoZO<float>;
+                gfx::is_homogeneous_depth() ? math::orthoNO<float> : math::orthoZO<float>;
 
             math::mat4 projection = ortho_(rect.left * zoom,
                                            rect.right * zoom,
@@ -323,7 +323,7 @@ auto camera::get_frustum() const -> const math::frustum&
     // Recalculate frustum if necessary
     if(frustum_dirty_ && !frustum_locked_)
     {
-        frustum_.update(get_view(), get_projection(), false); // gfx::is_homogeneous_depth());
+        frustum_.update(get_view(), get_projection(), gfx::is_homogeneous_depth());
         frustum_dirty_ = false;
 
         // Also build the frustum / volume that represents the space between the

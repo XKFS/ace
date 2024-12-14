@@ -13,8 +13,8 @@
 
 #define BT_USE_SSE_IN_API
 #include "LinearMath/btThreads.h"
-#include <BulletCollision/NarrowPhaseCollision/btRaycastCallback.h>
 #include <BulletCollision/CollisionDispatch/btCollisionDispatcherMt.h>
+#include <BulletCollision/NarrowPhaseCollision/btRaycastCallback.h>
 #include <BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolverMt.h>
 #include <BulletDynamics/Dynamics/btDiscreteDynamicsWorldMt.h>
 
@@ -28,7 +28,7 @@ namespace bullet
 namespace
 {
 bool enable_logging = false;
-//#define BULLET_MT 1
+// #define BULLET_MT 1
 
 enum class manifold_type
 {
@@ -213,7 +213,6 @@ void cleanup_task_scheduler()
         btSetTaskScheduler(nullptr);
         delete scheduler;
     }
-
 
 #endif
 }
@@ -528,7 +527,6 @@ void handle_regular_collision(btPersistentManifold* manifold,
                      get_entity_name_from_user_index(obj_b->getUserIndex()));
     }
 
-
     auto& world = get_world_from_user_pointer(obj_a->getUserPointer());
     auto& new_manifold = world.pending_manifolds.emplace_back();
 
@@ -632,7 +630,7 @@ auto create_dynamics_world() -> bullet::world
     bullet::world world{};
     /// collision configuration contains default setup for memory, collision setup
     auto collision_config = std::make_shared<btDefaultCollisionConfiguration>();
-    //collision_config->setConvexConvexMultipointIterations();
+    // collision_config->setConvexConvexMultipointIterations();
 
     auto broadphase = std::make_shared<btDbvtBroadphase>();
 
@@ -647,7 +645,6 @@ auto create_dynamics_world() -> bullet::world
                                                                        collision_config.get());
     world.solver_pool = solver_pool;
 #else
-
 
     auto dispatcher = std::make_shared<btCollisionDispatcher>(collision_config.get());
     auto solver = std::make_shared<btSequentialImpulseConstraintSolver>();
@@ -780,19 +777,31 @@ void update_rigidbody_kind(bullet::rigidbody& body, physics_component& comp)
 
 void update_rigidbody_constraints(bullet::rigidbody& body, physics_component& comp)
 {
+    // Get freeze constraints for position and apply them
     auto freeze_position = comp.get_freeze_position();
     btVector3 linear_factor(float(!freeze_position.x), float(!freeze_position.y), float(!freeze_position.z));
-
     body.internal->setLinearFactor(linear_factor);
 
+    // Adjust velocity to respect linear constraints
+    auto velocity = body.internal->getLinearVelocity();
+    velocity *= linear_factor;
+    body.internal->setLinearVelocity(velocity);
+
+    // Get freeze constraints for rotation and apply them
     auto freeze_rotation = comp.get_freeze_rotation();
     btVector3 angular_factor(float(!freeze_rotation.x), float(!freeze_rotation.y), float(!freeze_rotation.z));
-
     body.internal->setAngularFactor(angular_factor);
 
+    // Adjust angular velocity to respect angular constraints
+    auto angular_velocity = body.internal->getAngularVelocity();
+    angular_velocity *= angular_factor;
+    body.internal->setAngularVelocity(angular_velocity);
+
+    // Clear forces and reapply gravity
     body.internal->clearForces();
     body.internal->applyGravity();
 
+    // Ensure the body is active
     wake_up(body);
 }
 
@@ -899,10 +908,6 @@ void recreate_phyisics_body(bullet::world& world, physics_component& comp, bool 
     {
         auto& body = owner.get<bullet::rigidbody>();
 
-        if(comp.is_property_dirty(physics_property::constraints) || is_kind_dirty)
-        {
-            update_rigidbody_constraints(body, comp);
-        }
         if(comp.is_property_dirty(physics_property::mass) || is_kind_dirty)
         {
             update_rigidbody_mass_and_inertia(body, comp);
@@ -924,6 +929,10 @@ void recreate_phyisics_body(bullet::world& world, physics_component& comp, bool 
             update_rigidbody_shape(body, comp);
             update_rigidbody_mass_and_inertia(body, comp);
             world.dynamics_world->updateSingleAabb(body.internal.get());
+        }
+        if(comp.is_property_dirty(physics_property::constraints) || is_kind_dirty)
+        {
+            update_rigidbody_constraints(body, comp);
         }
         if(is_kind_dirty)
         {

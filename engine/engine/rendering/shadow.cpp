@@ -1026,9 +1026,9 @@ auto shadowmap_generator::get_rt_texture(uint8_t split) const -> bgfx::TextureHa
     return bgfx::getTexture(rt_shadow_map_[split]);
 }
 
-auto shadowmap_generator::get_depth_render_program(PackDepth::Enum depth) const -> bgfx::ProgramHandle
+auto shadowmap_generator::get_depth_render_program(PackDepth::Enum depth) const -> gpu_program::ptr
 {
-    return programs_.m_drawDepth[depth]->native_handle();
+    return programs_.m_drawDepth[depth];
 }
 
 void shadowmap_generator::submit_uniforms(uint8_t stage) const
@@ -1467,45 +1467,45 @@ void shadowmap_generator::update(const camera& cam, const light& l, const math::
 
     if(LightType::SpotLight == settings_.m_lightType)
     {
-        lightFrustums[0].update(math::make_mat4(lightView[0]), math::make_mat4(lightProj[ProjType::Horizontal]), false);
+        lightFrustums[0].update(math::make_mat4(lightView[0]), math::make_mat4(lightProj[ProjType::Horizontal]), homogeneousDepth);
     }
     else if(LightType::PointLight == settings_.m_lightType)
     {
         lightFrustums[TetrahedronFaces::Green].update(math::make_mat4(lightView[TetrahedronFaces::Green]),
                                                       math::make_mat4(lightProj[ProjType::Horizontal]),
-                                                      false);
+                                                      homogeneousDepth);
 
         lightFrustums[TetrahedronFaces::Yellow].update(math::make_mat4(lightView[TetrahedronFaces::Yellow]),
                                                        math::make_mat4(lightProj[ProjType::Horizontal]),
-                                                       false);
+                                                       homogeneousDepth);
 
         if(settings_.m_stencilPack)
         {
             lightFrustums[TetrahedronFaces::Blue].update(math::make_mat4(lightView[TetrahedronFaces::Blue]),
                                                          math::make_mat4(lightProj[ProjType::Vertical]),
-                                                         false);
+                                                         homogeneousDepth);
 
             lightFrustums[TetrahedronFaces::Red].update(math::make_mat4(lightView[TetrahedronFaces::Red]),
                                                         math::make_mat4(lightProj[ProjType::Vertical]),
-                                                        false);
+                                                        homogeneousDepth);
         }
         else
         {
             lightFrustums[TetrahedronFaces::Blue].update(math::make_mat4(lightView[TetrahedronFaces::Blue]),
                                                          math::make_mat4(lightProj[ProjType::Horizontal]),
-                                                         false);
+                                                         homogeneousDepth);
 
             lightFrustums[TetrahedronFaces::Red].update(math::make_mat4(lightView[TetrahedronFaces::Red]),
                                                         math::make_mat4(lightProj[ProjType::Horizontal]),
-                                                        false);
+                                                        homogeneousDepth);
         }
     }
     else // LightType::DirectionalLight == settings.m_lightType
     {
-        lightFrustums[0].update(math::make_mat4(lightView[0]), math::make_mat4(lightProj[0]), false);
-        lightFrustums[1].update(math::make_mat4(lightView[0]), math::make_mat4(lightProj[1]), false);
-        lightFrustums[2].update(math::make_mat4(lightView[0]), math::make_mat4(lightProj[2]), false);
-        lightFrustums[3].update(math::make_mat4(lightView[0]), math::make_mat4(lightProj[3]), false);
+        lightFrustums[0].update(math::make_mat4(lightView[0]), math::make_mat4(lightProj[0]), homogeneousDepth);
+        lightFrustums[1].update(math::make_mat4(lightView[0]), math::make_mat4(lightProj[1]), homogeneousDepth);
+        lightFrustums[2].update(math::make_mat4(lightView[0]), math::make_mat4(lightProj[2]), homogeneousDepth);
+        lightFrustums[3].update(math::make_mat4(lightView[0]), math::make_mat4(lightProj[3]), homogeneousDepth);
     }
 
     // Prepare for scene.

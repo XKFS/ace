@@ -34,9 +34,9 @@ frustum::frustum()
     position = vec3(0, 0, 0);
 }
 
-frustum::frustum(const transform& View, const transform& Proj, bool _oglNDC)
+frustum::frustum(const transform& View, const transform& Proj, bool homogeneousDepth)
 {
-    update(View, Proj, _oglNDC);
+    update(View, Proj, homogeneousDepth);
 }
 
 frustum::frustum(const bbox& AABB)
@@ -63,7 +63,7 @@ frustum::frustum(const bbox& AABB)
     position = p;
 }
 
-void frustum::update(const transform& view, const transform& proj, bool _oglNDC)
+void frustum::update(const transform& view, const transform& proj, bool homogeneousDepth)
 {
     // Build a combined view & projection matrix
     const transform m = proj * view;
@@ -96,7 +96,7 @@ void frustum::update(const transform& view, const transform& proj, bool _oglNDC)
     planes[volume_plane::far_plane].data.z = m[2][3] - m[2][2];
     planes[volume_plane::far_plane].data.w = m[3][3] - m[3][2];
 
-    if(_oglNDC)
+    if(homogeneousDepth)
     {
         planes[volume_plane::near_plane].data.x = m[0][3] + m[0][2];
         planes[volume_plane::near_plane].data.y = m[1][3] + m[1][2];

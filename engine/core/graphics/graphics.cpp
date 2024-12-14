@@ -1226,12 +1226,13 @@ auto get_renderer_based_on_filename_extension(const std::string& _type) -> rende
 
 auto is_homogeneous_depth() -> bool
 {
-    return bgfx::getCaps()->homogeneousDepth;
+    //We handle this in shaders.
+    return false;//get_caps()->homogeneousDepth;
 }
 
 auto is_origin_bottom_left() -> bool
 {
-    return bgfx::getCaps()->originBottomLeft;
+    return get_caps()->originBottomLeft;
 }
 
 auto get_max_blend_transforms() -> uint32_t

@@ -127,13 +127,17 @@ REFLECT(light)
         .property("normal_bias",
                   &light::shadowmap_params::normal_bias)(rttr::metadata("pretty_name", "Normal Bias"),
                                                          rttr::metadata("min", 0.0f),
-                                                         rttr::metadata("max", 0.05f),
+                                                         rttr::metadata("max", 0.25f),
                                                          rttr::metadata("step", 0.00001f),
                                                          rttr::metadata("tooltip", "Shadowmap normal bias offset"))
         .property("near_plane", &light::shadowmap_params::near_plane)(rttr::metadata("pretty_name", "Near Plane"),
                                                                       rttr::metadata("min", 0.01f),
                                                                       rttr::metadata("max", 10.0f),
                                                                       rttr::metadata("tooltip", "Shadowmap near plane"))
+        .property("far_plane", &light::shadowmap_params::far_plane)(rttr::metadata("pretty_name", "Far Plane"),
+                                                                      rttr::metadata("min", 0.01f),
+                                                                      rttr::metadata("max", 10000.0f),
+                                                                      rttr::metadata("tooltip", "Shadowmap far plane"))
         .property("show_coverage", &light::shadowmap_params::show_coverage)(
             rttr::metadata("pretty_name", "Show Coverage"),
             rttr::metadata("tooltip", "Show shadowmap coverage in view."));

@@ -31,9 +31,10 @@ public:
      *
      * @param view The view transform.
      * @param proj The projection transform.
-     * @param _oglNDC Whether the frustum uses OpenGL's NDC.
+     * @param homogeneousDepth True when NDC depth is in [-1, 1] range, otherwise its [0, 1].
      */
-    frustum(const transform& view, const transform& proj, bool _oglNDC);
+
+    frustum(const transform& view, const transform& proj, bool homogeneousDepth);
 
     /**
      * @brief Constructs a frustum from an axis-aligned bounding box.

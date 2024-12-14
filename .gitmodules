@@ -19,9 +19,6 @@
 [submodule "deps/3rdparty/glm/glm"]
 	path = deps/3rdparty/glm/glm
 	url = https://github.com/volcoma/glm.git
-[submodule "deps/itc/itc"]
-	path = deps/itc/itc
-	url = https://github.com/volcoma/itc.git
 [submodule "deps/3rdparty/assimp/assimp"]
 	path = deps/3rdparty/assimp/assimp
 	url = https://github.com/assimp/assimp.git

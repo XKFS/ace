@@ -36,12 +36,24 @@ void draw_footer_child(rtti::context& ctx, float footerSize, const std::function
 
     auto jobs_icon = fmt::format("{} {}", pool_jobs, ICON_MDI_BUS_ALERT);
 
+    float spinner_size = 0.0f;
+    if(pool_jobs > 0)
+    {
+        spinner_size = ImGui::GetTextLineHeight();
+    }
     ImGui::AlignedItem(
         1.0f,
         ImGui::GetContentRegionAvail().x,
-        ImGui::CalcTextSize(jobs_icon.c_str()).x,
+        ImGui::CalcTextSize(jobs_icon.c_str()).x + spinner_size + ImGui::GetStyle().ItemSpacing.x,
         [&]()
         {
+            if(pool_jobs > 0)
+            {
+                ImGui::AlignTextToFramePadding();
+
+                ImGui::Spinner(spinner_size, 4.0f, 24.0f, 1.0f);
+                ImGui::SameLine();
+            }
             ImGui::AlignTextToFramePadding();
             ImGui::HelpMarker(
                 jobs_icon.c_str(),
@@ -51,12 +63,12 @@ void draw_footer_child(rtti::context& ctx, float footerSize, const std::function
                     ImGui::TextUnformatted(
                         fmt::format("Threads : {}, Jobs : {}, Pool Jobs {}", threads.size(), total_jobs, pool_jobs)
                             .c_str());
-                    for(const auto& id : threads)
-                    {
-                        auto jobs_info = tpp::get_pending_task_count_detailed(id);
-                        ImGui::TextUnformatted(
-                            fmt::format("Thread : {}, Jobs : {}", jobs_info.thread_name, jobs_info.count).c_str());
-                    }
+                    // for(const auto& id : threads)
+                    // {
+                    //     auto jobs_info = tpp::get_pending_task_count_detailed(id);
+                    //     ImGui::TextUnformatted(
+                    //         fmt::format("Thread : {}, Jobs : {}", jobs_info.thread_name, jobs_info.count).c_str());
+                    // }
                 });
         });
 

@@ -475,7 +475,7 @@ private:
     }
 
     /// Thread pool for asset loading tasks.
-    itc::thread_pool& pool_;
+    tpp::thread_pool& pool_;
     /// Different storages for assets.
     std::unordered_map<std::size_t, std::unique_ptr<basic_storage>> storages_{};
     /// Mutex for database operations.

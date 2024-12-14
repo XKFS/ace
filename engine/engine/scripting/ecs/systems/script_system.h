@@ -110,7 +110,7 @@ private:
 
     void check_for_recompile(rtti::context& ctx, delta_t dt, bool emit_callback);
 
-    auto create_compilation_job(rtti::context& ctx, const std::string& protocol, bool debug) -> itc::job_future<bool>;
+    auto create_compilation_job(rtti::context& ctx, const std::string& protocol, bool debug) -> tpp::job_future<bool>;
 
     ///< Sentinel value to manage shared resources.
     std::shared_ptr<int> sentinel_ = std::make_shared<int>(0);
@@ -149,7 +149,7 @@ private:
     call_progress create_call_{call_progress::not_called};
     call_progress start_call_{call_progress::not_called};
 
-    std::vector<itc::future<void>> compilation_jobs_;
+    std::vector<tpp::future<void>> compilation_jobs_;
 
     bool has_compilation_errors_{};
 };

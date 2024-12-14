@@ -853,12 +853,12 @@ void editor_actions::run_project(const deploy_settings& params)
 }
 
 auto editor_actions::deploy_project(rtti::context& ctx, const deploy_settings& params)
-    -> std::map<std::string, itc::shared_future<void>>
+    -> std::map<std::string, tpp::shared_future<void>>
 {
     auto& th = ctx.get_cached<threader>();
 
-    std::map<std::string, itc::shared_future<void>> jobs;
-    std::vector<itc::shared_future<void>> jobs_seq;
+    std::map<std::string, tpp::shared_future<void>> jobs;
+    std::vector<tpp::shared_future<void>> jobs_seq;
 
     fs::error_code ec;
 
@@ -1038,8 +1038,8 @@ auto editor_actions::deploy_project(rtti::context& ctx, const deploy_settings& p
         jobs_seq.emplace_back(job);
     }
 
-    itc::when_all(std::begin(jobs_seq), std::end(jobs_seq))
-        .then(itc::this_thread::get_id(),
+    tpp::when_all(std::begin(jobs_seq), std::end(jobs_seq))
+        .then(tpp::this_thread::get_id(),
               [params](auto f)
               {
                   if(params.deploy_and_run)
@@ -1089,7 +1089,7 @@ void editor_actions::open_workspace_on_file(const fs::path& file, int line)
     auto& pm = ctx.get_cached<project_manager>();
     auto project_name = pm.get_name();
     auto vscode_exe = pm.get_editor_settings().external_tools.vscode_executable;
-    itc::async(
+    tpp::async(
         [vscode_exe, project_name, file, line]()
         {
             auto external_tool = vscode_exe;

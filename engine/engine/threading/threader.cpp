@@ -7,7 +7,7 @@ namespace ace
 {
 threader::threader()
 {
-    itc::init_data data{};
+    tpp::init_data data{};
     data.set_thread_name = [](const std::string& name)
     {
         platform::set_thread_name(name.c_str());
@@ -22,15 +22,15 @@ threader::threader()
         APPLOG_ERROR(msg);
     };
 
-    itc::init(data);
+    tpp::init(data);
 
-    pool = std::make_unique<itc::thread_pool>();
+    pool = std::make_unique<tpp::thread_pool>();
 }
 
 threader::~threader()
 {
     pool.reset();
-    itc::shutdown();
+    tpp::shutdown();
 }
 
 auto threader::init(rtti::context& ctx) -> bool
@@ -49,7 +49,7 @@ auto threader::deinit(rtti::context& ctx) -> bool
 
 void threader::process()
 {
-    itc::this_thread::process();
+    tpp::this_thread::process();
 }
 
 } // namespace ace

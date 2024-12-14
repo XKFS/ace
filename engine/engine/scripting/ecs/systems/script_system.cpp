@@ -553,7 +553,7 @@ void script_system::check_for_recompile(rtti::context& ctx, delta_t dt, bool emi
             for(const auto& protocol : container)
             {
                 auto job = create_compilation_job(ctx, protocol, get_script_debug_mode())
-                               .then(itc::this_thread::get_id(),
+                               .then(tpp::this_thread::get_id(),
                                      [this, &ctx, protocol, emit_callback](auto f)
                                      {
                                          if(!emit_callback)
@@ -595,7 +595,7 @@ void script_system::wait_for_jobs_to_finish(rtti::context& ctx)
 }
 
 auto script_system::create_compilation_job(rtti::context& ctx, const std::string& protocol, bool debug)
-    -> itc::job_future<bool>
+    -> tpp::job_future<bool>
 {
     uint32_t flags = 0;
     if(debug)

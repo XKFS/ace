@@ -83,7 +83,7 @@ auto validate(const std::string& key, const std::string& compiled_ext, std::stri
 }
 
 template<>
-auto load_from_file<gfx::texture>(itc::thread_pool& pool, asset_handle<gfx::texture>& output, const std::string& key)
+auto load_from_file<gfx::texture>(tpp::thread_pool& pool, asset_handle<gfx::texture>& output, const std::string& key)
     -> bool
 {
     std::string compiled_absolute_path{};
@@ -106,7 +106,7 @@ auto load_from_file<gfx::texture>(itc::thread_pool& pool, asset_handle<gfx::text
 }
 
 template<>
-auto load_from_file<gfx::shader>(itc::thread_pool& pool, asset_handle<gfx::shader>& output, const std::string& key)
+auto load_from_file<gfx::shader>(tpp::thread_pool& pool, asset_handle<gfx::shader>& output, const std::string& key)
     -> bool
 {
     std::string compiled_absolute_path{};
@@ -133,7 +133,7 @@ auto load_from_file<gfx::shader>(itc::thread_pool& pool, asset_handle<gfx::shade
 }
 
 template<>
-auto load_from_file<material>(itc::thread_pool& pool, asset_handle<material>& output, const std::string& key) -> bool
+auto load_from_file<material>(tpp::thread_pool& pool, asset_handle<material>& output, const std::string& key) -> bool
 {
     std::string compiled_absolute_path{};
 
@@ -156,7 +156,7 @@ auto load_from_file<material>(itc::thread_pool& pool, asset_handle<material>& ou
 }
 
 template<>
-auto load_from_file<mesh>(itc::thread_pool& pool, asset_handle<mesh>& output, const std::string& key) -> bool
+auto load_from_file<mesh>(tpp::thread_pool& pool, asset_handle<mesh>& output, const std::string& key) -> bool
 {
     std::string compiled_absolute_path{};
 
@@ -182,7 +182,7 @@ auto load_from_file<mesh>(itc::thread_pool& pool, asset_handle<mesh>& output, co
 }
 
 template<>
-auto load_from_file<animation_clip>(itc::thread_pool& pool, asset_handle<animation_clip>& output, const std::string& key) -> bool
+auto load_from_file<animation_clip>(tpp::thread_pool& pool, asset_handle<animation_clip>& output, const std::string& key) -> bool
 {
     std::string compiled_absolute_path{};
 
@@ -206,7 +206,7 @@ auto load_from_file<animation_clip>(itc::thread_pool& pool, asset_handle<animati
 }
 
 template<>
-auto load_from_file<prefab>(itc::thread_pool& pool, asset_handle<prefab>& output, const std::string& key) -> bool
+auto load_from_file<prefab>(tpp::thread_pool& pool, asset_handle<prefab>& output, const std::string& key) -> bool
 {
     std::string compiled_absolute_path{};
 
@@ -231,7 +231,7 @@ auto load_from_file<prefab>(itc::thread_pool& pool, asset_handle<prefab>& output
 }
 
 template<>
-auto load_from_file<scene_prefab>(itc::thread_pool& pool, asset_handle<scene_prefab>& output, const std::string& key)
+auto load_from_file<scene_prefab>(tpp::thread_pool& pool, asset_handle<scene_prefab>& output, const std::string& key)
     -> bool
 {
     std::string compiled_absolute_path{};
@@ -257,7 +257,7 @@ auto load_from_file<scene_prefab>(itc::thread_pool& pool, asset_handle<scene_pre
 }
 
 template<>
-auto load_from_file<physics_material>(itc::thread_pool& pool,
+auto load_from_file<physics_material>(tpp::thread_pool& pool,
                                       asset_handle<physics_material>& output,
                                       const std::string& key) -> bool
 {
@@ -282,7 +282,7 @@ auto load_from_file<physics_material>(itc::thread_pool& pool,
 }
 
 template<>
-auto load_from_file<audio_clip>(itc::thread_pool& pool, asset_handle<audio_clip>& output, const std::string& key)
+auto load_from_file<audio_clip>(tpp::thread_pool& pool, asset_handle<audio_clip>& output, const std::string& key)
     -> bool
 {
     std::string compiled_absolute_path{};
@@ -304,7 +304,7 @@ auto load_from_file<audio_clip>(itc::thread_pool& pool, asset_handle<audio_clip>
         audio::sound_data data;
         load_from_file_bin(compiled_absolute_path, data);
 
-        auto create_job = itc::async(itc::main_thread::get_id(),
+        auto create_job = tpp::async(tpp::main_thread::get_id(),
                                      [data = std::move(data)]() mutable
                                      {
                                          auto clip = std::make_shared<audio_clip>(std::move(data), false);
@@ -322,7 +322,7 @@ auto load_from_file<audio_clip>(itc::thread_pool& pool, asset_handle<audio_clip>
 }
 
 template<>
-auto load_from_file<script>(itc::thread_pool& pool, asset_handle<script>& output, const std::string& key)
+auto load_from_file<script>(tpp::thread_pool& pool, asset_handle<script>& output, const std::string& key)
     -> bool
 {
     std::string compiled_absolute_path{};

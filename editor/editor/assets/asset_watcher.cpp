@@ -213,7 +213,7 @@ auto watch_assets(rtti::context& ctx, const fs::path& dir, const fs::path& wildc
 
         if(!changed.empty() || !removed.empty())
         {
-            itc::invoke(itc::main_thread::get_id(),
+            tpp::invoke(tpp::main_thread::get_id(),
                         [&tm, changed, removed]()
                         {
                             for(const auto& uid : removed)

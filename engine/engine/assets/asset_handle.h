@@ -11,7 +11,7 @@
 #include "../threading/threader.h"
 
 template<typename T>
-using task_future = itc::job_shared_future<T>;
+using task_future = tpp::job_shared_future<T>;
 
 /**
  * @struct asset_link
@@ -127,7 +127,7 @@ struct asset_handle
         {
             if(!ready)
             {
-                link_->task.change_priority(itc::priority::high());
+                link_->task.change_priority(tpp::priority::high());
             }
 
             auto value = link_->task.get();
@@ -172,7 +172,7 @@ struct asset_handle
             return link_->task.id;
         }
 
-        return itc::job_id{};
+        return tpp::job_id{};
     }
 
     /**

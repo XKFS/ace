@@ -24,7 +24,7 @@ struct editor_actions
 
     static void run_project(const deploy_settings& params);
     static auto deploy_project(rtti::context& ctx, const deploy_settings& params)
-        -> std::map<std::string, itc::shared_future<void>>;
+        -> std::map<std::string, tpp::shared_future<void>>;
 
 
     static void generate_script_workspace();

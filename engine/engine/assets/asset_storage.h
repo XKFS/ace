@@ -212,21 +212,21 @@ struct basic_storage
      * @brief Unloads all assets.
      * @param pool The thread pool for unloading tasks.
      */
-    virtual void unload_all(itc::thread_pool& pool) = 0;
+    virtual void unload_all(tpp::thread_pool& pool) = 0;
 
     /**
      * @brief Unloads a single asset by its key.
      * @param pool The thread pool for unloading tasks.
      * @param key The key of the asset to unload.
      */
-    virtual void unload_single(itc::thread_pool& pool, const std::string& key) = 0;
+    virtual void unload_single(tpp::thread_pool& pool, const std::string& key) = 0;
 
     /**
      * @brief Unloads all assets in a specified group.
      * @param pool The thread pool for unloading tasks.
      * @param group The group to unload.
      */
-    virtual void unload_group(itc::thread_pool& pool, const std::string& group) = 0;
+    virtual void unload_group(tpp::thread_pool& pool, const std::string& group) = 0;
 };
 
 /**
@@ -244,11 +244,11 @@ struct asset_storage : public basic_storage
     using callable = std::function<F>;
 
     /// Function type for loading from file.
-    using load_from_file_t = callable<bool(itc::thread_pool& pool, asset_handle<T>&, const std::string&)>;
+    using load_from_file_t = callable<bool(tpp::thread_pool& pool, asset_handle<T>&, const std::string&)>;
 
     /// Function type for loading from instance. Predicate function type.
     using predicate_t = callable<bool(const asset_handle<T>&)>;
-    using load_from_instance_t = callable<bool(itc::thread_pool& pool, asset_handle<T>&, std::shared_ptr<T>)>;
+    using load_from_instance_t = callable<bool(tpp::thread_pool& pool, asset_handle<T>&, std::shared_ptr<T>)>;
 
     ~asset_storage() override = default;
 
@@ -257,7 +257,7 @@ struct asset_storage : public basic_storage
      * @param pool The thread pool for unloading tasks.
      * @param handle The handle to unload.
      */
-    void unload_handle(itc::thread_pool& pool, asset_handle<T>& handle)
+    void unload_handle(tpp::thread_pool& pool, asset_handle<T>& handle)
     {
         pool.stop(handle.task_id());
         handle.invalidate();
@@ -268,7 +268,7 @@ struct asset_storage : public basic_storage
      * @param pool The thread pool for unloading tasks.
      * @param predicate The predicate function to determine which assets to unload.
      */
-    void unload_with_condition(itc::thread_pool& pool, const predicate_t& predicate)
+    void unload_with_condition(tpp::thread_pool& pool, const predicate_t& predicate)
     {
         std::lock_guard<std::recursive_mutex> lock(container_mutex);
         for(auto it = container.begin(); it != container.end();)
@@ -290,7 +290,7 @@ struct asset_storage : public basic_storage
      * @brief Unloads all assets.
      * @param pool The thread pool for unloading tasks.
      */
-    void unload_all(itc::thread_pool& pool) final
+    void unload_all(tpp::thread_pool& pool) final
     {
         unload_with_condition(pool,
                               [](const auto& it)
@@ -304,7 +304,7 @@ struct asset_storage : public basic_storage
      * @param pool The thread pool for unloading tasks.
      * @param group The group to unload.
      */
-    void unload_group(itc::thread_pool& pool, const std::string& group) final
+    void unload_group(tpp::thread_pool& pool, const std::string& group) final
     {
         unload_with_condition(pool,
                               [&](const auto& it)
@@ -320,7 +320,7 @@ struct asset_storage : public basic_storage
      * @param pool The thread pool for unloading tasks.
      * @param key The key of the asset to unload.
      */
-    void unload_single(itc::thread_pool& pool, const std::string& key) final
+    void unload_single(tpp::thread_pool& pool, const std::string& key) final
     {
         unload_with_condition(pool,
                               [&](const auto& it)

@@ -24,11 +24,11 @@ void draw_footer_child(rtti::context& ctx, float footerSize, const std::function
 
     ImGui::SameLine();
 
-    auto threads = itc::get_all_registered_threads();
+    auto threads = tpp::get_all_registered_threads();
     size_t total_jobs = 0;
     for(const auto& id : threads)
     {
-        total_jobs += itc::get_pending_task_count(id);
+        total_jobs += tpp::get_pending_task_count(id);
     }
 
     auto& thr = ctx.get_cached<threader>();
@@ -53,7 +53,7 @@ void draw_footer_child(rtti::context& ctx, float footerSize, const std::function
                             .c_str());
                     for(const auto& id : threads)
                     {
-                        auto jobs_info = itc::get_pending_task_count_detailed(id);
+                        auto jobs_info = tpp::get_pending_task_count_detailed(id);
                         ImGui::TextUnformatted(
                             fmt::format("Thread : {}, Jobs : {}", jobs_info.thread_name, jobs_info.count).c_str());
                     }

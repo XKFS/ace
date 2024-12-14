@@ -3,8 +3,8 @@
 
 #include <base/basetypes.hpp>
 #include <context/context.hpp>
-#include <itc/thread_pool.h>
-#include <itc/when_all_any.hpp>
+#include <threadpp/thread_pool.h>
+#include <threadpp/when_all_any.hpp>
 #include <memory>
 
 namespace ace
@@ -20,6 +20,6 @@ struct threader
 
     void process();
 
-    std::unique_ptr<itc::thread_pool> pool{};
+    std::unique_ptr<tpp::thread_pool> pool{};
 };
 } // namespace ace

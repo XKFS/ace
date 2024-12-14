@@ -383,6 +383,7 @@ static void process_drag_drop_target(rtti::context& ctx, const camera_component&
 }
 void draw_selected_camera(rtti::context& ctx, entt::handle editor_camera, const ImVec2& size)
 {
+    return;
     auto& em = ctx.get_cached<editing_manager>();
 
     auto& selected = em.selection_data.object;

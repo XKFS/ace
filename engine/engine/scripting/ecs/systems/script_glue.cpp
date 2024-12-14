@@ -318,9 +318,7 @@ auto internal_m2n_destroy_entity(entt::entity id, float seconds) -> bool
             internal_m2n_destroy_entity_immediate(id);
         });
 
-    seq::seq_scope_policy policy{};
-    policy.scope = "script";
-    seq::start(tween, policy);
+    seq::start(tween, "script");
 
     return true;
 }
@@ -1693,7 +1691,6 @@ auto script_system::bind_internal_calls(rtti::context& ctx) -> bool
         reg.add_internal_call("internal_m2n_find_entities_by_name", internal_call(internal_m2n_find_entities_by_name));
         reg.add_internal_call("internal_m2n_find_entity_by_tag", internal_call(internal_m2n_find_entity_by_tag));
         reg.add_internal_call("internal_m2n_find_entities_by_tag", internal_call(internal_m2n_find_entities_by_tag));
-
     }
 
     {
